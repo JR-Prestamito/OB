@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>JR Prestamito</title>
+<meta name="theme-color" content="#1B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JR Prestamito">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%20%22JR%20Prestamito%22%2C%20%22short_name%22%3A%20%22JR%20Prestamito%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%23F7F5F0%22%2C%20%22theme_color%22%3A%20%22%231B2A4A%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAHfUlEQVR4nO3dS2wVVRyA8TOP%2BwBawEKFmDZtQYJKgAC2BjAQCCZKjIkQYEGIJsaoJK7cuHFj3BiDGwzESEI0PiIEUeMCA9aUl5YCoshbSm3l1VKEttDex8y4IBoETO65/96ZOdfvtywUhtuPM%2BfM02rduEABxbKj3gCYjYAgQkAQISCIEBBE3Lu/tGx9RfjbASN88erAHV9hBIIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBC5x0t34%2B%2B1J4fmT8kX%2BJs3NKd2HUuU4k/%2BL4FSnqfyvjWUUzcyVv%2BQ1TtgdffbF/%2B0zl1xOnvtnCf8G2LEyIBizlLKdZTrBOmEGjsyuONXc546ccE51OHuO%2BNevWFFsoXDiIDClnDUjFpvRq33/OOZtnPutoOJM5edqDeqeAQUGctSTZPyTZPyLSfdzXtTfYNGjkZMoqO38KH8O6tu1o/3o96QYhBQLFRXBm8%2BO1g3zryGCCguKtLB608PjUzeOemOOQKKkQmj/TXzs1FvhR4Cipclj%2BQmjjFpR0ZA8eLYask06ZHMMBFQ7MgPhYeJ40DFu%2BdJkpSrUolgfEVQW%2BXPqss3NngjNOfFE0b71ZVBT78Zh4UIaJhl8iqTt/oGrfYeu%2BWUO3pE8OLCjO6g0lDt9fSb8aNhF1ZafYPWu9%2BmW9v1apg4xpjFPAGVXBCozXuSns7SqiJFQLhNd5%2BtdcY0nSAg/Ntv3Rofdc4zYwatCCg0/Ton2wcypduQYUZAIbF1xhSDLu0goJBUjtCY1rT3GHOJGQGFZOrEQi%2BEzuZVZ68xPxdjNtRoD4z1J1UXuo4/9LurteaPFgGVnG2pFxZkrIJnNTt/LfQekjgw43i5ucaODF5alJlVV%2Bj%2B62y3/XOnMRMgRUDDLumq9K2TqeP82XX5xgav8KOCfqA2NKeNOYaolCIgibWLM2sXD%2BcRm4/2pc71GDapMGxzy9i2g8mvfzJp9nMLI1D0snn1QUvqu%2BPm1aMIKHJHOp3Ne1JdV03dFRBQNPxAHel0vjqcPPqHSWuuuxFQBC5ft9fvSh2/YHY6t5g6chptwhj/reWDbzwzWPjh6dgioMjMqvPeXnlz%2BaOG3Ul4BwKKkmOr1XOzryzOGHP1xl0IKHpPTMutnmfqOERAsbBsTnbegybdT/gPVmHFu/3GQkupdDIYPSKoH%2BfPrvfmT8nrPmfj5UWZkxcd4x56xwg0PAKlBrPW5et2a7u7sTn1yocjm0/oHVmuSAcvLDTnWui/EVBJ9A9Z7%2B1KffZjUuu75k7Oz6g17AmuBFRCW9uSOwt%2BwvAtzz9u2IqMgEprU0vqwjWND7l%2BvD/PqKdzEFBp5Ty1oTml9S2rmrKFX/8aOQIquePnnbZzGqvdmirfoEcEEVAYPt6fDHQW9Ssas6aMQQQUhq6r9v7fNAah2ip/riHHFQkoJFvb9A4srmgyYxAioJB09tqtZzUGobpxftNkAwYhAgrPlgN6g9DKRgPOsBJQeDqu2Ad1lmMN1X5jQ9wHIQIK1ZYDeic3VjbFfRAioFCd7bYPd2hcCj35fn9OfawHIQIK25Y23UEoV6ItGRb/g4Bidq/56UvOEZ3HJ0yZ4BX%2BbIbwGRmQ1rPfY/jAynKaCRkZ0Cids5OZ%2BE0hTl50tO4nnDrRmxnX64SMDOj%2BSo3bqW7G8ohu2QxC5gU0vjK4b5TGLqx3II4BHTvvHD%2BvMQg9/IA3vSaOg5B5Ac2p09gnBUpd6Y/pv1F/ORbHQci8uzKWztRY1l66ZmvNgdbtSK/bob1Jxfmly1m2viKkv6xkYvq/878snZmrrdKYAGm9YABFMOnznV7jPTdf78aXo13l8ASMODNjF5Zw1FMzcmvmZRyd4INAaV1LiiLE9/NNJ4KKtKq5z59e4y2cmquq0D6i/FOnc92cl04YKnYBrXosu2qYlhvfHNFb5qAIJs2BtJy4oHfKCcUpz4A8X23arXc3FopTngF9%2BkPSuCd2G6oMP%2BWWU%2B6Xh5n9hKTcAtp9yl2/07DXTRgtdquwovmB%2BuSH5PZDjD2hKpOAzlx23v8%2B1c68J3TGB3T6krP9cOLAWZfdViSMDCgIVMcV%2B2CHu/e0a%2B5bJspDrAPKeyrnWZm86hu0rt20evrtP/60u3rtU5fsG4Y9yKtsxS6gz1uTn7cyETYG4z9ECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoLIPV66%2B8WrA%2BFvBwzFCAQRAoIIAUGEgCBCQBD5CxBp4Kv8RxaLAAAAAElFTkSuQmCC%22%2C%20%22sizes%22%3A%20%22192x192%22%2C%20%22type%22%3A%20%22image/png%22%7D%2C%20%7B%22src%22%3A%20%22data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAV90lEQVR4nO3de4xd1X3o8b3Pa8b22AZjY4MxYDA1Nk7APEIaCElcQ3pDCa1LlbSNVKRUaukt1a2qKqrUSldtpUp9qEpIn2qlpsnNvWlTmgRSEgiEuDHhbWObYGMexsZg4wdgxjNz5jz2/QPapNTBr4F19v59Pn8hpNFZcM4%2B37P2Xnvt/IG/uioDIJ5a6gEAkIYAAAQlAABBCQBAUAIAEJQAAAQlAABBCQBAUAIAEJQAAAQlAABBCQBAUAIAEJQAAAQlAABBCQBAUI3j%2BJs1t4xM%2BTgAOBG33jx6rH9iBgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABNVIPQDeRu9e1PvfPz2e5KVv/sL0XS%2B/0z8vEv73nrh%2BkfX7Wb/Iev2808sme9lkN5/oZGOT%2BfhkPtbOXh3PD47nB8fzA2O1/aP5/tfy0XaeetSUmwDAQKjlWa3%2B%2Bj8W0974d8Vb/8n4ZL771Xz3q7UXXqntPFDbsb%2B26%2BVap/e2DpNKEQAoq2mtYvG8YvG8/n/%2Bm14/e25/7ak99Sd31x7fVd9z0Dle3ooAQHXUa9k58/rnzOtfsyLLsmzfaL5xZ%2BOR7fXHdtTHJp0v4s0EACpr7kixalln1bJOr59t3Flft63xwDONQ64c8B8EAKqvXstWntVbeVbvV3rt7z3V%2BNbjzc276qkHRXoCAIE069lVS7tXLe1u31e7bUNr7dZGr3/kv6KqXCOCiM6e27959cRnPzH2oWXdmnNCUQkAxDV/dv/m1RN/%2BvGx5QutHo1IACC6s%2Bf2/3DN%2BK%2Bvbs8YOsKdB1SMAABZlmWrlnU%2B/QtjSxeYCgQiAMAb5owUf7BmfNWyTuqB8A4RAOAHGvXs11e3P3lVu%2B67IQBvMvBm117Y%2Bc0PT%2BRWB1WdAACH8b4l3ZtWtVOPgreXAACHt3p558YrNaDKBAD4kT66svOT73JNuLIEAHgrN17ZPmOO/SKqSQCAt9JqZL95zUTD3nFVJADAESye1//5yydTj4KpJwDAkV130eS8mTaKqBoBAI6sUc8%2BZhJQOQIAHJUPnt9ZeLKrwZUiAMBRqeXZx95jElApAgAcrfee2x0ZdiWgOgQAOFqNenbled3Uo2DKCABwDGwWXSUCAByDJfP7LgVXhgAAx2blWZ4aVhGN1AOAKrj5C9N3vXxsP6fyPGvUsma9aDWymcPFzOHi5BnFgtn9BbOLc%2Bb1zjylP7CPZLlgYe/2Dc3Uo2AKCACkURRZp5d1evnYZPbK2JufvdKsZ0sX9C45u3v5ub0FswfrlMvy03t5llkMVAECAIOo08s276pv3lX/x3XZijN6163sXHr2oCy/mTlcLDqlv2P/oM5QOGoCAAOtyLJNz9c3PV8//7TeTavaiwZjZ%2BbzT%2BsJQAV4C6EctrxY/%2B0vTb/7%2BwNx8n3BbGeAqkAAoDQmu9lf3D30tfXpGzBolyU4PgIAJfO57w498Ezik7cCUA0CACVTZNktdw3994VD76T5s5wCqgIBgPIZm8y/cF8r4QCmtYqRIQ0oPQGAUvrO1ua%2B0ZSTgOH0VyI4UQIApdTrZ3duTvkdPNQ0Ayg9AYCyuv/plJeCzQAqQACgrJ4/UHvpYLJD2AygAgQASuypl9IFwDYC5ScAUGLPpAtA350A5ScAUGJ7X0t2CHc8FKD8BABKLOFK0MleykWoTAkBgBIbayf7Fm57NnD5CQCU2GS6ZwSk3YuCKSEAUGKdfppv4W4vG50QgNITACixoUaaxfivjOXuAqgAAYASayVajL8n3Q1oTCHvIpTYrOE0P8Q9D7IavItQYqeMpLkdSwCqwbsIJTY/0bN5t%2B/z1VEF3kUosXNPTXA/brubPb23/s6/LlNOAKCs8jxbcmqCU0BbXqx37QNRCQIAZbV0QW/WtASngDY/7%2Bd/RQgAlNX7lqS5Dzjtg2iYQgIApTTcLFYtTxCAZ/fWdr3se6MivJFQStde2JneSnD%2B59%2Bf9PO/OgQAymfuSPGzlybYjXOym93zhGcBV4cAQMk06tlv/Y%2BJ4RSP5L13S/PguD3gqkMAoEzqtew3Vk8sXZBgGWZRZLdt8PO/UpzOg9KYMVT8xtXtyxanWfxzzxNNl38rRgCgHC45u/srH2zPnZlm74eJTv7F%2B1tJXpq3jwDAQKvl2SVnd69f2Vm%2BMOXdt19%2BqPnyIWf/q0YAYBANNbJlp/cuObt7%2BbnduSOJH77y5O76Vx7187%2BCBADSyLOsUc8a9WKokc0cLmYOF3NGivmz%2BqedVJwzr3fmKf3aYPzgbnezT9811PcAsCoSAJgCt3xiLPUQ3i6f/dbwi6%2B49ltN3lfgR/rSg6112/xMrCwBAA7v2080/ukBp/6rTNuBw7jnieZf3D3kzH%2B1CQDwZnc93vzrbw8Vvv6rTgCAHyiK7PP3tSz6DEIAgDccauefvnPo4e2%2BFqLwTgNZlmWbnq9/5q7h/aODcfcB7wgBgOhe3%2Bfn6xtSbDBNUgIAoa3d2vjcuiH7/MQkABDUxp31/3t/a%2BvueuqBkIwAQDjrn6v/04O%2B%2BhEACONQO793S%2BMbmzzXhTcIAFRcr589tqP%2B79ua9z/VaKd5mBgDSgCgyrbtqf/tvUNPv%2BQnP4chAFBl583v/cnHxnYeqK3d2rh3S9Myf36YAED1LZrT/8Ufn/z45ZP3PdX4l4dbO/abEJBlAgBx1GvZ%2B3%2Bse%2BV53Xu3NP7P94YOWPsfnh8CEEueZx9a1v3MJ8auvqCTeiwkJgAQ0fRWcdOq9qeunRix539gAgBxXX5O908%2BPn7GnH7qgZCGAEBo82f1/%2BiG8RVn9FIPhAQEAKKbMVT83kfHLzpTA8IRACBr1rPf%2Banxdy/SgFgEAMiyLGvWs099ZGLxPNcDAhEA4A3TWsXvXjc%2BZ4Z1QVEIAPADJ88oPnXtRNNG0TEIAPBfnDe/98mr2qlHwTtBAIA3u2ZF58eX2Dm6%2BuwFBFPg5i9MP%2BJTVpr1rFkvprey2dOLU0b6C0/unzmnf/5p/fmzB/G666%2Btaj%2B5u2730GoTAHiHdHpZp5ePTWb7RvMf3qB/zkhx%2BTndK5Z0ly8coFWYM4aK//kTE7//1WmpB8LbSAAgsQOj%2BR0bm3dsbC6a0//piyc/eH43H4yf3Red2Vt9QedbjzdTD4S3i2sAMCh2Hqjd8q3h//XF6U%2B8MCircH7pismTplsVWlkCAINl54Ha79467fPrWv0B%2BOKdMVTceKUVQZUlADBwiiL710dbf/i1aROd9CeDrlratVVcVQkADKgNO%2Bq//9Xh8cn0DfjkVe1a%2BlEw9QQABteWF%2Bt/dPtwN/Xv77NO6a/2%2BLAqEgAYaJt31T9793DqUWS/8N7Jaa0BuCjBlBIAGHRrtzZu35B4LeasacX1K00CqkYAoAQ%2Bt25o6%2B7Ea0M/urIze5pJQKUIAJRAr5995s6hdtLteYabxQ2XTaYcAVNNAKAcXny19vn7htKO4ZoVnTkjJgHVIQBQGndsbG7bk/JEULOerbnEJKA6BABKoyiyv/n2UNo7hK%2B%2BwCSgOgQAyuSZvbW7ku7O1qxnP3OxSUBFCACUzJceaKW9PfjqCzp2iKsGAYCSeWUs/8qjKScBrUZ2/UqTgCoQACif2zY0D46nnAR8%2BF3dmcMmAaUnAFA%2BE53Ek4DhZnHdRW4MLj0BgFK6Y2PrlbGUk4CPXNiZMWQSUG4CAKXU7ma3rU85CZjeKq690CSg3AQAyuqOTc3RiZSTgJ%2B6sGOL0FITACiriU5%2B%2B2MpJwEjw8VPvsskoMQEAErs6481x5LeE3D9ys5QI%2BHrc0IEAErsUDu/Y2PKScCsacU1K0wCykoAoNxu29BM%2B%2Bz46y%2BebCZ%2BVAHHSQCg3A6O53duTnkWZs6M4ieWmwSUkgBA6X11fauT9MHxay6ZrPsuKSFvGpTey4fyu7%2Bf8krA3JnFh843CSgfAYAquPWRVq%2BfcgBrLu3UUl6J4HgIAFTBvtfye7eknAQsmN1//9Kkzyzm2AkAVMStDzfTPizshksnc5OAUhEAqIgXX62t25ZyOdDCk/vvW2ISUCYCANXx5YcSb81zw2VJ70vmGAkAVMfOA7UHnk45CTjrlP57zjEJKA0BgEr554daaQdww2WeFlkaAgCV8uze2iPbU04Czj21f/FZSW9L46gJAFTNPz%2BUcj1olmU/9x6TgHIQAKiaJ3fXN%2B5MuT3b0gW9dy8yCSgBAYAK%2BrIrARwFAYAK2ryr/sQLKScBKxb2lp1uEjDoBACq6csPJ54E/JxJwMATAKim9c/Vn34p5QF%2B0Zm98%2BabBAw0AYDKGoArAfaIHmgCUGUJt%2BftJ92amNc9%2BEzjuf0pj/HLFncXz/NRGFwCUGWtRrKNYdo9W8KkV2TZv6S%2BEmA50CATgCpL%2BKjuSfvBDIZ12xq7Xk55mL/33O6iOSYBA0oAqmwo3QxgsmsGMBCKIrv1kZSTgNwkYIAJQJWdND1NAIos65gBDIy1Wxt7DqY80q84r3vaSSYBg0gAquzkGWkC0OlmaXel54f1%2Btm/PpJyd6Banv3spZYDDSIBqLI5iQLg/M%2BgueeJ5oHRlG/KB5Z2Tp1lEjBwBKDKzkh08e2Qp0INmG4v%2B8qjKa8E1GvZmktMAgaOAFRWvZadnujE6/7XBGDg3Pl489XxlO/LqmWdOSNODQ4WAaisRXP69URv776kZxs4rMlu9rX1Ka8ENOrZz1xsOdBgEYDKWnFGsm1Y9o36XA2ib2xqjk6kbPPVF3RSrUzjsByolZXwiRz7nAIaSOOT%2BdcfSzkJaDWy61eaBAwQAaimoUa2YmGyAOx3CmhQ3f5YcyzpJfoPv6s7c9gkYFAIQDVdfm53uJnsMHMKaGAdauff2JRyEjDcLK67yHKgQeFAraYPnp/sGOv1s%2BcP%2BFwNrq%2Btb7aT3qf9kQs7M4ZMAgZCI/UAmHqL5/UvOjPZ%2BZ8d%2B2udRC%2B%2BcWd9zS0jaV67PA6O5z//V/4vkWVmAJV0w6Upr7M9/VLKR9ECR08AqmbZ6b33Lkk5w38q6WMIgaPnWK2URj276UPttEtwzACgLASgUm68op1q/5/XdXtZ2mcQAkfPsVodq5Z1PnJh4gV233%2Bh3k12%2BRk4NgJQEe9b0r1pVTv1KLIHn7WuDErD4VoFq5d3fnVVuzYAt98%2B9IxPFJSGw7XcWo3slz/QXr18IG6tfHZvba9dgKA8BKDELlvcvfH9k6fNHpQHLT3k/A%2BUiiO2fPIsu/js7vUrOwk3fD6s%2B5/2cYIyccSWRp5lS%2Bb33nNO74rzugsG5lf/f9q6u759nzUFUCYCMHDyPBtqFK1GNr1VzB0p5s4sTj%2Bpv2R%2Bb8mp/ZEB3kc37UbzwHEQgJRmTSv%2B4ZcPpR7FFDhwKP/eUz5LUDLm7EyBb25q9gbupBRwBALAier0sm9udv4HykcAOFFffbR1cNzyfygfAeCEHDiU3/qIn/9QSgLACfn8fUMTHT//oZQEgOP35O762i0W/0BZCQDHqdfP/m6tZ3tDiQkAx%2BmL32s9tcfnB0rMAczxeGR74yuPtlKPAjghAsAx2zeaf/ouJ3%2Bg9ASAY9PtZX92x/DohJU/UHoCwDHo9bM/%2B8bw1t311AMBpoAAcLT6Rfbn3xx%2BwEMfoSoEgKNSFNln7hq%2Bz5afUCGOZ46s18/%2B8p7htVt9WqBSHNIcwdhk/qd3DG/Y4bw/VI0A8FZ2vVz7438b3nnAqUKoIAHgR/rOlsbf3GuvN6gsAeAwXh3P/%2B47Q%2Bu2%2BXhAlTnC%2BS%2BKLPvOlsY/fHfIM16g8gSAH3hyd/3v17a27XG9F0IQALIsy57dW/t/D7QeetbnAQJxwEe36fn6beubD2/3SYBwHPZBjbbz7z7Z%2BOam5nP7LfGEoAQglslutv65xne3NR58ptHppR4NkJQAhLB/NH9sZ%2BORZ%2Bvrd9St6wdeJwCVtefV2pbdtS0v1B9/of68W3mB/0YAKuLgeP7CK7UXXqk9t6%2B2fV/t2X01z2wB3poADKgiy/r9rF9kvX7e7WUT3azdySc62aF2/tpE/tpEfnA8P3Ao3zda2z%2Ba7z2Yj036ugeOjQCkdHA8X3PLSOpRAEE5NQwQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABCUAAEEJAEBQAgAQlAAABNU4jr%2B59ebRKR8HAO8wMwCAoAQAICgBAAhKAACCEgCAoAQAICgBAAhKAACCEgCAoAQAICgBAAhKAACCEgCAoAQAICgBAAhKAACC%2Bv9MYPRayv%2BOIAAAAABJRU5ErkJggg%3D%3D%22%2C%20%22sizes%22%3A%20%22512x512%22%2C%20%22type%22%3A%20%22image/png%22%7D%2C%20%7B%22src%22%3A%20%22data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAHfUlEQVR4nO3dS2wVVRyA8TOP%2BwBawEKFmDZtQYJKgAC2BjAQCCZKjIkQYEGIJsaoJK7cuHFj3BiDGwzESEI0PiIEUeMCA9aUl5YCoshbSm3l1VKEttDex8y4IBoETO65/96ZOdfvtywUhtuPM%2BfM02rduEABxbKj3gCYjYAgQkAQISCIEBBE3Lu/tGx9RfjbASN88erAHV9hBIIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBC5x0t34%2B%2B1J4fmT8kX%2BJs3NKd2HUuU4k/%2BL4FSnqfyvjWUUzcyVv%2BQ1TtgdffbF/%2B0zl1xOnvtnCf8G2LEyIBizlLKdZTrBOmEGjsyuONXc546ccE51OHuO%2BNevWFFsoXDiIDClnDUjFpvRq33/OOZtnPutoOJM5edqDeqeAQUGctSTZPyTZPyLSfdzXtTfYNGjkZMoqO38KH8O6tu1o/3o96QYhBQLFRXBm8%2BO1g3zryGCCguKtLB608PjUzeOemOOQKKkQmj/TXzs1FvhR4Cipclj%2BQmjjFpR0ZA8eLYask06ZHMMBFQ7MgPhYeJ40DFu%2BdJkpSrUolgfEVQW%2BXPqss3NngjNOfFE0b71ZVBT78Zh4UIaJhl8iqTt/oGrfYeu%2BWUO3pE8OLCjO6g0lDt9fSb8aNhF1ZafYPWu9%2BmW9v1apg4xpjFPAGVXBCozXuSns7SqiJFQLhNd5%2BtdcY0nSAg/Ntv3Rofdc4zYwatCCg0/Ton2wcypduQYUZAIbF1xhSDLu0goJBUjtCY1rT3GHOJGQGFZOrEQi%2BEzuZVZ68xPxdjNtRoD4z1J1UXuo4/9LurteaPFgGVnG2pFxZkrIJnNTt/LfQekjgw43i5ucaODF5alJlVV%2Bj%2B62y3/XOnMRMgRUDDLumq9K2TqeP82XX5xgav8KOCfqA2NKeNOYaolCIgibWLM2sXD%2BcRm4/2pc71GDapMGxzy9i2g8mvfzJp9nMLI1D0snn1QUvqu%2BPm1aMIKHJHOp3Ne1JdV03dFRBQNPxAHel0vjqcPPqHSWuuuxFQBC5ft9fvSh2/YHY6t5g6chptwhj/reWDbzwzWPjh6dgioMjMqvPeXnlz%2BaOG3Ul4BwKKkmOr1XOzryzOGHP1xl0IKHpPTMutnmfqOERAsbBsTnbegybdT/gPVmHFu/3GQkupdDIYPSKoH%2BfPrvfmT8nrPmfj5UWZkxcd4x56xwg0PAKlBrPW5et2a7u7sTn1yocjm0/oHVmuSAcvLDTnWui/EVBJ9A9Z7%2B1KffZjUuu75k7Oz6g17AmuBFRCW9uSOwt%2BwvAtzz9u2IqMgEprU0vqwjWND7l%2BvD/PqKdzEFBp5Ty1oTml9S2rmrKFX/8aOQIquePnnbZzGqvdmirfoEcEEVAYPt6fDHQW9Ssas6aMQQQUhq6r9v7fNAah2ip/riHHFQkoJFvb9A4srmgyYxAioJB09tqtZzUGobpxftNkAwYhAgrPlgN6g9DKRgPOsBJQeDqu2Ad1lmMN1X5jQ9wHIQIK1ZYDeic3VjbFfRAioFCd7bYPd2hcCj35fn9OfawHIQIK25Y23UEoV6ItGRb/g4Bidq/56UvOEZ3HJ0yZ4BX%2BbIbwGRmQ1rPfY/jAynKaCRkZ0Cids5OZ%2BE0hTl50tO4nnDrRmxnX64SMDOj%2BSo3bqW7G8ohu2QxC5gU0vjK4b5TGLqx3II4BHTvvHD%2BvMQg9/IA3vSaOg5B5Ac2p09gnBUpd6Y/pv1F/ORbHQci8uzKWztRY1l66ZmvNgdbtSK/bob1Jxfmly1m2viKkv6xkYvq/878snZmrrdKYAGm9YABFMOnznV7jPTdf78aXo13l8ASMODNjF5Zw1FMzcmvmZRyd4INAaV1LiiLE9/NNJ4KKtKq5z59e4y2cmquq0D6i/FOnc92cl04YKnYBrXosu2qYlhvfHNFb5qAIJs2BtJy4oHfKCcUpz4A8X23arXc3FopTngF9%2BkPSuCd2G6oMP%2BWWU%2B6Xh5n9hKTcAtp9yl2/07DXTRgtdquwovmB%2BuSH5PZDjD2hKpOAzlx23v8%2B1c68J3TGB3T6krP9cOLAWZfdViSMDCgIVMcV%2B2CHu/e0a%2B5bJspDrAPKeyrnWZm86hu0rt20evrtP/60u3rtU5fsG4Y9yKtsxS6gz1uTn7cyETYG4z9ECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoIIAUGEgCBCQBAhIIgQEEQICCIEBBECgggBQYSAIEJAECEgiBAQRAgIIgQEEQKCCAFBhIAgQkAQISCIEBBECAgiBAQRAoLIPV66%2B8WrA%2BFvBwzFCAQRAoIIAUGEgCBCQBD5CxBp4Kv8RxaLAAAAAElFTkSuQmCC%22%2C%20%22sizes%22%3A%20%22192x192%22%2C%20%22type%22%3A%20%22image/png%22%2C%20%22purpose%22%3A%20%22maskable%22%7D%5D%7D">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='28' fill='%231B2A4A'/%3E%3Crect x='6' y='6' width='168' height='168' rx='22' fill='none' stroke='%23C9973E' stroke-width='6'/%3E%3Ctext x='90' y='122' font-family='Arial,Helvetica,sans-serif' font-size='76' font-weight='700' fill='%23C9973E' text-anchor='middle'%3EJR%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<style>
+  :root{ --navy:#1B2A4A; --gold:#C9973E; --cream:#F7F5F0; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#222;}
+  #app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:70px;background:var(--cream);}
+  header{background:var(--navy);padding:calc(20px + env(safe-area-inset-top)) 16px 16px;}
+  header p{color:rgba(255,255,255,.7);font-size:11px;margin:0 0 2px;letter-spacing:.03em;}
+  header h1{color:#fff;font-size:19px;margin:0;font-weight:600;}
+  .content{padding:16px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .card{border-radius:16px;padding:14px;}
+  .card .lbl{font-size:12px;color:#8a8680;margin:0 0 4px;}
+  .card .val{font-size:18px;font-weight:600;margin:0;}
+  .section-title{font-size:13px;font-weight:600;color:#8a8680;margin:0 0 8px;}
+  .row-card{border:1px solid #e5e1d8;border-radius:16px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:#fff;}
+  .row-card .name{font-size:14px;font-weight:600;margin:0;}
+  .row-card .sub{font-size:12px;color:#8a8680;margin:2px 0 0;}
+  .badge{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600;white-space:nowrap;}
+  .b-activo{background:#EAF3DE;color:#3B6D11;}
+  .b-pagado{background:#E1F5EE;color:#0F6E56;}
+  .b-vencido{background:#FCEBEB;color:#A32D2D;}
+  .b-refinanciado{background:#EAF0FB;color:#2255A0;}
+  input,select{width:100%;border:1px solid #d8d3c8;border-radius:10px;padding:9px 11px;font-size:15px;background:#fff;}
+  label{display:block;margin-bottom:12px;}
+  label span{display:block;font-size:13px;color:#666;margin-bottom:4px;}
+  .btn{border:none;border-radius:10px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;width:100%;}
+  .btn-navy{background:var(--navy);color:#fff;}
+  .btn-gold{background:var(--gold);color:#fff;}
+  .btn-outline{background:#fff;border:1px solid #d8d3c8;color:#333;}
+  .btn-danger{background:#fff;border:1px solid #f3c9c9;color:#c0433b;}
+  .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid #e5e1d8;display:flex;justify-content:space-around;padding:8px 0;}
+  .tab-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:#9c9890;cursor:pointer;padding:4px 10px;}
+  .tab-btn.active{color:var(--navy);font-weight:600;}
+  .tab-btn svg{width:21px;height:21px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#F5F3EE;text-align:left;padding:8px 6px;}
+  td{padding:6px;border-top:1px solid #eee;}
+  .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
+  .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:8px 12px;flex:1;background:#fff;}
+  .searchbar input{border:none;padding:0;flex:1;}
+  .toprow{display:flex;gap:8px;margin-bottom:16px;}
+  .iconbtn{background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;flex-shrink:0;}
+  .flexrow{display:flex;gap:8px;}
+  .hint{font-size:12px;color:#aaa;margin-top:6px;}
+  .avatar{width:36px;height:36px;border-radius:50%;background:#EEF1F6;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+  .flex-gap{display:flex;align-items:center;gap:10px;}
+  .backbtn{background:none;border:none;color:#fff;font-size:20px;margin-right:6px;cursor:pointer;}
+  .cartera-grupo{font-size:12px;font-weight:700;color:#A32D2D;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em;}
+  .printbtn{background:none;border:none;color:#9c9890;font-size:16px;cursor:pointer;padding:4px;}
+  #recibo-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;}
+  #recibo-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
+  #recibo-imprimible .rline{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed #eee;}
+  #recibo-imprimible .rtotal{font-size:17px;font-weight:700;color:var(--navy);}
+  #reporte-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;}
+  #reporte-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
+  #tabla-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;}
+  #tabla-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
+  .solo-imprimir{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #recibo-imprimible, #recibo-imprimible *,
+    #reporte-imprimible, #reporte-imprimible *,
+    #tabla-imprimible, #tabla-imprimible *{visibility:visible;}
+    #recibo-imprimible, #reporte-imprimible, #tabla-imprimible{position:absolute;top:0;left:0;width:100%;border:none;}
+    .solo-imprimir{display:block;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const NAVY = "#1B2A4A", GOLD = "#C9973E";
+const METODOS = ["Francés (cuota fija)","Alemán (cuota decreciente)","Tasa plana (interés fijo)","Capital al final (bullet)","Sistema Americano (puro)","Indefinido (solo interés)"];
+const PERIODOS = ["Semanal","Quincenal","Mensual"];
+const DIAS_PERIODO = { Semanal:7, Quincenal:15, Mensual:30 };
+
+let state = {
+  tab: "inicio",
+  clientes: JSON.parse(localStorage.getItem("jr_clientes") || "[]"),
+  prestamos: JSON.parse(localStorage.getItem("jr_prestamos") || "[]"),
+  config: JSON.parse(localStorage.getItem("jr_config") || '{"tasaMoraDiaria":0}'),
+  vista: "lista",
+  seleccionId: null,
+  showFormCliente: false,
+  desbloqueado: false,
+  ajustesDesbloqueado: false,
+  q: ""
+};
+
+function save(){
+  localStorage.setItem("jr_clientes", JSON.stringify(state.clientes));
+  localStorage.setItem("jr_prestamos", JSON.stringify(state.prestamos));
+  localStorage.setItem("jr_config", JSON.stringify(state.config));
+}
+function soloDigitos(s){ return (s||"").toString().replace(/\D/g,""); }
+// Los campos de dinero/tasa usan type="text" (no "number") a propósito: los inputs numéricos
+// no soportan mantener la posición del cursor al reconstruir el DOM, lo que hacía que los
+// dígitos parecieran escribirse al revés en el celular. Estas funciones filtran lo que se
+// puede escribir sin perder esa posición del cursor.
+function filtrarDecimal(v){
+  v = (v||"").toString().replace(/[^0-9.]/g, "");
+  const partes = v.split(".");
+  if(partes.length>2) v = partes[0] + "." + partes.slice(1).join("");
+  return v;
+}
+function filtrarEntero(v){ return (v||"").toString().replace(/[^0-9]/g, ""); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function nextCode(prefix, list){
+  const nums = list.map(x => parseInt((x.codigo||"").split("-")[1],10)).filter(n=>!isNaN(n));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return prefix + "-" + String(next).padStart(4,"0");
+}
+function money(n){
+  n = Number.isFinite(n) ? n : 0;
+  return "L " + n.toLocaleString("es-HN", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function addDays(dateStr, days){
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function fmtDate(dateStr){
+  if(!dateStr) return "—";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("es-HN", {day:"2-digit", month:"short", year:"numeric"});
+}
+function diasAtraso(fecha){
+  if(!fecha) return 0;
+  const hoy = new Date().toISOString().slice(0,10);
+  const diff = Math.round((new Date(hoy) - new Date(fecha))/86400000);
+  return Math.max(0, diff);
+}
+
+function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+function generarTabla(p){
+  const capital = Number(p.capital)||0, tasa = (Number(p.tasa)||0)/100, n = Number(p.cuotas)||0;
+  const dias = DIAS_PERIODO[p.periodo] || 30;
+  const filas = [];
+  if(p.metodo === METODOS[0]){ // Francés (cuota fija)
+    const cuotaFija = n===0 ? 0 : (tasa===0 ? capital/n : (capital*tasa)/(1-Math.pow(1+tasa,-n)));
+    const cuotaRed = round2(cuotaFija);
+    let saldo = capital;
+    for(let i=1;i<=n;i++){
+      const interes = round2(saldo*tasa);
+      const abono = (i===n) ? saldo : round2(cuotaRed - interes);
+      const cuota = round2(interes + abono);
+      const nuevoSaldo = round2(Math.max(0, saldo - abono));
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes, abono, saldo: nuevoSaldo});
+      saldo = nuevoSaldo;
+    }
+  } else if(p.metodo === METODOS[1]){ // Alemán (cuota decreciente): abono fijo, interés sobre saldo
+    const abonoFijo = n===0 ? 0 : round2(capital/n);
+    let saldo = capital;
+    for(let i=1;i<=n;i++){
+      const interes = round2(saldo*tasa);
+      const abono = (i===n) ? saldo : abonoFijo;
+      const cuota = round2(interes + abono);
+      const nuevoSaldo = round2(Math.max(0, saldo - abono));
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes, abono, saldo: nuevoSaldo});
+      saldo = nuevoSaldo;
+    }
+  } else if(p.metodo === METODOS[2]){ // Tasa plana (interés fijo): interés siempre sobre el capital original
+    const interesFijo = round2(capital*tasa);
+    const abonoFijo = n===0 ? 0 : round2(capital/n);
+    let saldo = capital;
+    for(let i=1;i<=n;i++){
+      const abono = (i===n) ? saldo : abonoFijo;
+      const cuota = round2(interesFijo + abono);
+      const nuevoSaldo = round2(Math.max(0, saldo - abono));
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes:interesFijo, abono, saldo: nuevoSaldo});
+      saldo = nuevoSaldo;
+    }
+  } else if(p.metodo === METODOS[3]){ // Capital al final (bullet): solo interés cada período, capital al final
+    const interesFijo = round2(capital*tasa);
+    for(let i=1;i<=n;i++){
+      const esUltima = i===n, abono = esUltima?capital:0;
+      const cuota = round2(interesFijo + abono);
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes:interesFijo, abono, saldo: esUltima?0:capital});
+    }
+  } else if(p.metodo === METODOS[4]){ // Sistema Americano (puro): nada hasta el final, ahí capital + todo el interés junto
+    for(let i=1;i<=n;i++){
+      const esUltima = i===n;
+      const interes = esUltima ? round2(capital*tasa*n) : 0;
+      const abono = esUltima ? capital : 0;
+      const cuota = round2(interes + abono);
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes, abono, saldo: esUltima?0:capital});
+    }
+  } else if(p.metodo === METODOS[5]){ // Indefinido (solo interés)
+    const interesFijo = round2(capital*tasa);
+    const hechas = (p.pagos||[]).length, total = Math.max(hechas+4,6);
+    for(let i=1;i<=total;i++){
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota:interesFijo, interes:interesFijo, abono:0, saldo:capital});
+    }
+  }
+  return filas;
+}
+function resumen(p){
+  const tabla = generarTabla(p);
+  const esIndef = p.metodo === METODOS[5];
+  const capital = Number(p.capital)||0, tasa=(Number(p.tasa)||0)/100;
+  const pagos = p.pagos || [];
+  // el capital/interés se acumula por separado de la mora: la mora no hace avanzar cuotas
+  const totalPagado = pagos.reduce((s,pg)=> s + (Number(pg.monto)||0), 0);
+  const moraTotal = pagos.reduce((s,pg)=> s + (Number(pg.mora)||0), 0);
+
+  if(p.liquidadoAnticipado){
+    return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente:0, capitalPendiente:0, estado:"Pagado", proximaFecha:null,
+      tabla, pagosHechos: tabla.length, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
+      moraTotal, totalPagado };
+  }
+  if(p.refinanciado){
+    return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente:0, capitalPendiente:0, estado:"Refinanciado", proximaFecha:null,
+      tabla, pagosHechos: tabla.length, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
+      moraTotal, totalPagado };
+  }
+
+  if(esIndef){
+    const cuotaPeriodo = capital*tasa;
+    const periodosPagados = cuotaPeriodo>0 ? Math.floor((totalPagado+0.01)/cuotaPeriodo) : 0;
+    const abonadoEnCuotaActual = Math.max(0, totalPagado - periodosPagados*cuotaPeriodo);
+    return { cuota:cuotaPeriodo, saldoPendiente:capital, capitalPendiente:capital, estado:"Activo",
+      proximaFecha: tabla[periodosPagados] ? tabla[periodosPagados].fecha : null, tabla,
+      pagosHechos: periodosPagados, cuotaActual: tabla[periodosPagados]||null,
+      abonadoEnCuotaActual, faltaEnCuotaActual: Math.max(0, cuotaPeriodo-abonadoEnCuotaActual), moraTotal, totalPagado };
+  }
+
+  // acumulado de cuotas: una cuota se marca "completa" cuando lo pagado alcanza su acumulado,
+  // así un abono menor a la cuota queda como abono parcial y uno mayor adelanta la siguiente
+  let cum = 0, cuotasCompletas = 0;
+  const acumulados = tabla.map(f=>{ cum += f.cuota; return cum; });
+  for(let i=0;i<acumulados.length;i++){
+    if(totalPagado + 0.01 >= acumulados[i]) cuotasCompletas = i+1; else break;
+  }
+  const totalCuotas = tabla.length;
+  const pagado = cuotasCompletas >= totalCuotas && totalCuotas>0;
+  const cuotaActual = tabla[cuotasCompletas] || null;
+  const baseAnterior = cuotasCompletas>0 ? acumulados[cuotasCompletas-1] : 0;
+  const abonadoEnCuotaActual = cuotaActual ? Math.max(0, totalPagado - baseAnterior) : 0;
+  const faltaEnCuotaActual = cuotaActual ? Math.max(0, cuotaActual.cuota - abonadoEnCuotaActual) : 0;
+  const saldoPendiente = Math.max(0, (acumulados[totalCuotas-1]||0) - totalPagado);
+  // capital realmente pendiente (sin contar el interés de las cuotas que faltan), util para refinanciar
+  const capitalPendiente = pagado ? 0 : (cuotasCompletas>0 ? Math.max(0, tabla[cuotasCompletas-1].saldo||0) : capital);
+
+  return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente, capitalPendiente, estado: pagado?"Pagado":"Activo",
+    proximaFecha: pagado?null:(cuotaActual?cuotaActual.fecha:null), tabla, pagosHechos: cuotasCompletas,
+    cuotaActual, abonadoEnCuotaActual, faltaEnCuotaActual, moraTotal, totalPagado };
+}
+function badge(estado){
+  const cls = estado==="Pagado" ? "b-pagado" : estado==="Vencido" ? "b-vencido" : estado==="Refinanciado" ? "b-refinanciado" : "b-activo";
+  return `<span class="badge ${cls}">${estado}</span>`;
+}
+function nombreNegocio(){
+  return (state.config && state.config.nombreNegocio) ? state.config.nombreNegocio : "JR PRESTAMITO";
+}
+function viewBloqueo(){
+  return `<div style="padding:60px 10px;text-align:center;">
+    <p style="font-weight:600;font-size:16px;margin-bottom:16px;color:#333;">Ingresa tu clave para entrar</p>
+    <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off"
+      style="text-align:center;font-size:22px;letter-spacing:6px;max-width:220px;margin:0 auto;display:block;padding:10px;border:1px solid #ddd;border-radius:10px;"
+      maxlength="12" onkeypress="if(event.key==='Enter') intentarDesbloquear()">
+    <button class="btn btn-navy" style="max-width:220px;margin:14px auto 0;" onclick="intentarDesbloquear()">Entrar</button>
+  </div>`;
+}
+function intentarDesbloquear(){
+  const el = document.getElementById("f_pinIngresado");
+  const val = el ? el.value : "";
+  if(val && val === state.config.pin){
+    state.desbloqueado = true;
+    render();
+  } else {
+    alert("Clave incorrecta.");
+    if(el){ el.value=""; el.focus(); }
+  }
+}
+function guardarPin(){
+  const el = document.getElementById("f_nuevoPin");
+  const val = (el?el.value:"").trim();
+  if(!val){ alert("Escribe una clave primero."); return; }
+  if(val.length<4){ alert("Usa una clave de al menos 4 caracteres."); return; }
+  state.config.pin = val;
+  state.desbloqueado = true;
+  save(); render();
+  alert("Clave guardada. La próxima vez que se abra la app, la pedirá.");
+}
+function quitarPin(){
+  const ok = confirm("¿Quitar la clave de acceso a la app? Cualquiera que la abra en este celular podrá entrar sin que se le pida nada.");
+  if(!ok) return;
+  delete state.config.pin;
+  save(); render();
+}
+function guardarPinAjustes(){
+  const el = document.getElementById("f_nuevoPinAjustes");
+  const val = (el?el.value:"").trim();
+  if(!val){ alert("Escribe una clave primero."); return; }
+  if(val.length<4){ alert("Usa una clave de al menos 4 caracteres."); return; }
+  state.config.pinAjustes = val;
+  state.ajustesDesbloqueado = true;
+  save(); render();
+  alert("Clave de Ajustes guardada. La próxima vez que se abra esta sección, la pedirá.");
+}
+function quitarPinAjustes(){
+  const ok = confirm("¿Quitar la clave de Ajustes? Cualquiera que desbloquee la app podrá entrar directo a Ajustes sin clave adicional.");
+  if(!ok) return;
+  delete state.config.pinAjustes;
+  save(); render();
+}
+const ICONS = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  landmark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+};
+
+function render(){
+  if(state.config && state.config.pin && !state.desbloqueado){
+    document.getElementById("app").innerHTML =
+      `<header><div><p>${nombreNegocio()}</p><h1>Acceso</h1></div></header><div class="content">${viewBloqueo()}</div>`;
+    const elp = document.getElementById("f_pinIngresado");
+    if(elp) elp.focus();
+    return;
+  }
+  // Guarda qué campo tenía el foco (y la posición del cursor) antes de reconstruir el DOM.
+  // Sin esto, cada tecla presionada destruye y recrea el <input>, lo que en el celular
+  // hace que el teclado parpadee o se cierre con cada dígito.
+  const activo = document.activeElement;
+  const activoId = activo && activo.id;
+  const esCampoTexto = activo && (activo.tagName === "INPUT" || activo.tagName === "TEXTAREA");
+  let selStart = null, selEnd = null;
+  if(esCampoTexto){
+    try{ selStart = activo.selectionStart; selEnd = activo.selectionEnd; }catch(e){}
+  }
+  const scrollY = window.scrollY;
+
+  const titles = {inicio:"Resumen", clientes:"Clientes", prestamos:"Préstamos", pagos:"Historial de pagos"};
+  let html = `<header><div style="display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;">`;
+  if(state.tab==="prestamos" && (state.vista==="detalle" || state.vista==="cartera" || state.vista==="refinanciar")){
+    html += `<button class="backbtn" onclick="volverLista()">‹</button>`;
+  }
+  if(state.tab==="pagos" && state.vista==="recibo"){
+    html += `<button class="backbtn" onclick="state.vista='lista'; render();">‹</button>`;
+  }
+  if(state.tab==="inicio" && state.vista==="reportePDF"){
+    html += `<button class="backbtn" onclick="state.vista='ajustes'; render();">‹</button>`;
+  }
+  if(state.tab==="inicio" && state.vista==="estadoResultados"){
+    html += `<button class="backbtn" onclick="state.vista='ajustes'; render();">‹</button>`;
+  }
+  if(state.tab==="inicio" && state.vista==="ajustes"){
+    html += `<button class="backbtn" onclick="state.vista='lista'; render();">‹</button>`;
+  }
+  const tituloAjustes = state.tab==="inicio" && state.vista==="ajustes" ? "Ajustes" : null;
+  const tituloReporte = state.tab==="inicio" && state.vista==="reportePDF" ? "Reporte para PDF" : null;
+  const tituloResultados = state.tab==="inicio" && state.vista==="estadoResultados" ? "Estado de resultados" : null;
+  html += `<div><p>${nombreNegocio()}</p><h1>${state.tab==="prestamos"&&state.vista==="cartera"?"Cartera vencida":(state.tab==="prestamos"&&state.vista==="refinanciar"?"Refinanciar":(state.tab==="pagos"&&state.vista==="recibo"?"Recibo de pago":(tituloReporte||tituloResultados||tituloAjustes||titles[state.tab])))}</h1></div>
+    </div>`;
+  if(state.tab==="inicio" && state.vista==="lista"){
+    html += `<button class="backbtn" style="margin-right:0;" title="Ajustes" onclick="abrirAjustes()">${ICONS.settings}</button>`;
+  }
+  html += `</div></header><div class="content">`;
+
+  if(state.tab==="inicio") html += viewInicio();
+  if(state.tab==="clientes") html += viewClientes();
+  if(state.tab==="prestamos") html += viewPrestamos();
+  if(state.tab==="pagos") html += viewPagos();
+
+  html += `</div>` + viewTabbar();
+  document.getElementById("app").innerHTML = html;
+
+  // Restaura el foco (y la posición del cursor) en el mismo campo, si seguía existiendo.
+  if(activoId){
+    const nuevo = document.getElementById(activoId);
+    if(nuevo){
+      nuevo.focus({preventScroll:true});
+      if(selStart!=null && nuevo.setSelectionRange){
+        try{ nuevo.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
+  window.scrollTo(0, scrollY);
+  document.title = nombreNegocio();
+}
+
+function exportarDatos(){
+  const payload = { clientes: state.clientes, prestamos: state.prestamos, config: state.config, exportado: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const fecha = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `jr-prestamito-respaldo-${fecha}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importarDatos(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let datos;
+    try { datos = JSON.parse(e.target.result); }
+    catch(err){ alert("Ese archivo no es un respaldo válido."); return; }
+    if(!datos || !Array.isArray(datos.clientes) || !Array.isArray(datos.prestamos)){
+      alert("Ese archivo no tiene el formato esperado.");
+      return;
+    }
+    const ok = confirm("Esto va a REEMPLAZAR todos los clientes y préstamos que tienes ahora en este celular por los del archivo. ¿Continuar?");
+    if(!ok) return;
+    state.clientes = datos.clientes;
+    state.prestamos = datos.prestamos;
+    if(datos.config) state.config = datos.config;
+    save();
+    render();
+    alert("Respaldo restaurado correctamente.");
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function cargarSheetJS(cb){
+  if(window.XLSX){ cb(); return; }
+  const s = document.createElement("script");
+  s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  s.onload = cb;
+  s.onerror = function(){ state.excelBusy = false; render(); alert("No se pudo cargar el generador de Excel. Revisa tu conexión a internet e intenta de nuevo."); };
+  document.head.appendChild(s);
+}
+function exportarExcel(){
+  if(state.excelBusy) return;
+  state.excelBusy = true; render();
+  cargarSheetJS(function(){
+    try{
+      const filasClientes = state.clientes.map(c=>({
+        "Código":c.codigo, "Nombre":c.nombre, "Celular":c.celular||"", "Cédula":c.cedula||"", "Dirección":c.direccion||""
+      }));
+      const filasPrestamos = state.prestamos.map(p=>{
+        const cli = state.clientes.find(c=>c.id===p.clienteId);
+        const r = resumen(p);
+        const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+        return {
+          "Código":p.codigo, "Cliente": cli?cli.nombre:"—", "Capital":Number(p.capital)||0,
+          "Tasa %":Number(p.tasa)||0, "Período":p.periodo, "Método":p.metodo,
+          "Cuotas":p.cuotas||"", "Fecha inicio":p.fechaInicio,
+          "Estado": atraso>0?"Vencido":r.estado, "Saldo pendiente":r.saldoPendiente,
+          "Próxima fecha":r.proximaFecha||""
+        };
+      });
+      const filasPagos = [];
+      state.prestamos.forEach(p=>{
+        const cli = state.clientes.find(c=>c.id===p.clienteId);
+        (p.pagos||[]).forEach(pg=>{
+          filasPagos.push({
+            "Fecha":pg.fecha, "Préstamo":p.codigo, "Cliente": cli?cli.nombre:"—",
+            "Monto":Number(pg.monto)||0, "Mora":Number(pg.mora)||0,
+            "Total":(Number(pg.monto)||0)+(Number(pg.mora)||0),
+            "Concepto": pg.liquidacion?"Liquidación anticipada":(pg.mora>0?"Cuota + mora":"Abono / cuota")
+          });
+        });
+      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasClientes), "Clientes");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasPrestamos), "Préstamos");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasPagos), "Pagos");
+      const fecha = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(wb, `jr-prestamito-reporte-${fecha}.xlsx`);
+    } catch(err){
+      alert("Ocurrió un error generando el Excel. Intenta de nuevo.");
+    }
+    state.excelBusy = false; render();
+  });
+}
+function abrirReportePDF(){
+  state.tab = "inicio";
+  state.vista = "reportePDF";
+  render();
+}
+function viewReportePDF(){
+  let prestado=0, cobrado=0;
+  state.prestamos.forEach(p=>{
+    prestado += Number(p.capital)||0;
+    cobrado += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
+  });
+  const filas = state.prestamos.map(p=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    const r = resumen(p);
+    const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+    const estado = atraso>0 ? "Vencido" : r.estado;
+    return `<tr>
+      <td style="padding:6px;border-top:1px solid #eee;">${p.codigo}</td>
+      <td style="padding:6px;border-top:1px solid #eee;">${cli?cli.nombre:"—"}</td>
+      <td style="padding:6px;border-top:1px solid #eee;">${money(p.capital)}</td>
+      <td style="padding:6px;border-top:1px solid #eee;">${estado}</td>
+      <td style="padding:6px;border-top:1px solid #eee;text-align:right;">${money(r.saldoPendiente)}</td>
+      <td style="padding:6px;border-top:1px solid #eee;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div id="reporte-imprimible">
+      <h2>${nombreNegocio()}</h2>
+      <p class="hint" style="margin:0 0 14px;">Reporte general · ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+      <div class="grid2" style="margin-bottom:16px;">
+        <div><p class="hint" style="margin:0;">Capital prestado</p><p style="font-weight:700;margin:2px 0;">${money(prestado)}</p></div>
+        <div><p class="hint" style="margin:0;">Total cobrado</p><p style="font-weight:700;margin:2px 0;">${money(cobrado)}</p></div>
+        <div><p class="hint" style="margin:0;">Clientes</p><p style="font-weight:700;margin:2px 0;">${state.clientes.length}</p></div>
+        <div><p class="hint" style="margin:0;">Préstamos</p><p style="font-weight:700;margin:2px 0;">${state.prestamos.length}</p></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#F5F3EE;">
+          <th style="text-align:left;padding:6px;">Código</th><th style="text-align:left;padding:6px;">Cliente</th>
+          <th style="text-align:left;padding:6px;">Capital</th><th style="text-align:left;padding:6px;">Estado</th>
+          <th style="text-align:right;padding:6px;">Saldo</th><th style="text-align:left;padding:6px;">Próx. fecha</th>
+        </tr></thead>
+        <tbody>${filas || `<tr><td colspan="6" style="padding:14px;text-align:center;color:#aaa;">Sin préstamos registrados.</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div class="flexrow" style="margin-top:16px;">
+      <button class="btn btn-outline" onclick="state.vista='ajustes'; render();">Volver</button>
+      <button class="btn btn-gold" onclick="window.print()">Generar PDF (imprimir)</button>
+    </div>`;
+}
+function desglosePagado(p){
+  // Reparte lo realmente cobrado en un préstamo entre interés y capital,
+  // recorriendo la tabla de amortización cuota por cuota (igual proporción que cada fila).
+  const r = resumen(p);
+  let restante = r.totalPagado || 0;
+  let interes = 0, capital = 0;
+  for(const fila of r.tabla){
+    if(restante<=0.005) break;
+    const aplicado = Math.min(restante, fila.cuota);
+    if(fila.cuota>0){
+      const propInteres = fila.interes/fila.cuota;
+      interes += aplicado*propInteres;
+      capital += aplicado*(1-propInteres);
+    }
+    restante -= aplicado;
+  }
+  return { interes, capital };
+}
+function abrirEstadoResultados(){
+  state.tab = "inicio";
+  state.vista = "estadoResultados";
+  render();
+}
+function viewEstadoResultados(){
+  let interesesCobrados=0, capitalCobrado=0, moraCobrada=0, enganches=0, desembolsos=0;
+  state.prestamos.forEach(p=>{
+    const d = desglosePagado(p);
+    interesesCobrados += d.interes;
+    capitalCobrado += d.capital;
+    moraCobrada += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.mora)||0),0);
+    if(p.refinanciaDe) enganches += Number(p.engancheAlRefinanciar)||0;
+    desembolsos += Number(p.capital)||0;
+  });
+  const ingresos = interesesCobrados + capitalCobrado + moraCobrada + enganches;
+  const utilidad = ingresos - desembolsos;
+  const fila = (label, valor, negrita)=>`<tr>
+      <td style="padding:6px 6px;${negrita?"font-weight:700;":""}">${label}</td>
+      <td style="padding:6px 6px;text-align:right;${negrita?"font-weight:700;":""}">${money(valor)}</td>
+    </tr>`;
+  return `
+    <div id="reporte-imprimible">
+      <h2>${nombreNegocio()}</h2>
+      <p class="hint" style="margin:0 0 14px;">Estado de resultados (base efectivo) · ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+      <p style="font-weight:700;margin:0 0 6px;">Ingresos</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
+        ${fila("Intereses cobrados", interesesCobrados)}
+        ${fila("Abonos a capital cobrados", capitalCobrado)}
+        ${fila("Mora cobrada", moraCobrada)}
+        ${fila("Enganches al refinanciar", enganches)}
+        ${fila("Total ingresos", ingresos, true)}
+      </table>
+      <p style="font-weight:700;margin:0 0 6px;">Egresos</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
+        ${fila("Desembolsos (capital prestado)", desembolsos)}
+        ${fila("Total egresos", desembolsos, true)}
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;border-top:2px solid #1B2A4A;">
+        <tr><td style="padding:8px 6px;font-weight:700;">${utilidad>=0?"Utilidad":"Pérdida"} del período</td>
+        <td style="padding:8px 6px;text-align:right;font-weight:700;color:${utilidad>=0?"#3B6D11":"#c0433b"};">${money(Math.abs(utilidad))}</td></tr>
+      </table>
+      <p class="hint" style="margin-top:14px;">Nota: es un estado en base efectivo (dinero que entra vs. dinero que sale), no un estado contable formal. Los desembolsos de préstamos refinanciados se cuentan como nuevo desembolso por el monto completo del préstamo nuevo, ya que en este reporte "egreso" = capital colocado en la calle.</p>
+    </div>
+    <div class="flexrow" style="margin-top:16px;">
+      <button class="btn btn-outline" onclick="state.vista='ajustes'; render();">Volver</button>
+      <button class="btn btn-gold" onclick="window.print()">Generar PDF (imprimir)</button>
+    </div>`;
+}
+
+async function subirNube(){
+  const url = (state.config.syncUrl||"").trim();
+  const key = (state.config.syncKey||"").trim();
+  if(!url || !key){ alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
+  if(state.syncBusy) return;
+  state.syncBusy = "push"; render();
+  try{
+    const payload = { clientes: state.clientes, prestamos: state.prestamos, config: { tasaMoraDiaria: state.config.tasaMoraDiaria } };
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(url + sep + "action=push&key=" + encodeURIComponent(key), {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.ok){
+      state.config.ultimaSubida = new Date().toISOString();
+      save();
+      alert("Datos subidos correctamente a la nube.");
+    } else {
+      alert("Error al subir: " + (data.error || "desconocido"));
+    }
+  } catch(err){
+    alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
+  }
+  state.syncBusy = null; render();
+}
+
+async function descargarNube(){
+  const url = (state.config.syncUrl||"").trim();
+  const key = (state.config.syncKey||"").trim();
+  if(!url || !key){ alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
+  if(state.syncBusy) return;
+  const ok = confirm("Esto va a REEMPLAZAR los clientes y préstamos de este celular con los que están guardados en la nube. ¿Continuar?");
+  if(!ok) return;
+  state.syncBusy = "pull"; render();
+  try{
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(url + sep + "action=pull&key=" + encodeURIComponent(key));
+    const data = await res.json();
+    if(data.ok && data.datos){
+      state.clientes = data.datos.clientes || [];
+      state.prestamos = data.datos.prestamos || [];
+      if(data.datos.config && data.datos.config.tasaMoraDiaria!==undefined){
+        state.config.tasaMoraDiaria = data.datos.config.tasaMoraDiaria;
+      }
+      state.config.ultimaDescarga = new Date().toISOString();
+      save();
+      alert("Datos descargados correctamente.");
+    } else if(data.ok && !data.datos){
+      alert("La nube todavía no tiene datos guardados. Primero sube los datos desde algún celular.");
+    } else {
+      alert("Error al descargar: " + (data.error || "desconocido"));
+    }
+  } catch(err){
+    alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
+  }
+  state.syncBusy = null; render();
+}
+
+function viewInicio(){
+  if(state.vista==="reportePDF") return viewReportePDF();
+  if(state.vista==="estadoResultados") return viewEstadoResultados();
+  if(state.vista==="ajustes") return viewAjustes();
+  let prestado=0, cobrado=0, activos=0, vencidos=0;
+  state.prestamos.forEach(p=>{
+    const r = resumen(p);
+    prestado += Number(p.capital)||0;
+    cobrado += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
+    if(r.estado==="Activo"){ activos++; if(r.proximaFecha && diasAtraso(r.proximaFecha)>0) vencidos++; }
+  });
+  let prox = state.prestamos.map(p=>({p, r:resumen(p)}))
+    .filter(x=>x.r.estado==="Activo" && x.r.proximaFecha)
+    .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha)).slice(0,4);
+
+  let html = `<div class="grid2">
+    <div class="card" style="background:#EEF1F6;"><p class="lbl">Capital prestado</p><p class="val" style="color:${NAVY}">${money(prestado)}</p></div>
+    <div class="card" style="background:#FBF3E4;"><p class="lbl">Total cobrado</p><p class="val" style="color:#8A6416">${money(cobrado)}</p></div>
+    <div class="card" style="background:#EAF3DE;"><p class="lbl">Préstamos activos</p><p class="val" style="color:#3B6D11">${activos}</p></div>
+    <div class="card" style="background:#FCEBEB;cursor:pointer;" onclick="verCartera()"><p class="lbl">Cuotas vencidas</p><p class="val" style="color:#A32D2D">${vencidos}</p></div>
+  </div>
+  <p class="section-title">Clientes</p>
+  <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
+  <p class="section-title" style="margin-top:16px;">Próximos a vencer</p>`;
+
+  if(prox.length===0) html += `<p class="empty">Todavía no tienes préstamos registrados.</p>`;
+  prox.forEach(({p,r})=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    const atraso = diasAtraso(r.proximaFecha);
+    html += `<div class="row-card"><div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>${badge(atraso>0?"Vencido":"Activo")}</div>`;
+  });
+  return html;
+}
+function abrirAjustes(){
+  if(state.config.pinAjustes && !state.ajustesDesbloqueado){
+    const val = prompt("Esta sección está protegida con una clave. Ingrésala para continuar:");
+    if(val === null) return;
+    if(val !== state.config.pinAjustes){ alert("Clave incorrecta."); return; }
+    state.ajustesDesbloqueado = true;
+  }
+  state.tab = "inicio";
+  state.vista = "ajustes";
+  render();
+}
+function viewAjustes(){
+  return `
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Nombre del negocio</p>
+    <p class="hint" style="margin:0 0 10px;">Este nombre aparece en el encabezado de la app, en los recibos, la tabla de amortización y los reportes.</p>
+    <label><span>Nombre a mostrar</span><input id="f_nombreNegocio" type="text" value="${nombreNegocio()}" oninput="state.config.nombreNegocio=this.value; save();"></label>
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Respaldo de datos</p>
+    <p class="hint" style="margin:0 0 10px;">Guarda un archivo con toda tu información, o restaura uno que ya tengas.</p>
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="exportarDatos()">Descargar respaldo</button>
+      <button class="btn btn-outline" onclick="document.getElementById('archivoRespaldo').click()">Restaurar respaldo</button>
+    </div>
+    <input type="file" id="archivoRespaldo" accept="application/json" style="display:none" onchange="importarDatos(event)">
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Reportes</p>
+    <p class="hint" style="margin:0 0 10px;">Para leer, imprimir o llevar a tu contador. Estos NO sirven para restaurar datos en el celular — para eso usa el respaldo de arriba.</p>
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="exportarExcel()" ${state.excelBusy?"disabled style='opacity:.5'":""}>${state.excelBusy?"Generando...":"Excel"}</button>
+      <button class="btn btn-outline" onclick="abrirReportePDF()">PDF (imprimir)</button>
+    </div>
+    <div class="flexrow" style="margin-top:8px;">
+      <button class="btn btn-outline" onclick="abrirEstadoResultados()">Estado de resultados</button>
+    </div>
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Sincronizar entre celulares</p>
+    <p class="hint" style="margin:0 0 10px;">Usa una Google Sheet como nube compartida. Configúrala una sola vez (instrucciones aparte) y luego pega aquí la URL y la clave.</p>
+    <label><span>URL de la aplicación web</span><input id="f_syncUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${state.config.syncUrl||""}" oninput="state.config.syncUrl=this.value; save();"></label>
+    <label style="margin-bottom:10px;"><span>Clave</span><input id="f_syncKey" type="password" placeholder="La misma clave que pusiste en el script" value="${state.config.syncKey||""}" oninput="state.config.syncKey=this.value; save();"></label>
+    ${(state.config.ultimaSubida || state.config.ultimaDescarga) ? `<p class="hint" style="margin:0 0 10px;">${state.config.ultimaSubida?`↑ Última subida: ${new Date(state.config.ultimaSubida).toLocaleString("es-HN")}`:""}${(state.config.ultimaSubida && state.config.ultimaDescarga)?" · ":""}${state.config.ultimaDescarga?`↓ Última descarga: ${new Date(state.config.ultimaDescarga).toLocaleString("es-HN")}`:""}</p>` : ""}
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="subirNube()" ${state.syncBusy?"disabled style='opacity:.5'":""}>${state.syncBusy==="push"?"Subiendo...":"Subir a la nube"}</button>
+      <button class="btn btn-outline" onclick="descargarNube()" ${state.syncBusy?"disabled style='opacity:.5'":""}>${state.syncBusy==="pull"?"Descargando...":"Descargar de la nube"}</button>
+    </div>
+    <p class="hint" style="margin-top:10px;">Importante: gana el último que suba. Si dos celulares editan al mismo tiempo, el segundo en subir borra los cambios del primero. Lo más seguro es que un celular suba y los demás descarguen antes de trabajar.</p>
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Mensaje de recordatorio (WhatsApp / SMS)</p>
+    <p class="hint" style="margin:0 0 10px;">Personaliza el texto que se usa en "Cartera vencida". Puedes usar estas palabras clave y la app las reemplaza solas: <b>{negocio}</b> (nombre de tu negocio), <b>{nombre}</b> (primer nombre), <b>{nombreCompleto}</b>, <b>{codigo}</b>, <b>{cuota}</b>, <b>{fecha}</b>, <b>{atraso}</b> (ej. "5 días de atraso"), <b>{dias}</b> (solo el número).</p>
+    <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
+      <textarea id="f_plantillaRecordatorio" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaRecordatorio=this.value; save();">${(state.config.plantillaRecordatorio||PLANTILLA_RECORDATORIO_DEFAULT)}</textarea>
+    </label>
+    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajeRecordatorio({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:new Date().toISOString().slice(0,10)}, 5)}</p>
+    <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de recordatorio original?')){ state.config.plantillaRecordatorio=PLANTILLA_RECORDATORIO_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Mora por atraso</p>
+    <p class="hint" style="margin:0 0 10px;">Porcentaje que se cobra por cada día de atraso sobre el monto de la cuota. Déjalo en 0 si no quieres cobrar mora.</p>
+    <label style="margin-bottom:0;"><span>Tasa de mora diaria (%)</span><input type="text" inputmode="decimal" step="0.01" min="0" value="${state.config.tasaMoraDiaria}" oninput="state.config.tasaMoraDiaria=filtrarDecimal(this.value); save();"></label>
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Clave de acceso a la app</p>
+    <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "La app pide esta clave cada vez que se abre en este celular." : "Protege toda la app: la pedirá cada vez que se abra en este celular."}</p>
+    <div class="flexrow">
+      <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}">
+      <button class="btn btn-outline" style="width:auto;padding:0 16px;" onclick="guardarPin()">Guardar</button>
+    </div>
+    ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
+  </div>
+  <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Clave adicional para Ajustes</p>
+    <p class="hint" style="margin:0 0 10px;">${state.config.pinAjustes ? "Esta sección (Ajustes) pedirá esta clave aparte, aunque ya hayas abierto la app." : "Pide una clave extra solo para entrar aquí, aunque la app ya esté desbloqueada. Útil si otras personas usan el celular pero no deben ver la sincronización, respaldos, etc."}</p>
+    <div class="flexrow">
+      <input id="f_nuevoPinAjustes" type="password" inputmode="numeric" autocomplete="off" placeholder="${state.config.pinAjustes?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}">
+      <button class="btn btn-outline" style="width:auto;padding:0 16px;" onclick="guardarPinAjustes()">Guardar</button>
+    </div>
+    ${state.config.pinAjustes ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPinAjustes()">Quitar clave de Ajustes</button>` : ""}
+  </div>`;
+}
+
+function viewClientes(){
+  const filtrados = state.clientes.filter(c => (c.nombre+c.codigo).toLowerCase().includes(state.q.toLowerCase()));
+  let html = `<div class="toprow">
+    <div class="searchbar"><span style="color:#9c9890">⌕</span><input placeholder="Buscar cliente" value="${state.q}" oninput="state.q=this.value; render()"></div>
+    <button class="iconbtn" onclick="abrirFormCliente(null)">+</button>
+  </div>`;
+
+  if(state.showFormCliente){
+    const ed = state.clienteEditId ? state.clientes.find(c=>c.id===state.clienteEditId) : null;
+    html += `<div class="row-card" style="display:block;">
+      <p style="font-weight:600;margin:0 0 10px;">${ed?"Editar cliente":"Nuevo cliente"}</p>
+      <label><span>Nombre</span><input id="f_nombre" value="${ed?ed.nombre:""}"></label>
+      <label><span>Celular</span><input id="f_celular" placeholder="9999-9999 (8 dígitos)" value="${ed?ed.celular||"":""}"></label>
+      <label><span>Cédula</span><input id="f_cedula" placeholder="0000-0000-00000 (13 dígitos)" value="${ed?ed.cedula||"":""}"></label>
+      <label><span>Dirección</span><input id="f_direccion" value="${ed?ed.direccion||"":""}"></label>
+      <div class="flexrow">
+        <button class="btn btn-outline" onclick="state.showFormCliente=false; state.clienteEditId=null; render()">Cancelar</button>
+        <button class="btn btn-gold" onclick="guardarCliente()">${ed?"Guardar cambios":"Guardar cliente"}</button>
+      </div>
+    </div>`;
+  }
+
+  if(filtrados.length===0) html += `<p class="empty">No hay clientes todavía.</p>`;
+  filtrados.forEach(c=>{
+    html += `<div class="row-card">
+      <div class="flex-gap" style="cursor:pointer;" onclick="abrirFormCliente('${c.id}')"><div class="avatar">${c.nombre.slice(0,2).toUpperCase()}</div>
+      <div><p class="name">${c.nombre}</p><p class="sub">${c.codigo} · ${c.celular||"sin celular"}</p></div></div>
+      <button onclick="eliminarCliente('${c.id}')" style="background:none;border:none;color:#bbb;font-size:16px;">✕</button>
+    </div>`;
+  });
+  return html;
+}
+function abrirFormCliente(id){
+  state.clienteEditId = id;
+  state.showFormCliente = true;
+  render();
+}
+
+function guardarCliente(){
+  const nombre = document.getElementById("f_nombre").value.trim();
+  if(!nombre){ alert("El nombre es obligatorio."); return; }
+
+  let cedula = soloDigitos(document.getElementById("f_cedula").value);
+  let celular = soloDigitos(document.getElementById("f_celular").value);
+
+  if(cedula && cedula.length !== 13){
+    alert("La cédula debe tener exactamente 13 dígitos (formato hondureño). Puedes dejarla vacía si no la tienes a mano.");
+    return;
+  }
+  if(celular && celular.length !== 8){
+    alert("El celular debe tener 8 dígitos (formato hondureño), sin incluir el 504.");
+    return;
+  }
+  if(cedula){
+    const dup = state.clientes.find(c => c.id !== state.clienteEditId && soloDigitos(c.cedula) === cedula);
+    if(dup){ alert(`Esa cédula ya está registrada a nombre de ${dup.nombre}.`); return; }
+    cedula = cedula.replace(/(\d{4})(\d{4})(\d{5})/, "$1-$2-$3");
+  }
+  if(celular) celular = celular.replace(/(\d{4})(\d{4})/, "$1-$2");
+
+  const datos = {
+    nombre,
+    celular,
+    cedula,
+    direccion: document.getElementById("f_direccion").value
+  };
+  if(state.clienteEditId){
+    const c = state.clientes.find(x=>x.id===state.clienteEditId);
+    Object.assign(c, datos);
+  } else {
+    const codigo = nextCode("C", state.clientes);
+    state.clientes.push({ id: uid(), codigo, ...datos });
+  }
+  state.showFormCliente = false;
+  state.clienteEditId = null;
+  save(); render();
+}
+function eliminarCliente(id){
+  const c = state.clientes.find(x=>x.id===id);
+  if(!c) return;
+  const prestamosCliente = state.prestamos.filter(p=>p.clienteId===id);
+  let msg = `¿Seguro que quieres eliminar a "${c.nombre}"? Esta acción no se puede deshacer.`;
+  if(prestamosCliente.length>0){
+    msg = `"${c.nombre}" tiene ${prestamosCliente.length} préstamo(s) registrado(s) (${prestamosCliente.map(p=>p.codigo).join(", ")}).\n\n`+
+      `Si lo eliminas, esos préstamos quedarán sin cliente asignado, pero NO se borran automáticamente.\n\n`+
+      `¿Seguro que quieres eliminar a "${c.nombre}"? Esta acción no se puede deshacer.`;
+  }
+  if(!confirm(msg)) return;
+  state.clientes = state.clientes.filter(x=>x.id!==id);
+  save(); render();
+}
+
+function viewPrestamos(){
+  if(state.vista==="nuevo") return viewNuevoPrestamo();
+  if(state.vista==="detalle") return viewDetallePrestamo();
+  if(state.vista==="cartera") return viewCartera();
+  if(state.vista==="refinanciar") return viewRefinanciar();
+
+  let html = `<button class="btn btn-navy" style="margin-bottom:16px;" onclick="abrirNuevoPrestamo()">+ Nuevo préstamo</button>`;
+  if(state.prestamos.length===0) html += `<p class="empty">Todavía no tienes préstamos.</p>`;
+  state.prestamos.forEach(p=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    const r = resumen(p);
+    const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+    html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+      <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
+      <p class="sub">${p.codigo} · ${p.metodo.split(" (")[0]}</p>
+      <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.saldoPendiente)}</p></div>
+      <div style="text-align:right;">${badge(atraso>0?"Vencido":r.estado)}</div>
+    </div>`;
+  });
+  return html;
+}
+function verDetalle(id){ state.seleccionId=id; state.vista="detalle"; render(); }
+function volverLista(){ state.vista="lista"; render(); }
+function verCartera(){ state.tab="prestamos"; state.vista="cartera"; render(); }
+
+const PLANTILLA_RECORDATORIO_DEFAULT = "Hola {nombre}, le saluda {negocio}. Su préstamo {codigo} tiene una cuota de {cuota} vencida desde el {fecha} ({atraso}). Le agradecemos ponerse al día lo antes posible. Cualquier duda, con gusto le atendemos. ¡Gracias!";
+function mensajeRecordatorio(p, cli, r, atraso){
+  const cuota = money(r.cuotaActual ? r.cuotaActual.cuota : r.cuota);
+  const nombre = cli ? cli.nombre.split(" ")[0] : "";
+  const nombreCompleto = cli ? cli.nombre : "";
+  const plantilla = (state.config.plantillaRecordatorio || PLANTILLA_RECORDATORIO_DEFAULT);
+  return plantilla
+    .replaceAll("{negocio}", nombreNegocio())
+    .replaceAll("{nombre}", nombre)
+    .replaceAll("{nombreCompleto}", nombreCompleto)
+    .replaceAll("{codigo}", p.codigo)
+    .replaceAll("{cuota}", cuota)
+    .replaceAll("{fecha}", fmtDate(r.proximaFecha))
+    .replaceAll("{atraso}", `${atraso} día${atraso===1?"":"s"} de atraso`)
+    .replaceAll("{dias}", String(atraso));
+}
+function linkWhatsapp(cli, mensaje){
+  if(!cli || !cli.celular) return null;
+  const digitos = soloDigitos(cli.celular);
+  if(digitos.length!==8) return null;
+  return `https://wa.me/504${digitos}?text=${encodeURIComponent(mensaje)}`;
+}
+function linkSms(cli, mensaje){
+  if(!cli || !cli.celular) return null;
+  const digitos = soloDigitos(cli.celular);
+  if(digitos.length!==8) return null;
+  return `sms:+504${digitos}?&body=${encodeURIComponent(mensaje)}`;
+}
+function viewCartera(){
+  const vencidos = state.prestamos.map(p=>({p, r:resumen(p)}))
+    .filter(x=>x.r.estado==="Activo" && x.r.proximaFecha && diasAtraso(x.r.proximaFecha)>0)
+    .map(x=>({...x, atraso: diasAtraso(x.r.proximaFecha)}))
+    .sort((a,b)=> b.atraso - a.atraso);
+
+  if(vencidos.length===0){
+    return `<p class="empty">No tienes cuotas vencidas en este momento. 🎉</p>`;
+  }
+
+  const grupos = [
+    { label:"1 a 15 días", min:1, max:15 },
+    { label:"16 a 30 días", min:16, max:30 },
+    { label:"31 a 60 días", min:31, max:60 },
+    { label:"Más de 60 días", min:61, max:Infinity }
+  ];
+
+  let html = `<p class="hint" style="margin-bottom:12px;">${vencidos.length} préstamo(s) con cuotas vencidas, agrupados por días de atraso.</p>`;
+
+  grupos.forEach(g=>{
+    const enGrupo = vencidos.filter(x=> x.atraso>=g.min && x.atraso<=g.max);
+    if(enGrupo.length===0) return;
+    html += `<p class="cartera-grupo">${g.label} (${enGrupo.length})</p>`;
+    enGrupo.forEach(({p, r, atraso})=>{
+      const cli = state.clientes.find(c=>c.id===p.clienteId);
+      const mensaje = mensajeRecordatorio(p, cli, r, atraso);
+      const wa = linkWhatsapp(cli, mensaje);
+      const sms = linkSms(cli, mensaje);
+      html += `<div class="row-card" style="display:block;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="verDetalle('${p.id}')">
+          <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
+          <p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p>
+          <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.cuotaActual?r.cuotaActual.cuota:r.cuota)}</p></div>
+          <span class="badge b-vencido">${atraso} día${atraso===1?"":"s"}</span>
+        </div>
+        ${(wa||sms) ? `<div class="flexrow" style="margin-top:10px;">
+          ${wa?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;" href="${wa}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Recordar por WhatsApp</a>`:""}
+          ${sms?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;" href="${sms}" onclick="event.stopPropagation()">Recordar por SMS</a>`:""}
+        </div>` : `<p class="hint" style="margin-top:8px;">Este cliente no tiene celular registrado — agrégalo en su ficha para poder enviarle recordatorio.</p>`}
+      </div>`;
+    });
+  });
+  return html;
+}
+
+function viewNuevoPrestamo(){
+  const f = window._nf;
+  const esIndef = f.metodo === METODOS[5];
+  const editando = !!f.editId;
+
+  let opts = state.clientes.map(c=>`<option value="${c.id}" ${c.id===f.clienteId?"selected":""}>${c.nombre}</option>`).join("");
+  let metodoOpts = METODOS.map(m=>`<option ${m===f.metodo?"selected":""}>${m}</option>`).join("");
+  let periodoOpts = PERIODOS.map(pd=>`<option ${pd===f.periodo?"selected":""}>${pd}</option>`).join("");
+
+  let previewHtml = "";
+  if(f.capital && f.tasa && (esIndef || f.cuotas)){
+    const tabla = generarTabla({...f, cuotas: esIndef?1:f.cuotas});
+    const esAmericano = f.metodo === METODOS[4];
+    if(tabla.length){
+      previewHtml = `<div class="card" style="background:#EEF1F6;margin-bottom:16px;">
+        ${esAmericano
+          ? `<p style="font-size:13px;margin:0 0 4px;">Durante el plazo no se cobra nada; todo el interés se acumula.</p>
+             <p style="font-size:13px;margin:0;">Pago único al final (capital + interés): <b>${money(tabla[tabla.length-1].cuota)}</b></p>`
+          : `<p style="font-size:13px;margin:0 0 4px;">Cuota ${esIndef?"por período":"(1ª)"}: <b>${money(tabla[0].cuota)}</b></p>
+             ${esIndef?"":`<p style="font-size:13px;margin:0;">Total a pagar: <b>${money(tabla.reduce((s,x)=>s+x.cuota,0))}</b></p>`}`}
+      </div>`;
+    }
+  }
+
+  return `
+    ${editando ? `<p class="hint" style="margin-bottom:12px;">Editando ${f.codigo} — cambiar estos datos puede afectar la tabla de amortización y los pagos ya registrados.</p>` : ""}
+    ${state.clientes.length===0 ? `<p style="color:#c0433b;font-size:13px;">Agrega un cliente primero en la pestaña Clientes.</p>` : ""}
+    <label><span>Cliente</span><select onchange="window._nf.clienteId=this.value; render()">${opts}</select></label>
+    <label><span>Capital a financiar (L)</span><input id="nf_capital" type="text" inputmode="decimal" value="${f.capital}" oninput="window._nf.capital=filtrarDecimal(this.value); render()"></label>
+    <label><span>Tasa de interés por período (%)</span><input id="nf_tasa" type="text" inputmode="decimal" value="${f.tasa}" oninput="window._nf.tasa=filtrarDecimal(this.value); render()"></label>
+    <label><span>Período de pago</span><select onchange="window._nf.periodo=this.value; render()">${periodoOpts}</select></label>
+    <label><span>Método de amortización</span><select onchange="window._nf.metodo=this.value; render()">${metodoOpts}</select></label>
+    ${esIndef?"":`<label><span>Cantidad de cuotas</span><input id="nf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._nf.cuotas=filtrarEntero(this.value); render()"></label>`}
+    <label><span>Fecha del préstamo</span><input id="nf_fecha" type="date" value="${f.fechaInicio}" oninput="window._nf.fechaInicio=this.value; render()"></label>
+    ${previewHtml}
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="window._nf=null; state.vista=${editando?"'detalle'":"'lista'"}; render()">Cancelar</button>
+      <button class="btn btn-gold" onclick="guardarPrestamo()" ${state.clientes.length===0?"disabled style='opacity:.4'":""}>${editando?"Guardar cambios":"Guardar préstamo"}</button>
+    </div>`;
+}
+function abrirNuevoPrestamo(){
+  window._nf = {
+    clienteId: state.clientes[0]?state.clientes[0].id:"", capital:"", tasa:"", cuotas:"",
+    periodo:"Mensual", metodo:METODOS[0], fechaInicio:new Date().toISOString().slice(0,10)
+  };
+  state.vista = "nuevo";
+  render();
+}
+function abrirEditarPrestamo(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  window._nf = { editId:p.id, codigo:p.codigo, clienteId:p.clienteId, capital:p.capital, tasa:p.tasa,
+    cuotas:p.cuotas, periodo:p.periodo, metodo:p.metodo, fechaInicio:p.fechaInicio };
+  state.vista = "nuevo";
+  render();
+}
+function guardarPrestamo(){
+  const f = window._nf;
+  const esIndef = f.metodo === METODOS[5];
+  if(!f.clienteId || !f.capital || !f.tasa || (!esIndef && !f.cuotas)) return;
+  if(f.editId){
+    const p = state.prestamos.find(x=>x.id===f.editId);
+    Object.assign(p, {
+      clienteId:f.clienteId, capital:f.capital, tasa:f.tasa, periodo:f.periodo,
+      metodo:f.metodo, fechaInicio:f.fechaInicio, cuotas: esIndef?0:Number(f.cuotas)
+    });
+    window._nf = null;
+    state.vista = "detalle";
+  } else {
+    const codigo = nextCode("P", state.prestamos);
+    state.prestamos.push({ id:uid(), codigo, ...f, cuotas: esIndef?0:Number(f.cuotas), pagos:[] });
+    window._nf = null;
+    state.vista = "lista";
+  }
+  save(); render();
+}
+
+function abrirRefinanciar(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  window._rf = {
+    origenId: id, enganche:"", adicional:"", tasa:p.tasa, periodo:p.periodo, metodo:p.metodo,
+    cuotas: p.cuotas || "", fechaInicio: new Date().toISOString().slice(0,10)
+  };
+  state.vista = "refinanciar";
+  render();
+}
+function viewRefinanciar(){
+  const f = window._rf;
+  const origen = state.prestamos.find(x=>x.id===f.origenId);
+  if(!origen){ state.vista="lista"; return viewPrestamos(); }
+  const cli = state.clientes.find(c=>c.id===origen.clienteId);
+  const r = resumen(origen);
+  const capitalPendiente = r.capitalPendiente || 0;
+  const esIndef = f.metodo === METODOS[5];
+  const enganche = Number(f.enganche)||0;
+  const adicional = Number(f.adicional)||0;
+  const nuevoCapital = Math.max(0, capitalPendiente - enganche + adicional);
+
+  let metodoOpts = METODOS.map(m=>`<option ${m===f.metodo?"selected":""}>${m}</option>`).join("");
+  let periodoOpts = PERIODOS.map(pd=>`<option ${pd===f.periodo?"selected":""}>${pd}</option>`).join("");
+
+  let previewHtml = "";
+  if(nuevoCapital>0 && f.tasa && (esIndef || f.cuotas)){
+    const tabla = generarTabla({capital:nuevoCapital, tasa:f.tasa, cuotas: esIndef?1:f.cuotas, periodo:f.periodo, metodo:f.metodo, fechaInicio:f.fechaInicio});
+    const esAmericano = f.metodo === METODOS[4];
+    if(tabla.length){
+      previewHtml = `<div class="card" style="background:#EEF1F6;margin-bottom:16px;">
+        <p style="font-size:13px;margin:0 0 4px;">Nuevo capital financiado: <b>${money(nuevoCapital)}</b></p>
+        ${esAmericano
+          ? `<p style="font-size:13px;margin:0 0 4px;">Durante el plazo no se cobra nada; todo el interés se acumula.</p>
+             <p style="font-size:13px;margin:0;">Pago único al final (capital + interés): <b>${money(tabla[tabla.length-1].cuota)}</b></p>`
+          : `<p style="font-size:13px;margin:0 0 4px;">Cuota ${esIndef?"por período":"(1ª)"}: <b>${money(tabla[0].cuota)}</b></p>
+             ${esIndef?"":`<p style="font-size:13px;margin:0;">Total a pagar: <b>${money(tabla.reduce((s,x)=>s+x.cuota,0))}</b></p>`}`}
+      </div>`;
+    }
+  }
+
+  return `
+    <div class="card" style="background:${NAVY};margin-bottom:16px;">
+      <p style="color:rgba(255,255,255,.7);font-size:12px;margin:0;">Refinanciando ${origen.codigo} · ${cli?cli.nombre:"—"}</p>
+      <p style="color:#fff;font-size:22px;font-weight:700;margin:4px 0 0;">${money(capitalPendiente)}</p>
+      <p style="color:rgba(255,255,255,.7);font-size:12px;margin:2px 0 0;">capital pendiente a refinanciar</p>
+    </div>
+    <p class="hint" style="margin-bottom:12px;">El préstamo ${origen.codigo} quedará marcado como "Refinanciado" y se creará un préstamo nuevo. El nuevo capital = capital pendiente − enganche/abono + monto adicional entregado (si aplica).</p>
+    <label><span>Enganche / abono que reduce el préstamo (L, opcional)</span><input id="rf_enganche" type="text" inputmode="decimal" value="${f.enganche}" oninput="window._rf.enganche=filtrarDecimal(this.value); render()"></label>
+    <label><span>Monto adicional a desembolsar (L, opcional)</span><input id="rf_adicional" type="text" inputmode="decimal" value="${f.adicional}" oninput="window._rf.adicional=filtrarDecimal(this.value); render()"></label>
+    <label><span>Tasa de interés por período (%)</span><input id="rf_tasa" type="text" inputmode="decimal" value="${f.tasa}" oninput="window._rf.tasa=filtrarDecimal(this.value); render()"></label>
+    <label><span>Período de pago</span><select onchange="window._rf.periodo=this.value; render()">${periodoOpts}</select></label>
+    <label><span>Método de amortización</span><select onchange="window._rf.metodo=this.value; render()">${metodoOpts}</select></label>
+    ${esIndef?"":`<label><span>Cantidad de cuotas</span><input id="rf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._rf.cuotas=filtrarEntero(this.value); render()"></label>`}
+    <label><span>Fecha del nuevo préstamo</span><input id="rf_fecha" type="date" value="${f.fechaInicio}" oninput="window._rf.fechaInicio=this.value; render()"></label>
+    ${previewHtml}
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="window._rf=null; state.vista='detalle'; render()">Cancelar</button>
+      <button class="btn btn-gold" onclick="guardarRefinanciamiento()" ${nuevoCapital<=0?"disabled style='opacity:.4'":""}>Confirmar refinanciamiento</button>
+    </div>`;
+}
+function guardarRefinanciamiento(){
+  const f = window._rf;
+  const origen = state.prestamos.find(x=>x.id===f.origenId);
+  if(!origen) return;
+  const esIndef = f.metodo === METODOS[5];
+  if(!f.tasa || (!esIndef && !f.cuotas)) return;
+  const r = resumen(origen);
+  const capitalPendiente = r.capitalPendiente || 0;
+  const enganche = Number(f.enganche)||0;
+  const adicional = Number(f.adicional)||0;
+  const nuevoCapital = Math.max(0, capitalPendiente - enganche + adicional);
+  if(nuevoCapital<=0) return;
+
+  const ok = confirm(`Vas a refinanciar ${origen.codigo}:\nCapital pendiente: ${money(capitalPendiente)}\nEnganche/abono: ${money(enganche)}\nMonto adicional entregado: ${money(adicional)}\nNuevo capital: ${money(nuevoCapital)}\n\n¿Confirmas?`);
+  if(!ok) return;
+
+  origen.refinanciado = true;
+  origen.fechaRefinanciado = f.fechaInicio;
+
+  const codigo = nextCode("P", state.prestamos);
+  const nuevo = {
+    id: uid(), codigo, clienteId: origen.clienteId, capital: nuevoCapital, tasa: f.tasa,
+    periodo: f.periodo, metodo: f.metodo, fechaInicio: f.fechaInicio,
+    cuotas: esIndef?0:Number(f.cuotas), pagos: [],
+    refinanciaDe: origen.id, engancheAlRefinanciar: enganche, adicionalAlRefinanciar: adicional
+  };
+  state.prestamos.push(nuevo);
+  window._rf = null;
+  state.seleccionId = nuevo.id;
+  state.vista = "detalle";
+  save(); render();
+}
+
+function viewDetallePrestamo(){
+  const p = state.prestamos.find(x=>x.id===state.seleccionId);
+  if(!p){ state.vista="lista"; return viewPrestamos(); }
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const r = resumen(p);
+  const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+
+  let filasHtml = r.tabla.map((f,i)=>{
+    let estadoCelda;
+    if(i < r.pagosHechos) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
+    else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};font-size:11px;">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
+    else estadoCelda = '<span style="color:#aaa">Pendiente</span>';
+    return `<tr><td>${f.n}</td><td>${fmtDate(f.fecha)}</td>
+    <td style="text-align:right">${money(f.interes)}</td>
+    <td style="text-align:right">${money(f.abono)}</td>
+    <td style="text-align:right;font-weight:600;">${money(f.cuota)}</td>
+    <td style="text-align:right">${money(f.saldo)}</td>
+    <td style="text-align:right;white-space:nowrap;">${estadoCelda}</td></tr>`;
+  }).join("");
+
+  const tasaMora = Number(state.config.tasaMoraDiaria)||0;
+  const diasAtr = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+  const cuotaRef = r.cuotaActual ? r.cuotaActual.cuota : r.cuota;
+  const moraCalc = (tasaMora>0 && diasAtr>0) ? Math.round(cuotaRef*tasaMora/100*diasAtr*100)/100 : 0;
+  const sugerido = r.faltaEnCuotaActual || r.cuota;
+  const esBullet = p.metodo === METODOS[3] || p.metodo === METODOS[4];
+
+  return `
+    <div class="card" style="background:${NAVY};margin-bottom:16px;">
+      <p style="color:rgba(255,255,255,.7);font-size:12px;margin:0;">${p.codigo} · ${cli?cli.nombre:"—"}</p>
+      <p style="color:#fff;font-size:22px;font-weight:700;margin:4px 0 0;">${money(r.saldoPendiente)}</p>
+      <p style="color:rgba(255,255,255,.7);font-size:12px;margin:2px 0 10px;">saldo pendiente</p>
+      <div class="flex-gap">${badge(atraso>0?"Vencido":r.estado)}<span style="color:rgba(255,255,255,.7);font-size:12px;">${p.metodo}</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Capital</p><p style="font-size:15px;font-weight:600;margin:0;">${money(p.capital)}</p></div>
+      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuota</p><p style="font-size:15px;font-weight:600;margin:0;">${money(r.cuota)}</p></div>
+      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Próxima fecha</p><p style="font-size:15px;font-weight:600;margin:0;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</p></div>
+      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuotas pagadas</p><p style="font-size:15px;font-weight:600;margin:0;">${r.pagosHechos}${p.metodo.includes("Indefinido")?"":" / "+p.cuotas}</p></div>
+    </div>
+    ${r.estado==="Activo" ? `
+    <div class="row-card" style="display:block;">
+      <p style="font-weight:600;margin:0 0 10px;">Registrar pago</p>
+      ${r.abonadoEnCuotaActual>0 ? `<p class="hint" style="color:#8A6416;margin:0 0 10px;">Ya abonaste ${money(r.abonadoEnCuotaActual)} a esta cuota. Falta ${money(r.faltaEnCuotaActual)}.</p>` : ""}
+      ${moraCalc>0 ? `<p class="hint" style="color:#A32D2D;margin:0 0 6px;">Este pago tiene ${diasAtr} día(s) de atraso. Mora calculada: ${money(moraCalc)}</p>
+      <label style="display:flex;align-items:center;gap:6px;margin-bottom:12px;"><input type="checkbox" id="incluirMora" checked style="width:auto;"><span style="margin:0;font-size:13px;color:#666;">Cobrar la mora junto con este pago</span></label>` : ""}
+      <div class="flexrow">
+        <input type="text" inputmode="decimal" id="montoPago" placeholder="${sugerido.toFixed(2)}">
+        <button class="btn btn-gold" style="width:auto;padding:0 18px;" onclick="registrarPago('${p.id}')">Pagar</button>
+      </div>
+      <p class="hint">Déjalo vacío para pagar lo sugerido. Un monto menor queda como abono parcial; uno mayor se aplica como abono a capital.</p>
+    </div>
+    ${esBullet ? `
+    <div class="row-card" style="display:block;">
+      <p style="font-weight:600;margin:0 0 6px;">Liquidar anticipado</p>
+      <p class="hint" style="margin:0 0 10px;">Calcula el interés real, prorateado por los días que realmente pasaron, si cancelas antes de la fecha de la cuota.</p>
+      <label><span>Fecha de liquidación</span><input type="date" id="fechaLiquidacion" value="${new Date().toISOString().slice(0,10)}"></label>
+      <button class="btn btn-outline" onclick="liquidarAnticipado('${p.id}')">Calcular y liquidar</button>
+    </div>` : ""}` : ""}
+    <p class="section-title" style="margin-top:16px;">Tabla de amortización</p>
+    <div id="tabla-imprimible">
+      <h2 class="solo-imprimir">${nombreNegocio()}</h2>
+      <p class="hint solo-imprimir" style="margin:0 0 10px;">${p.codigo} · ${cli?cli.nombre:"—"} · Capital ${money(p.capital)} · Tasa ${p.tasa}% · ${p.metodo}</p>
+      <div style="border:1px solid #e5e1d8;border-radius:16px;overflow-x:auto;margin-bottom:16px;">
+        <table style="min-width:620px;"><thead><tr><th>#</th><th>Fecha</th><th style="text-align:right">Interés</th><th style="text-align:right">Abono</th><th style="text-align:right">Cuota</th><th style="text-align:right">Saldo</th><th style="text-align:right">Estado</th></tr></thead>
+        <tbody>${filasHtml}</tbody></table>
+      </div>
+    </div>
+    <button class="btn btn-outline" style="margin-bottom:10px;" onclick="imprimirTabla('${p.id}')">Imprimir tabla de amortización</button>
+    <button class="btn btn-outline" style="margin-bottom:10px;" onclick="compartirTabla('${p.id}')">Enviar tabla (WhatsApp / otra app)</button>
+    ${r.estado==="Activo" ? `<button class="btn btn-outline" style="margin-bottom:10px;" onclick="abrirRefinanciar('${p.id}')">Refinanciar este préstamo</button>` : ""}
+    ${p.refinanciaDe ? `<p class="hint" style="margin-bottom:10px;">Este préstamo nació de un refinanciamiento.</p>` : ""}
+    <div class="flexrow">
+      <button class="btn btn-outline" onclick="abrirEditarPrestamo('${p.id}')">Editar préstamo</button>
+      <button class="btn btn-danger" onclick="eliminarPrestamo('${p.id}')">Eliminar</button>
+    </div>
+  `;
+}
+function cargarJsPDF(cb){
+  if(window.jspdf && window.jspdf.jsPDF){ cb(); return; }
+  const s = document.createElement("script");
+  s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  s.onload = cb;
+  s.onerror = function(){ state.pdfBusy = false; render(); alert("No se pudo cargar el generador de PDF. Revisa tu conexión a internet e intenta de nuevo."); };
+  document.head.appendChild(s);
+}
+function generarPDFRecibo(p, cli, pg, r){
+  const { jsPDF } = window.jspdf;
+  const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0);
+  const concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota");
+  const filas = [
+    ["Cliente", cli?cli.nombre:"—"],
+    ["Préstamo", p.codigo],
+    ["Fecha", fmtDate(pg.fecha)],
+    ["Concepto", concepto]
+  ];
+  if(pg.mora>0){ filas.push(["Cuota/abono", money(pg.monto)]); filas.push(["Mora", money(pg.mora)]); }
+  filas.push(["Total pagado", money(totalPago)]);
+  filas.push(["Saldo pendiente", money(r.saldoPendiente)]);
+
+  const width = 80; // ancho tipo recibo/ticket, no una hoja carta con espacio de sobra
+  const alto = 46 + filas.length*7 + 14;
+  const doc = new jsPDF({unit:"mm", format:[width, alto]});
+  let y = 12;
+  doc.setFont("helvetica","bold"); doc.setFontSize(13);
+  doc.setTextColor(27,42,74);
+  doc.text(nombreNegocio(), width/2, y, {align:"center"}); y+=6;
+  doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.setTextColor(120,120,120);
+  doc.text("Recibo de pago", width/2, y, {align:"center"}); y+=6;
+  doc.setDrawColor(220,220,220);
+  doc.line(6, y, width-6, y); y+=7;
+
+  doc.setTextColor(40,40,40); doc.setFontSize(9.5);
+  filas.forEach(([label, valor])=>{
+    doc.setFont("helvetica","normal");
+    doc.text(label, 6, y);
+    doc.setFont("helvetica","bold");
+    doc.text(String(valor), width-6, y, {align:"right"});
+    y+=7;
+  });
+  y+=3;
+  doc.setDrawColor(220,220,220); doc.line(6,y,width-6,y); y+=8;
+  doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(120,120,120);
+  doc.text("¡Gracias por su pago!", width/2, y, {align:"center"});
+  return doc;
+}
+function generarPDFTabla(p, cli, r){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"mm", format:"a4", orientation:"landscape"});
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  let y = 16;
+  doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(27,42,74);
+  doc.text(nombreNegocio(), marginX, y); y+=7;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(90,90,90);
+  doc.text(`Tabla de amortización — ${p.codigo}`, marginX, y); y+=5;
+  doc.text(`Cliente: ${cli?cli.nombre:"—"}   ·   Capital: ${money(p.capital)}   ·   Tasa: ${p.tasa}%   ·   Método: ${p.metodo}`, marginX, y); y+=8;
+
+  const cols = [
+    {label:"#", w:12, align:"left"},
+    {label:"Fecha", w:26, align:"left"},
+    {label:"Interés", w:30, align:"right"},
+    {label:"Abono a capital", w:38, align:"right"},
+    {label:"Cuota", w:30, align:"right"},
+    {label:"Saldo", w:32, align:"right"},
+    {label:"Estado", w:40, align:"left"}
+  ];
+  const anchoTotal = cols.reduce((s,c)=>s+c.w,0);
+  function dibujarEncabezado(){
+    doc.setFillColor(27,42,74);
+    doc.rect(marginX, y-5, anchoTotal, 7, "F");
+    let x = marginX;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9.5); doc.setTextColor(255,255,255);
+    cols.forEach(c=>{
+      doc.text(c.label, c.align==="right"? x+c.w-2 : x+2, y, {align: c.align==="right"?"right":"left"});
+      x+=c.w;
+    });
+    y+=6;
+    doc.setTextColor(40,40,40); doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  }
+  dibujarEncabezado();
+  r.tabla.forEach((f,i)=>{
+    if(y > pageH-14){ doc.addPage(); y=16; dibujarEncabezado(); }
+    const est = i<r.pagosHechos ? "Pagada" : (i===r.pagosHechos && r.abonadoEnCuotaActual>0 ? `Abonado ${money(r.abonadoEnCuotaActual)}` : "Pendiente");
+    const valores = [String(f.n), fmtDate(f.fecha), money(f.interes), money(f.abono), money(f.cuota), money(f.saldo), est];
+    let x = marginX;
+    valores.forEach((val,idx)=>{
+      const c = cols[idx];
+      doc.text(val, c.align==="right"? x+c.w-2 : x+2, y, {align: c.align==="right"?"right":"left"});
+      x+=c.w;
+    });
+    y+=6;
+    doc.setDrawColor(235,235,235); doc.line(marginX, y-2, marginX+anchoTotal, y-2);
+  });
+  return doc;
+}
+async function compartirPDF(doc, filename){
+  const blob = doc.output("blob");
+  try{
+    const file = new File([blob], filename, {type:"application/pdf"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({ files:[file], title:filename });
+      return;
+    }
+  }catch(err){
+    if(err && err.name==="AbortError") return;
+  }
+  // Si el celular no soporta compartir el archivo directamente, se descarga
+  // para poder adjuntarlo a mano en WhatsApp u otra app.
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert("Se descargó el PDF a tu celular. Ábrelo desde tus Descargas para adjuntarlo en WhatsApp u otra app.");
+}
+function compartirRecibo(prestamoId, pagoId){
+  const p = state.prestamos.find(x=>x.id===prestamoId);
+  if(!p) return;
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const pg = (p.pagos||[]).find(x=>x.id===pagoId);
+  if(!pg) return;
+  if(state.pdfBusy) return;
+  state.pdfBusy = true; render();
+  cargarJsPDF(async function(){
+    try{
+      const r = resumen(p);
+      const doc = generarPDFRecibo(p, cli, pg, r);
+      await compartirPDF(doc, `recibo-${p.codigo}.pdf`);
+    } finally {
+      state.pdfBusy = false; render();
+    }
+  });
+}
+function compartirTabla(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  if(state.pdfBusy) return;
+  state.pdfBusy = true; render();
+  cargarJsPDF(async function(){
+    try{
+      const cli = state.clientes.find(c=>c.id===p.clienteId);
+      const r = resumen(p);
+      const doc = generarPDFTabla(p, cli, r);
+      await compartirPDF(doc, `amortizacion-${p.codigo}.pdf`);
+    } finally {
+      state.pdfBusy = false; render();
+    }
+  });
+}
+function imprimirTabla(id){
+  state.seleccionId = id;
+  window.print();
+}
+function registrarPago(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  const r = resumen(p);
+  const tasaMora = Number(state.config.tasaMoraDiaria)||0;
+  const diasAtr = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+  const cuotaRef = r.cuotaActual ? r.cuotaActual.cuota : r.cuota;
+  let mora = 0;
+  if(tasaMora>0 && diasAtr>0){
+    mora = Math.round(cuotaRef*tasaMora/100*diasAtr*100)/100;
+    const chk = document.getElementById("incluirMora");
+    if(chk && !chk.checked) mora = 0;
+  }
+  const val = document.getElementById("montoPago").value;
+  const sugerido = r.faltaEnCuotaActual || r.cuota;
+  const monto = val ? Number(val) : sugerido;
+  if(!monto || monto<=0) return;
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const total = monto + mora;
+  const ok = confirm(
+    `Vas a registrar un pago:\n` +
+    `Cliente: ${cli?cli.nombre:"—"}\n` +
+    `Préstamo: ${p.codigo}\n` +
+    (mora>0 ? `Cuota/abono: ${money(monto)}\nMora: ${money(mora)}\n` : `Monto: ${money(monto)}\n`) +
+    `Total a pagar: ${money(total)}\n\n` +
+    `¿Confirmas este pago?`
+  );
+  if(!ok) return;
+  p.pagos = p.pagos || [];
+  p.pagos.push({ id:uid(), fecha:new Date().toISOString().slice(0,10), monto, mora });
+  save(); render();
+}
+function liquidarAnticipado(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  const r = resumen(p);
+  const fechaLiq = document.getElementById("fechaLiquidacion").value || new Date().toISOString().slice(0,10);
+  const diasPeriodo = DIAS_PERIODO[p.periodo] || 30;
+  const tasaDiaria = (Number(p.tasa)||0)/100/diasPeriodo;
+  const fechaBase = r.pagosHechos>0 ? r.tabla[r.pagosHechos-1].fecha : p.fechaInicio;
+  const diasReales = Math.max(0, Math.round((new Date(fechaLiq+"T00:00:00") - new Date(fechaBase+"T00:00:00"))/86400000));
+  const capitalPendiente = Number(p.capital)||0;
+  const interes = Math.round(capitalPendiente*tasaDiaria*diasReales*100)/100;
+  const total = capitalPendiente + interes;
+  const ok = confirm(
+    `Liquidación anticipada al ${fmtDate(fechaLiq)}:\n` +
+    `Días reales transcurridos: ${diasReales}\n` +
+    `Interés prorateado: ${money(interes)}\n` +
+    `Capital pendiente: ${money(capitalPendiente)}\n` +
+    `Total a pagar: ${money(total)}\n\n` +
+    `¿Registrar este pago y cerrar el préstamo?`
+  );
+  if(!ok) return;
+  p.pagos = p.pagos || [];
+  p.pagos.push({ id:uid(), fecha:fechaLiq, monto:total, mora:0, liquidacion:true });
+  p.liquidadoAnticipado = true;
+  save(); render();
+}
+function eliminarPrestamo(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const numPagos = (p.pagos||[]).length;
+  let msg = `¿Seguro que quieres eliminar el préstamo ${p.codigo}${cli?" de "+cli.nombre:""}? Esta acción no se puede deshacer.`;
+  if(numPagos>0){
+    msg = `El préstamo ${p.codigo}${cli?" de "+cli.nombre:""} tiene ${numPagos} pago(s) registrado(s). Si lo eliminas, se pierde también ese historial de pagos.\n\n`+
+      `¿Seguro que quieres eliminarlo? Esta acción no se puede deshacer.`;
+  }
+  if(!confirm(msg)) return;
+  state.prestamos = state.prestamos.filter(x=>x.id!==id);
+  state.vista = "lista";
+  save(); render();
+}
+
+function viewPagos(){
+  if(state.vista==="recibo") return viewRecibo();
+  let lista = [];
+  state.prestamos.forEach(p=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    (p.pagos||[]).forEach(pg=> lista.push({...pg, codigo:p.codigo, nombre:cli?cli.nombre:"—", prestamoId:p.id}));
+  });
+  lista.sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+  if(lista.length===0) return `<p class="empty">Aún no se han registrado pagos.</p>`;
+  return lista.map(pg=>{
+    const total = (Number(pg.monto)||0) + (Number(pg.mora)||0);
+    let sub = `${pg.codigo} · ${fmtDate(pg.fecha)}`;
+    if(pg.liquidacion) sub += " · Liquidación anticipada";
+    else if(pg.mora>0) sub += ` · incluye mora ${money(pg.mora)}`;
+    return `<div class="row-card">
+    <div style="cursor:pointer;" onclick="verRecibo('${pg.prestamoId}','${pg.id||""}')"><p class="name">${pg.nombre}</p><p class="sub">${sub}</p></div>
+    <div style="text-align:right;display:flex;align-items:center;gap:6px;">
+      <p style="font-size:15px;font-weight:600;color:#3B6D11;margin:0;">${money(total)}</p>
+      <button class="printbtn" title="Ver recibo" onclick="verRecibo('${pg.prestamoId}','${pg.id||""}')">🧾</button>
+      <button class="printbtn" title="Eliminar pago" onclick="eliminarPago('${pg.prestamoId}','${pg.id||""}')">🗑</button>
+    </div>
+  </div>`;
+  }).join("");
+}
+function eliminarPago(prestamoId, pagoId){
+  const p = state.prestamos.find(x=>x.id===prestamoId);
+  if(!p) return;
+  const pagos = p.pagos || [];
+  const idx = pagoId ? pagos.findIndex(pg=>pg.id===pagoId) : pagos.length-1;
+  if(idx<0) return;
+  const pg = pagos[idx];
+  const total = (Number(pg.monto)||0) + (Number(pg.mora)||0);
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const msg = `¿Eliminar el pago de ${money(total)} del ${fmtDate(pg.fecha)} (${p.codigo}${cli?" · "+cli.nombre:""})?\n\n`+
+    `El préstamo recalculará sus cuotas pendientes sin este pago. Esta acción no se puede deshacer.`;
+  if(!confirm(msg)) return;
+  if(pg.liquidacion) p.liquidadoAnticipado = false;
+  pagos.splice(idx,1);
+  p.pagos = pagos;
+  if(state.vista==="recibo") state.vista = "lista";
+  save(); render();
+}
+function verRecibo(prestamoId, pagoId){
+  state.tab = "pagos";
+  state.vista = "recibo";
+  state.reciboSel = { prestamoId, pagoId };
+  render();
+}
+function viewRecibo(){
+  const sel = state.reciboSel || {};
+  const p = state.prestamos.find(x=>x.id===sel.prestamoId);
+  if(!p){ state.vista="lista"; return viewPagos(); }
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const pagos = p.pagos || [];
+  const idx = sel.pagoId ? pagos.findIndex(pg=>pg.id===sel.pagoId) : -1;
+  const pg = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
+  if(!pg){ state.vista="lista"; return viewPagos(); }
+  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
+  const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0);
+  const r = resumen(p);
+  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota");
+
+  return `
+    <div id="recibo-imprimible">
+      <h2>${nombreNegocio()}</h2>
+      <p class="hint" style="margin:0 0 14px;">Recibo de pago</p>
+      <div class="rline"><span>No. de recibo</span><b>R-${numRecibo}</b></div>
+      <div class="rline"><span>Fecha</span><b>${fmtDate(pg.fecha)}</b></div>
+      <div class="rline"><span>Cliente</span><b>${cli?cli.nombre:"—"}</b></div>
+      ${cli && cli.cedula ? `<div class="rline"><span>Cédula</span><b>${cli.cedula}</b></div>` : ""}
+      <div class="rline"><span>Préstamo</span><b>${p.codigo}</b></div>
+      <div class="rline"><span>Método</span><b>${p.metodo}</b></div>
+      <div class="rline"><span>Concepto</span><b>${concepto}</b></div>
+      ${pg.mora>0 ? `<div class="rline"><span>Cuota / abono</span><b>${money(pg.monto)}</b></div>
+      <div class="rline"><span>Mora</span><b>${money(pg.mora)}</b></div>` : ""}
+      <div class="rline rtotal" style="border-bottom:none;padding-top:14px;"><span>Total pagado</span><span>${money(totalPago)}</span></div>
+      <div class="rline"><span>Saldo pendiente actual del préstamo</span><b>${money(r.saldoPendiente)}</b></div>
+      <p class="hint" style="margin-top:18px;">Gracias por su pago.</p>
+    </div>
+    <div class="flexrow" style="margin-top:16px;">
+      <button class="btn btn-outline" onclick="state.vista='lista'; render();">Volver</button>
+      <button class="btn btn-gold" onclick="window.print()">Imprimir recibo</button>
+    </div>
+    <button class="btn btn-outline" style="margin-top:10px;" onclick="compartirRecibo('${p.id}','${pg.id||""}')">Enviar recibo (WhatsApp / otra app)</button>
+    <button class="btn btn-danger" style="margin-top:10px;" onclick="eliminarPago('${p.id}','${pg.id||""}')">Eliminar este pago</button>`;
+}
+
+
+function viewTabbar(){
+  const items = [["inicio","Inicio","home"],["clientes","Clientes","users"],["prestamos","Préstamos","landmark"],["pagos","Pagos","wallet"]];
+  return `<div class="tabbar">${items.map(([id,label,icon])=>`
+    <button class="tab-btn ${state.tab===id?"active":""}" onclick="state.tab='${id}'; state.vista='lista'; render()">
+      ${ICONS[icon]}<span>${label}</span>
+    </button>`).join("")}</div>`;
+}
+
+render();
+</script>
+</body>
+</html>
