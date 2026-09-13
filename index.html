@@ -51,8 +51,9 @@
   th{background:#F5F3EE;text-align:left;padding:8px 6px;}
   td{padding:6px;border-top:1px solid #eee;}
   .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
-  .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:8px 12px;flex:1;background:#fff;}
-  .searchbar input{border:none;padding:0;flex:1;}
+  .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
+  .searchbar:focus-within{border-color:#1B2A4A;box-shadow:0 0 0 2px rgba(27,42,74,.15);}
+  .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#222;min-width:0;}
   .toprow{display:flex;gap:8px;margin-bottom:16px;}
   .iconbtn{background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;flex-shrink:0;}
   .flexrow{display:flex;gap:8px;}
@@ -90,23 +91,55 @@ const METODOS = ["Francés (cuota fija)","Alemán (cuota decreciente)","Tasa pla
 const PERIODOS = ["Semanal","Quincenal","Mensual"];
 const DIAS_PERIODO = { Semanal:7, Quincenal:15, Mensual:30 };
 
+// Espacio de guardado propio de esta dirección (URL): así, si esta app llega a quedar
+// publicada dos veces bajo el mismo dominio (por ejemplo dos repos distintos en el mismo
+// usuario de GitHub Pages, que comparten el mismo "host"), cada una guarda sus clientes,
+// préstamos y ajustes por separado, sin pisarse entre sí.
+const NS = (function(){
+  try{
+    const p = (location.pathname||"").replace(/\/index\.html$/i,"").replace(/\/$/,"");
+    return "__" + (p||"root").replace(/[^a-zA-Z0-9]/g,"_");
+  }catch(e){ return ""; }
+})();
+function LK(base){ return base + NS; }
+function migrarClaveVieja(base){
+  // Si esta dirección específica todavía no tiene nada guardado bajo su propia clave, pero
+  // sí existe un valor bajo la clave antigua (de cuando esta app no distinguía direcciones),
+  // se copia una sola vez para no perder datos al actualizar.
+  try{
+    if(localStorage.getItem(LK(base)) === null && localStorage.getItem(base) !== null){
+      localStorage.setItem(LK(base), localStorage.getItem(base));
+    }
+  }catch(e){}
+}
+["jr_clientes","jr_prestamos","jr_config"].forEach(migrarClaveVieja);
+
 let state = {
   tab: "inicio",
-  clientes: JSON.parse(localStorage.getItem("jr_clientes") || "[]"),
-  prestamos: JSON.parse(localStorage.getItem("jr_prestamos") || "[]"),
-  config: JSON.parse(localStorage.getItem("jr_config") || '{"tasaMoraDiaria":0}'),
+  clientes: JSON.parse(localStorage.getItem(LK("jr_clientes")) || "[]"),
+  prestamos: JSON.parse(localStorage.getItem(LK("jr_prestamos")) || "[]"),
+  config: JSON.parse(localStorage.getItem(LK("jr_config")) || '{"tasaMoraDiaria":0}'),
   vista: "lista",
   seleccionId: null,
   showFormCliente: false,
   desbloqueado: false,
   ajustesDesbloqueado: false,
-  q: ""
+  q: "",
+  qPrestamos: ""
 };
 
-function save(){
-  localStorage.setItem("jr_clientes", JSON.stringify(state.clientes));
-  localStorage.setItem("jr_prestamos", JSON.stringify(state.prestamos));
-  localStorage.setItem("jr_config", JSON.stringify(state.config));
+let autoSyncTimer = null;
+function save(opts){
+  opts = opts || {};
+  localStorage.setItem(LK("jr_clientes"), JSON.stringify(state.clientes));
+  localStorage.setItem(LK("jr_prestamos"), JSON.stringify(state.prestamos));
+  localStorage.setItem(LK("jr_config"), JSON.stringify(state.config));
+  // Guardado automático en la nube: si ya hay URL y clave configuradas (y no se desactivó
+  // a propósito), unos segundos después de cada cambio se sube solo, en silencio.
+  if(!opts.sinAutoSync && state.config.autoSync !== false && (state.config.syncUrl||"").trim() && (state.config.syncKey||"").trim()){
+    clearTimeout(autoSyncTimer);
+    autoSyncTimer = setTimeout(()=>{ subirNube(true); }, 2500);
+  }
 }
 function soloDigitos(s){ return (s||"").toString().replace(/\D/g,""); }
 // Los campos de dinero/tasa usan type="text" (no "number") a propósito: los inputs numéricos
@@ -127,6 +160,7 @@ function nextCode(prefix, list){
   return prefix + "-" + String(next).padStart(4,"0");
 }
 function money(n){
+  n = Number(n);
   n = Number.isFinite(n) ? n : 0;
   return "L " + n.toLocaleString("es-HN", {minimumFractionDigits:2, maximumFractionDigits:2});
 }
@@ -270,12 +304,16 @@ function nombreNegocio(){
   return (state.config && state.config.nombreNegocio) ? state.config.nombreNegocio : "JR PRESTAMITO";
 }
 function viewBloqueo(){
-  return `<div style="padding:60px 10px;text-align:center;">
-    <p style="font-weight:600;font-size:16px;margin-bottom:16px;color:#333;">Ingresa tu clave para entrar</p>
+  const nombre = nombreNegocio();
+  const sigla = nombre.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase() || "N";
+  return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px 20px;">
+    <div style="width:56px;height:56px;border-radius:16px;background:${NAVY};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;margin-bottom:14px;">${sigla}</div>
+    <p style="font-weight:700;color:${NAVY};margin:0 0 4px;font-size:16px;">${nombre}</p>
+    <p class="hint" style="text-align:center;margin:0 0 22px;">Ingresa tu clave para continuar</p>
     <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off"
-      style="text-align:center;font-size:22px;letter-spacing:6px;max-width:220px;margin:0 auto;display:block;padding:10px;border:1px solid #ddd;border-radius:10px;"
-      maxlength="12" onkeypress="if(event.key==='Enter') intentarDesbloquear()">
-    <button class="btn btn-navy" style="max-width:220px;margin:14px auto 0;" onclick="intentarDesbloquear()">Entrar</button>
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:1px solid #ddd;border-radius:12px;box-sizing:border-box;"
+      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarDesbloquear()">
+    <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarDesbloquear()">Entrar</button>
   </div>`;
 }
 function intentarDesbloquear(){
@@ -300,25 +338,10 @@ function guardarPin(){
   alert("Clave guardada. La próxima vez que se abra la app, la pedirá.");
 }
 function quitarPin(){
-  const ok = confirm("¿Quitar la clave de acceso a la app? Cualquiera que la abra en este celular podrá entrar sin que se le pida nada.");
+  const ok = confirm("¿Quitar la clave de acceso a la app? Cualquiera que la abra en este celular podrá entrar sin que se le pida nada, y Ajustes tampoco pedirá clave.");
   if(!ok) return;
   delete state.config.pin;
-  save(); render();
-}
-function guardarPinAjustes(){
-  const el = document.getElementById("f_nuevoPinAjustes");
-  const val = (el?el.value:"").trim();
-  if(!val){ alert("Escribe una clave primero."); return; }
-  if(val.length<4){ alert("Usa una clave de al menos 4 caracteres."); return; }
-  state.config.pinAjustes = val;
-  state.ajustesDesbloqueado = true;
-  save(); render();
-  alert("Clave de Ajustes guardada. La próxima vez que se abra esta sección, la pedirá.");
-}
-function quitarPinAjustes(){
-  const ok = confirm("¿Quitar la clave de Ajustes? Cualquiera que desbloquee la app podrá entrar directo a Ajustes sin clave adicional.");
-  if(!ok) return;
-  delete state.config.pinAjustes;
+  state.ajustesDesbloqueado = false;
   save(); render();
 }
 const ICONS = {
@@ -333,6 +356,7 @@ function render(){
   if(state.config && state.config.pin && !state.desbloqueado){
     document.getElementById("app").innerHTML =
       `<header><div><p>${nombreNegocio()}</p><h1>Acceso</h1></div></header><div class="content">${viewBloqueo()}</div>`;
+    document.title = nombreNegocio();
     const elp = document.getElementById("f_pinIngresado");
     if(elp) elp.focus();
     return;
@@ -364,10 +388,10 @@ function render(){
   if(state.tab==="inicio" && state.vista==="estadoResultados"){
     html += `<button class="backbtn" onclick="state.vista='ajustes'; render();">‹</button>`;
   }
-  if(state.tab==="inicio" && state.vista==="ajustes"){
+  if(state.tab==="inicio" && (state.vista==="ajustes" || state.vista==="ajustesClave")){
     html += `<button class="backbtn" onclick="state.vista='lista'; render();">‹</button>`;
   }
-  const tituloAjustes = state.tab==="inicio" && state.vista==="ajustes" ? "Ajustes" : null;
+  const tituloAjustes = state.tab==="inicio" && (state.vista==="ajustes" || state.vista==="ajustesClave") ? "Ajustes" : null;
   const tituloReporte = state.tab==="inicio" && state.vista==="reportePDF" ? "Reporte para PDF" : null;
   const tituloResultados = state.tab==="inicio" && state.vista==="estadoResultados" ? "Estado de resultados" : null;
   html += `<div><p>${nombreNegocio()}</p><h1>${state.tab==="prestamos"&&state.vista==="cartera"?"Cartera vencida":(state.tab==="prestamos"&&state.vista==="refinanciar"?"Refinanciar":(state.tab==="pagos"&&state.vista==="recibo"?"Recibo de pago":(tituloReporte||tituloResultados||tituloAjustes||titles[state.tab])))}</h1></div>
@@ -606,10 +630,15 @@ function viewEstadoResultados(){
     </div>`;
 }
 
-async function subirNube(){
+function verOcultarClaveSync(){
+  const el = document.getElementById("f_syncKey");
+  if(!el) return;
+  el.type = el.type === "password" ? "text" : "password";
+}
+async function subirNube(silencioso){
   const url = (state.config.syncUrl||"").trim();
   const key = (state.config.syncKey||"").trim();
-  if(!url || !key){ alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
+  if(!url || !key){ if(!silencioso) alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
   if(state.syncBusy) return;
   state.syncBusy = "push"; render();
   try{
@@ -622,13 +651,13 @@ async function subirNube(){
     const data = await res.json();
     if(data.ok){
       state.config.ultimaSubida = new Date().toISOString();
-      save();
-      alert("Datos subidos correctamente a la nube.");
+      save({sinAutoSync:true});
+      if(!silencioso) alert("Datos subidos correctamente a la nube.");
     } else {
-      alert("Error al subir: " + (data.error || "desconocido"));
+      if(!silencioso) alert("Error al subir: " + (data.error || "desconocido"));
     }
   } catch(err){
-    alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
+    if(!silencioso) alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
   }
   state.syncBusy = null; render();
 }
@@ -652,7 +681,7 @@ async function descargarNube(){
         state.config.tasaMoraDiaria = data.datos.config.tasaMoraDiaria;
       }
       state.config.ultimaDescarga = new Date().toISOString();
-      save();
+      save({sinAutoSync:true});
       alert("Datos descargados correctamente.");
     } else if(data.ok && !data.datos){
       alert("La nube todavía no tiene datos guardados. Primero sube los datos desde algún celular.");
@@ -668,6 +697,7 @@ async function descargarNube(){
 function viewInicio(){
   if(state.vista==="reportePDF") return viewReportePDF();
   if(state.vista==="estadoResultados") return viewEstadoResultados();
+  if(state.vista==="ajustesClave") return viewAjustesClave();
   if(state.vista==="ajustes") return viewAjustes();
   let prestado=0, cobrado=0, activos=0, vencidos=0;
   state.prestamos.forEach(p=>{
@@ -678,7 +708,9 @@ function viewInicio(){
   });
   let prox = state.prestamos.map(p=>({p, r:resumen(p)}))
     .filter(x=>x.r.estado==="Activo" && x.r.proximaFecha)
-    .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha)).slice(0,4);
+    .map(x=>({...x, atraso: diasAtraso(x.r.proximaFecha), faltan: diasParaVencer(x.r.proximaFecha)}))
+    .filter(x=> x.atraso>0 || (x.faltan!==null && x.faltan>=0 && x.faltan<=1))
+    .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha));
 
   let html = `<div class="grid2">
     <div class="card" style="background:#EEF1F6;"><p class="lbl">Capital prestado</p><p class="val" style="color:${NAVY}">${money(prestado)}</p></div>
@@ -690,24 +722,45 @@ function viewInicio(){
   <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
   <p class="section-title" style="margin-top:16px;">Próximos a vencer</p>`;
 
-  if(prox.length===0) html += `<p class="empty">Todavía no tienes préstamos registrados.</p>`;
-  prox.forEach(({p,r})=>{
+  if(prox.length===0) html += `<p class="empty">No tienes cuotas vencidas ni por vencer mañana. 🎉</p>`;
+  prox.forEach(({p,r,atraso,faltan})=>{
     const cli = state.clientes.find(c=>c.id===p.clienteId);
-    const atraso = diasAtraso(r.proximaFecha);
-    html += `<div class="row-card"><div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>${badge(atraso>0?"Vencido":"Activo")}</div>`;
+    const esVencido = atraso>0;
+    const etiqueta = esVencido ? `${atraso} día${atraso===1?"":"s"}` : (faltan===0 ? "Vence hoy" : "Vence mañana");
+    html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+      <div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>
+      ${esVencido ? `<span class="badge b-vencido">${etiqueta}</span>` : `<span class="badge" style="background:#EEF1F6;color:${NAVY};">${etiqueta}</span>`}
+    </div>`;
   });
   return html;
 }
 function abrirAjustes(){
-  if(state.config.pinAjustes && !state.ajustesDesbloqueado){
-    const val = prompt("Esta sección está protegida con una clave. Ingrésala para continuar:");
-    if(val === null) return;
-    if(val !== state.config.pinAjustes){ alert("Clave incorrecta."); return; }
-    state.ajustesDesbloqueado = true;
-  }
   state.tab = "inicio";
-  state.vista = "ajustes";
+  state.vista = (state.config.pin && !state.ajustesDesbloqueado) ? "ajustesClave" : "ajustes";
   render();
+}
+function viewAjustesClave(){
+  return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px 20px;">
+    <div style="width:56px;height:56px;border-radius:16px;background:${NAVY};display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;">🔒</div>
+    <p style="font-weight:700;color:${NAVY};margin:0 0 4px;font-size:16px;">Ajustes protegidos</p>
+    <p class="hint" style="text-align:center;margin:0 0 22px;">Es la misma clave con la que abres la app.</p>
+    <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off"
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:1px solid #ddd;border-radius:12px;box-sizing:border-box;"
+      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarAjustes()">
+    <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarAjustes()">Entrar</button>
+  </div>`;
+}
+function intentarAjustes(){
+  const el = document.getElementById("f_pinAjustesIngresado");
+  const val = el ? el.value : "";
+  if(val && val === state.config.pin){
+    state.ajustesDesbloqueado = true;
+    state.vista = "ajustes";
+    render();
+  } else {
+    alert("Clave incorrecta.");
+    if(el){ el.value=""; el.focus(); }
+  }
 }
 function viewAjustes(){
   return `
@@ -739,8 +792,17 @@ function viewAjustes(){
   <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Sincronizar entre celulares</p>
     <p class="hint" style="margin:0 0 10px;">Usa una Google Sheet como nube compartida. Configúrala una sola vez (instrucciones aparte) y luego pega aquí la URL y la clave.</p>
-    <label><span>URL de la aplicación web</span><input id="f_syncUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${state.config.syncUrl||""}" oninput="state.config.syncUrl=this.value; save();"></label>
-    <label style="margin-bottom:10px;"><span>Clave</span><input id="f_syncKey" type="password" placeholder="La misma clave que pusiste en el script" value="${state.config.syncKey||""}" oninput="state.config.syncKey=this.value; save();"></label>
+    <label><span>URL de la aplicación web</span><input id="f_syncUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${state.config.syncUrl||""}" oninput="state.config.syncUrl=this.value; save({sinAutoSync:true});"></label>
+    <label style="margin-bottom:4px;"><span>Clave</span>
+      <div class="flexrow" style="align-items:center;">
+        <input id="f_syncKey" type="password" placeholder="La misma clave que pusiste en el script" value="${state.config.syncKey||""}" oninput="state.config.syncKey=this.value; save({sinAutoSync:true});">
+        <button type="button" class="btn btn-outline" style="width:auto;padding:0 14px;white-space:nowrap;" onclick="verOcultarClaveSync()">👁 Ver</button>
+      </div>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;margin:6px 0 10px;cursor:pointer;">
+      <input type="checkbox" id="f_autoSync" style="width:auto;" ${state.config.autoSync!==false?"checked":""} onchange="state.config.autoSync=this.checked; save({sinAutoSync:true});">
+      <span style="font-size:14px;">Guardar automáticamente en la nube después de cada cambio</span>
+    </label>
     ${(state.config.ultimaSubida || state.config.ultimaDescarga) ? `<p class="hint" style="margin:0 0 10px;">${state.config.ultimaSubida?`↑ Última subida: ${new Date(state.config.ultimaSubida).toLocaleString("es-HN")}`:""}${(state.config.ultimaSubida && state.config.ultimaDescarga)?" · ":""}${state.config.ultimaDescarga?`↓ Última descarga: ${new Date(state.config.ultimaDescarga).toLocaleString("es-HN")}`:""}</p>` : ""}
     <div class="flexrow">
       <button class="btn btn-outline" onclick="subirNube()" ${state.syncBusy?"disabled style='opacity:.5'":""}>${state.syncBusy==="push"?"Subiendo...":"Subir a la nube"}</button>
@@ -758,34 +820,33 @@ function viewAjustes(){
     <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de recordatorio original?')){ state.config.plantillaRecordatorio=PLANTILLA_RECORDATORIO_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
   </div>
   <div class="row-card" style="display:block;">
+    <p style="font-weight:600;margin:0 0 4px;">Mensaje de pendiente de cobro (1 día antes)</p>
+    <p class="hint" style="margin:0 0 10px;">Se usa en "Próximos a vencer" para las cuotas que vencen hoy o mañana, todavía no atrasadas. Mismas palabras clave que arriba, sin {atraso} ni {dias}.</p>
+    <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
+      <textarea id="f_plantillaPendiente" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaPendiente=this.value; save();">${(state.config.plantillaPendiente||PLANTILLA_PENDIENTE_DEFAULT)}</textarea>
+    </label>
+    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajePendiente({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:new Date().toISOString().slice(0,10)})}</p>
+    <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de pendiente original?')){ state.config.plantillaPendiente=PLANTILLA_PENDIENTE_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
+  </div>
+  <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Mora por atraso</p>
     <p class="hint" style="margin:0 0 10px;">Porcentaje que se cobra por cada día de atraso sobre el monto de la cuota. Déjalo en 0 si no quieres cobrar mora.</p>
     <label style="margin-bottom:0;"><span>Tasa de mora diaria (%)</span><input type="text" inputmode="decimal" step="0.01" min="0" value="${state.config.tasaMoraDiaria}" oninput="state.config.tasaMoraDiaria=filtrarDecimal(this.value); save();"></label>
   </div>
   <div class="row-card" style="display:block;">
-    <p style="font-weight:600;margin:0 0 4px;">Clave de acceso a la app</p>
-    <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "La app pide esta clave cada vez que se abre en este celular." : "Protege toda la app: la pedirá cada vez que se abra en este celular."}</p>
+    <p style="font-weight:600;margin:0 0 4px;">Clave de acceso</p>
+    <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "Esta misma clave protege la app al abrirla y también te la vuelve a pedir al entrar a Ajustes, por seguridad extra." : "Protege toda la app: la pedirá cada vez que se abra en este celular, y también al entrar a Ajustes."}</p>
     <div class="flexrow">
       <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}">
       <button class="btn btn-outline" style="width:auto;padding:0 16px;" onclick="guardarPin()">Guardar</button>
     </div>
     ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
-  </div>
-  <div class="row-card" style="display:block;">
-    <p style="font-weight:600;margin:0 0 4px;">Clave adicional para Ajustes</p>
-    <p class="hint" style="margin:0 0 10px;">${state.config.pinAjustes ? "Esta sección (Ajustes) pedirá esta clave aparte, aunque ya hayas abierto la app." : "Pide una clave extra solo para entrar aquí, aunque la app ya esté desbloqueada. Útil si otras personas usan el celular pero no deben ver la sincronización, respaldos, etc."}</p>
-    <div class="flexrow">
-      <input id="f_nuevoPinAjustes" type="password" inputmode="numeric" autocomplete="off" placeholder="${state.config.pinAjustes?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}">
-      <button class="btn btn-outline" style="width:auto;padding:0 16px;" onclick="guardarPinAjustes()">Guardar</button>
-    </div>
-    ${state.config.pinAjustes ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPinAjustes()">Quitar clave de Ajustes</button>` : ""}
   </div>`;
 }
 
 function viewClientes(){
-  const filtrados = state.clientes.filter(c => (c.nombre+c.codigo).toLowerCase().includes(state.q.toLowerCase()));
   let html = `<div class="toprow">
-    <div class="searchbar"><span style="color:#9c9890">⌕</span><input placeholder="Buscar cliente" value="${state.q}" oninput="state.q=this.value; render()"></div>
+    <div class="searchbar"><span style="color:#9c9890">⌕</span><input id="f_buscarCliente" placeholder="Buscar cliente" value="${state.q}" oninput="state.q=this.value; filtrarListaClientes();"></div>
     <button class="iconbtn" onclick="abrirFormCliente(null)">+</button>
   </div>`;
 
@@ -804,15 +865,25 @@ function viewClientes(){
     </div>`;
   }
 
-  if(filtrados.length===0) html += `<p class="empty">No hay clientes todavía.</p>`;
-  filtrados.forEach(c=>{
-    html += `<div class="row-card">
+  html += `<div id="lista-clientes">${renderListaClientes()}</div>`;
+  return html;
+}
+function renderListaClientes(){
+  const filtrados = state.clientes.filter(c => (c.nombre+c.codigo).toLowerCase().includes(state.q.toLowerCase()));
+  if(filtrados.length===0){
+    return `<p class="empty">${state.q ? `Ningún cliente coincide con "${state.q}".` : "No hay clientes todavía."}</p>`;
+  }
+  return filtrados.map(c=>`<div class="row-card">
       <div class="flex-gap" style="cursor:pointer;" onclick="abrirFormCliente('${c.id}')"><div class="avatar">${c.nombre.slice(0,2).toUpperCase()}</div>
       <div><p class="name">${c.nombre}</p><p class="sub">${c.codigo} · ${c.celular||"sin celular"}</p></div></div>
       <button onclick="eliminarCliente('${c.id}')" style="background:none;border:none;color:#bbb;font-size:16px;">✕</button>
-    </div>`;
-  });
-  return html;
+    </div>`).join("");
+}
+function filtrarListaClientes(){
+  // Solo actualiza la lista filtrada, sin redibujar toda la pantalla — así el cuadro de
+  // búsqueda nunca se destruye ni parpadea mientras escribes.
+  const el = document.getElementById("lista-clientes");
+  if(el) el.innerHTML = renderListaClientes();
 }
 function abrirFormCliente(id){
   state.clienteEditId = id;
@@ -880,20 +951,42 @@ function viewPrestamos(){
   if(state.vista==="cartera") return viewCartera();
   if(state.vista==="refinanciar") return viewRefinanciar();
 
-  let html = `<button class="btn btn-navy" style="margin-bottom:16px;" onclick="abrirNuevoPrestamo()">+ Nuevo préstamo</button>`;
-  if(state.prestamos.length===0) html += `<p class="empty">Todavía no tienes préstamos.</p>`;
-  state.prestamos.forEach(p=>{
+  let html = `<div class="toprow">
+    <div class="searchbar"><span style="color:#9c9890">⌕</span><input id="f_buscarPrestamo" placeholder="Buscar préstamo (código o cliente)" value="${state.qPrestamos||""}" oninput="state.qPrestamos=this.value; filtrarListaPrestamos();"></div>
+    <button class="iconbtn" onclick="abrirNuevoPrestamo()">+</button>
+  </div>
+  <div id="lista-prestamos">${renderListaPrestamos()}</div>`;
+  return html;
+}
+function renderListaPrestamos(){
+  const filtro = (state.qPrestamos||"").toLowerCase();
+  const filtrados = state.prestamos.filter(p=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    const texto = (p.codigo + " " + (cli?cli.nombre:"")).toLowerCase();
+    return texto.includes(filtro);
+  });
+  if(state.prestamos.length===0){
+    return `<p class="empty">Todavía no tienes préstamos.</p>`;
+  }
+  if(filtrados.length===0){
+    return `<p class="empty">Ningún préstamo coincide con "${state.qPrestamos}".</p>`;
+  }
+  return filtrados.map(p=>{
     const cli = state.clientes.find(c=>c.id===p.clienteId);
     const r = resumen(p);
     const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
-    html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+    return `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
       <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
       <p class="sub">${p.codigo} · ${p.metodo.split(" (")[0]}</p>
       <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.saldoPendiente)}</p></div>
       <div style="text-align:right;">${badge(atraso>0?"Vencido":r.estado)}</div>
     </div>`;
-  });
-  return html;
+  }).join("");
+}
+function filtrarListaPrestamos(){
+  // Igual que en clientes: solo se actualiza la lista, el cuadro de búsqueda no se toca.
+  const el = document.getElementById("lista-prestamos");
+  if(el) el.innerHTML = renderListaPrestamos();
 }
 function verDetalle(id){ state.seleccionId=id; state.vista="detalle"; render(); }
 function volverLista(){ state.vista="lista"; render(); }
@@ -914,6 +1007,25 @@ function mensajeRecordatorio(p, cli, r, atraso){
     .replaceAll("{fecha}", fmtDate(r.proximaFecha))
     .replaceAll("{atraso}", `${atraso} día${atraso===1?"":"s"} de atraso`)
     .replaceAll("{dias}", String(atraso));
+}
+function diasParaVencer(fecha){
+  if(!fecha) return null;
+  const hoy = new Date().toISOString().slice(0,10);
+  return Math.round((new Date(fecha) - new Date(hoy))/86400000);
+}
+const PLANTILLA_PENDIENTE_DEFAULT = "Hola {nombre}, le saluda {negocio}. Le recordamos que su préstamo {codigo} tiene una cuota de {cuota} pendiente de cobro, con fecha {fecha}. Cualquier duda, con gusto le atendemos. ¡Gracias!";
+function mensajePendiente(p, cli, r){
+  const cuota = money(r.cuotaActual ? r.cuotaActual.cuota : r.cuota);
+  const nombre = cli ? cli.nombre.split(" ")[0] : "";
+  const nombreCompleto = cli ? cli.nombre : "";
+  const plantilla = (state.config.plantillaPendiente || PLANTILLA_PENDIENTE_DEFAULT);
+  return plantilla
+    .replaceAll("{negocio}", nombreNegocio())
+    .replaceAll("{nombre}", nombre)
+    .replaceAll("{nombreCompleto}", nombreCompleto)
+    .replaceAll("{codigo}", p.codigo)
+    .replaceAll("{cuota}", cuota)
+    .replaceAll("{fecha}", fmtDate(r.proximaFecha));
 }
 function linkWhatsapp(cli, mensaje){
   if(!cli || !cli.celular) return null;
@@ -952,20 +1064,11 @@ function viewCartera(){
     html += `<p class="cartera-grupo">${g.label} (${enGrupo.length})</p>`;
     enGrupo.forEach(({p, r, atraso})=>{
       const cli = state.clientes.find(c=>c.id===p.clienteId);
-      const mensaje = mensajeRecordatorio(p, cli, r, atraso);
-      const wa = linkWhatsapp(cli, mensaje);
-      const sms = linkSms(cli, mensaje);
-      html += `<div class="row-card" style="display:block;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="verDetalle('${p.id}')">
-          <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
-          <p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p>
-          <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.cuotaActual?r.cuotaActual.cuota:r.cuota)}</p></div>
-          <span class="badge b-vencido">${atraso} día${atraso===1?"":"s"}</span>
-        </div>
-        ${(wa||sms) ? `<div class="flexrow" style="margin-top:10px;">
-          ${wa?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;" href="${wa}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Recordar por WhatsApp</a>`:""}
-          ${sms?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;" href="${sms}" onclick="event.stopPropagation()">Recordar por SMS</a>`:""}
-        </div>` : `<p class="hint" style="margin-top:8px;">Este cliente no tiene celular registrado — agrégalo en su ficha para poder enviarle recordatorio.</p>`}
+      html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+        <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
+        <p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p>
+        <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.cuotaActual?r.cuotaActual.cuota:r.cuota)}</p></div>
+        <span class="badge b-vencido">${atraso} día${atraso===1?"":"s"}</span>
       </div>`;
     });
   });
@@ -1183,6 +1286,22 @@ function viewDetallePrestamo(){
       <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Próxima fecha</p><p style="font-size:15px;font-weight:600;margin:0;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</p></div>
       <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuotas pagadas</p><p style="font-size:15px;font-weight:600;margin:0;">${r.pagosHechos}${p.metodo.includes("Indefinido")?"":" / "+p.cuotas}</p></div>
     </div>
+    ${(()=>{
+      if(r.estado!=="Activo" || !r.proximaFecha) return "";
+      const faltan = diasParaVencer(r.proximaFecha);
+      if(!(atraso>0 || (faltan!==null && faltan>=0 && faltan<=1))) return "";
+      const mensaje = atraso>0 ? mensajeRecordatorio(p, cli, r, atraso) : mensajePendiente(p, cli, r);
+      const wa = linkWhatsapp(cli, mensaje);
+      const sms = linkSms(cli, mensaje);
+      const titulo = atraso>0 ? `Cuota vencida hace ${atraso} día${atraso===1?"":"s"}` : (faltan===0 ? "Cuota vence hoy" : "Cuota vence mañana");
+      return `<div class="row-card" style="display:block;padding:10px 12px;">
+        <p style="font-weight:600;margin:0 0 6px;font-size:13px;color:${atraso>0?"#A32D2D":NAVY};">${titulo}</p>
+        ${(wa||sms) ? `<div class="flexrow" style="gap:6px;">
+          ${wa?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;font-size:12px;padding:7px;" href="${wa}" target="_blank" rel="noopener">Recordar por WhatsApp</a>`:""}
+          ${sms?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;font-size:12px;padding:7px;" href="${sms}">Recordar por SMS</a>`:""}
+        </div>` : `<p class="hint" style="margin:0;font-size:12px;">Este cliente no tiene celular registrado — agrégalo en su ficha para poder enviarle recordatorio.</p>`}
+      </div>`;
+    })()}
     ${r.estado==="Activo" ? `
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 10px;">Registrar pago</p>
@@ -1205,7 +1324,7 @@ function viewDetallePrestamo(){
     <p class="section-title" style="margin-top:16px;">Tabla de amortización</p>
     <div id="tabla-imprimible">
       <h2 class="solo-imprimir">${nombreNegocio()}</h2>
-      <p class="hint solo-imprimir" style="margin:0 0 10px;">${p.codigo} · ${cli?cli.nombre:"—"} · Capital ${money(p.capital)} · Tasa ${p.tasa}% · ${p.metodo}</p>
+      <p class="hint solo-imprimir" style="margin:0 0 10px;">${p.codigo} · ${cli?cli.nombre:"—"} · Capital ${money(p.capital)} · Tasa ${p.tasa}% · ${p.periodo} · ${p.metodo}</p>
       <div style="border:1px solid #e5e1d8;border-radius:16px;overflow-x:auto;margin-bottom:16px;">
         <table style="min-width:620px;"><thead><tr><th>#</th><th>Fecha</th><th style="text-align:right">Interés</th><th style="text-align:right">Abono</th><th style="text-align:right">Cuota</th><th style="text-align:right">Saldo</th><th style="text-align:right">Estado</th></tr></thead>
         <tbody>${filasHtml}</tbody></table>
@@ -1229,16 +1348,19 @@ function cargarJsPDF(cb){
   s.onerror = function(){ state.pdfBusy = false; render(); alert("No se pudo cargar el generador de PDF. Revisa tu conexión a internet e intenta de nuevo."); };
   document.head.appendChild(s);
 }
-function generarPDFRecibo(p, cli, pg, r){
+function generarPDFRecibo(p, cli, pg, r, numRecibo){
   const { jsPDF } = window.jspdf;
   const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0);
   const concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota");
   const filas = [
-    ["Cliente", cli?cli.nombre:"—"],
-    ["Préstamo", p.codigo],
+    ["No. de recibo", "R-"+numRecibo],
     ["Fecha", fmtDate(pg.fecha)],
-    ["Concepto", concepto]
+    ["Cliente", cli?cli.nombre:"—"]
   ];
+  if(cli && cli.cedula) filas.push(["Cédula", cli.cedula]);
+  filas.push(["Préstamo", p.codigo]);
+  filas.push(["Método", p.metodo]);
+  filas.push(["Concepto", concepto]);
   if(pg.mora>0){ filas.push(["Cuota/abono", money(pg.monto)]); filas.push(["Mora", money(pg.mora)]); }
   filas.push(["Total pagado", money(totalPago)]);
   filas.push(["Saldo pendiente", money(r.saldoPendiente)]);
@@ -1280,7 +1402,7 @@ function generarPDFTabla(p, cli, r){
   doc.text(nombreNegocio(), marginX, y); y+=7;
   doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(90,90,90);
   doc.text(`Tabla de amortización — ${p.codigo}`, marginX, y); y+=5;
-  doc.text(`Cliente: ${cli?cli.nombre:"—"}   ·   Capital: ${money(p.capital)}   ·   Tasa: ${p.tasa}%   ·   Método: ${p.metodo}`, marginX, y); y+=8;
+  doc.text(`Cliente: ${cli?cli.nombre:"—"}   ·   Capital: ${money(p.capital)}   ·   Tasa: ${p.tasa}%   ·   Período: ${p.periodo}   ·   Método: ${p.metodo}`, marginX, y); y+=8;
 
   const cols = [
     {label:"#", w:12, align:"left"},
@@ -1344,14 +1466,17 @@ function compartirRecibo(prestamoId, pagoId){
   const p = state.prestamos.find(x=>x.id===prestamoId);
   if(!p) return;
   const cli = state.clientes.find(c=>c.id===p.clienteId);
-  const pg = (p.pagos||[]).find(x=>x.id===pagoId);
+  const pagos = p.pagos||[];
+  const idx = pagos.findIndex(x=>x.id===pagoId);
+  const pg = idx>=0 ? pagos[idx] : null;
   if(!pg) return;
+  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
   if(state.pdfBusy) return;
   state.pdfBusy = true; render();
   cargarJsPDF(async function(){
     try{
       const r = resumen(p);
-      const doc = generarPDFRecibo(p, cli, pg, r);
+      const doc = generarPDFRecibo(p, cli, pg, r, numRecibo);
       await compartirPDF(doc, `recibo-${p.codigo}.pdf`);
     } finally {
       state.pdfBusy = false; render();
@@ -1374,9 +1499,45 @@ function compartirTabla(id){
     }
   });
 }
+function imprimirPDFDoc(doc){
+  // Abre exactamente el mismo PDF que se usa para "Enviar" y dispara la impresión sobre
+  // ese mismo archivo, para que imprimir y enviar salgan siempre idénticos.
+  try{
+    doc.autoPrint();
+    const url = doc.output("bloburl");
+    const w = window.open(url, "_blank");
+    if(!w){
+      alert("El navegador bloqueó la ventana del PDF. Permite ventanas emergentes para poder imprimir, o usa el botón de Enviar y luego imprime desde ahí.");
+    }
+  }catch(err){
+    alert("Ocurrió un error generando el PDF para imprimir. Intenta de nuevo.");
+  }
+}
 function imprimirTabla(id){
-  state.seleccionId = id;
-  window.print();
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const r = resumen(p);
+  cargarJsPDF(function(){
+    const doc = generarPDFTabla(p, cli, r);
+    imprimirPDFDoc(doc);
+  });
+}
+function imprimirRecibo(){
+  const sel = state.reciboSel || {};
+  const p = state.prestamos.find(x=>x.id===sel.prestamoId);
+  if(!p) return;
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const pagos = p.pagos || [];
+  const idx = sel.pagoId ? pagos.findIndex(pg=>pg.id===sel.pagoId) : -1;
+  const pg = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
+  if(!pg) return;
+  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
+  const r = resumen(p);
+  cargarJsPDF(function(){
+    const doc = generarPDFRecibo(p, cli, pg, r, numRecibo);
+    imprimirPDFDoc(doc);
+  });
 }
 function registrarPago(id){
   const p = state.prestamos.find(x=>x.id===id);
@@ -1531,7 +1692,7 @@ function viewRecibo(){
     </div>
     <div class="flexrow" style="margin-top:16px;">
       <button class="btn btn-outline" onclick="state.vista='lista'; render();">Volver</button>
-      <button class="btn btn-gold" onclick="window.print()">Imprimir recibo</button>
+      <button class="btn btn-gold" onclick="imprimirRecibo()">Imprimir recibo</button>
     </div>
     <button class="btn btn-outline" style="margin-top:10px;" onclick="compartirRecibo('${p.id}','${pg.id||""}')">Enviar recibo (WhatsApp / otra app)</button>
     <button class="btn btn-danger" style="margin-top:10px;" onclick="eliminarPago('${p.id}','${pg.id||""}')">Eliminar este pago</button>`;
