@@ -315,8 +315,11 @@ function siglasNegocio(){
   return partes[0].slice(0,2).toUpperCase();
 }
 function viewBloqueo(){
-  const nombre = nombreNegocio();
-  const sigla = siglasNegocio();
+  // El nombre y las iniciales de esta pantalla de acceso quedan FIJOS en "JR Prestamito",
+  // sin importar el "Nombre del negocio" que se configure en Ajustes (ese nombre configurable
+  // solo aplica a recibos, reportes, etc. — no a esta pantalla).
+  const nombre = "JR PRESTAMITO";
+  const sigla = "JR";
   if(state.mostrarRecuperar){
     return `<div style="min-height:100vh;min-height:100dvh;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
       <div style="width:60px;height:60px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;margin-bottom:16px;">${sigla}</div>
