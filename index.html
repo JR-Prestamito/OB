@@ -308,23 +308,36 @@ function siglasNegocio(){
   const nombre = nombreNegocio().replace(/[^\p{L}\p{N}\s]/gu, "").trim();
   const partes = nombre.split(/\s+/).filter(Boolean);
   if(partes.length===0) return "JR";
-  // Si la primera palabra ya es una sigla (2 a 4 letras mayúsculas, ej. "JR"), se usa tal cual
+  // Si la primera palabra ya parece una sigla (2 a 4 letras, ej. "JR" o "jr"), se usa tal cual
   // en vez de combinarla con la inicial de la siguiente palabra (evita "JR Prestamito" -> "JP").
-  if(/^[A-ZÁÉÍÓÚÑ]{2,4}$/.test(partes[0])) return partes[0];
+  if(/^\p{L}{2,4}$/u.test(partes[0])) return partes[0].toUpperCase();
   if(partes.length>=2) return (partes[0][0]+partes[1][0]).toUpperCase();
   return partes[0].slice(0,2).toUpperCase();
 }
 function viewBloqueo(){
   const nombre = nombreNegocio();
   const sigla = siglasNegocio();
-  return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px 20px;">
-    <div style="width:56px;height:56px;border-radius:16px;background:${NAVY};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;margin-bottom:14px;">${sigla}</div>
-    <p style="font-weight:700;color:${NAVY};margin:0 0 4px;font-size:16px;">${nombre}</p>
-    <p class="hint" style="text-align:center;margin:0 0 22px;">Ingresa tu clave para continuar</p>
+  if(state.mostrarRecuperar){
+    return `<div style="min-height:100vh;min-height:100dvh;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+      <div style="width:60px;height:60px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;margin-bottom:16px;">${sigla}</div>
+      <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">Recuperar acceso</p>
+      <p style="text-align:center;margin:0 0 24px;color:rgba(255,255,255,.6);font-size:13px;max-width:260px;">Escribe el código de recuperación que definiste al crear tu clave.</p>
+      <input type="text" id="f_codigoRecuperacion" autocomplete="off"
+        style="width:100%;max-width:240px;text-align:center;font-size:16px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
+        placeholder="Código de recuperación" onkeypress="if(event.key==='Enter') verificarRecuperacion()">
+      <button class="btn btn-gold" style="max-width:240px;width:100%;margin-top:14px;" onclick="verificarRecuperacion()">Verificar</button>
+      <a href="javascript:void(0)" onclick="cancelarRecuperar()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">Cancelar</a>
+    </div>`;
+  }
+  return `<div style="min-height:100vh;min-height:100dvh;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    <div style="width:60px;height:60px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;margin-bottom:16px;">${sigla}</div>
+    <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">${nombre}</p>
+    <p style="text-align:center;margin:0 0 24px;color:rgba(255,255,255,.6);font-size:13px;">Ingresa tu clave para continuar</p>
     <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off"
-      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:1px solid #ddd;border-radius:12px;box-sizing:border-box;"
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
       maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarDesbloquear()">
     <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarDesbloquear()">Entrar</button>
+    <a href="javascript:void(0)" onclick="olvidoClavePregunta()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">¿Olvidaste tu clave?</a>
   </div>`;
 }
 function intentarDesbloquear(){
@@ -338,12 +351,44 @@ function intentarDesbloquear(){
     if(el){ el.value=""; el.focus(); }
   }
 }
+function olvidoClavePregunta(){
+  state.mostrarRecuperar = true;
+  render();
+}
+function cancelarRecuperar(){
+  state.mostrarRecuperar = false;
+  render();
+}
+function verificarRecuperacion(){
+  const el = document.getElementById("f_codigoRecuperacion");
+  const val = (el?el.value:"").trim();
+  if(!state.config.pinRecovery){
+    alert("No configuraste un código de recuperación cuando creaste esta clave, así que no es posible verificarlo aquí para quitarla de forma segura.\n\nSi tienes un respaldo descargado o sincronización con la nube configurada (Ajustes > Sincronizar), puedes borrar los datos de este sitio en el navegador y luego restaurar tu respaldo — así no perderás tu información. Si no tienes ningún respaldo, lamentablemente no hay forma de recuperar el acceso sin la clave.");
+    return;
+  }
+  if(val && val.toLowerCase() === String(state.config.pinRecovery).toLowerCase()){
+    delete state.config.pin;
+    delete state.config.pinRecovery;
+    state.desbloqueado = true;
+    state.ajustesDesbloqueado = false;
+    state.mostrarRecuperar = false;
+    save(); render();
+    alert("Clave quitada. Puedes poner una nueva desde Ajustes.");
+  } else {
+    alert("Ese código de recuperación no es correcto.");
+    if(el){ el.value=""; el.focus(); }
+  }
+}
 function guardarPin(){
   const el = document.getElementById("f_nuevoPin");
   const val = (el?el.value:"").trim();
+  const elR = document.getElementById("f_nuevaRecuperacion");
+  const recu = (elR?elR.value:"").trim();
   if(!val){ alert("Escribe una clave primero."); return; }
   if(val.length<4){ alert("Usa una clave de al menos 4 caracteres."); return; }
+  if(!recu){ alert("Escribe también un código de recuperación — lo necesitarás si algún día olvidas la clave."); return; }
   state.config.pin = val;
+  state.config.pinRecovery = recu;
   state.desbloqueado = true;
   save(); render();
   alert("Clave guardada. La próxima vez que se abra la app, la pedirá.");
@@ -352,6 +397,7 @@ function quitarPin(){
   const ok = confirm("¿Quitar la clave de acceso a la app? Cualquiera que la abra en este celular podrá entrar sin que se le pida nada, y Ajustes tampoco pedirá clave.");
   if(!ok) return;
   delete state.config.pin;
+  delete state.config.pinRecovery;
   state.ajustesDesbloqueado = false;
   save(); render();
 }
@@ -365,13 +411,17 @@ const ICONS = {
 
 function render(){
   if(state.config && state.config.pin && !state.desbloqueado){
-    document.getElementById("app").innerHTML =
-      `<header><div><p>${nombreNegocio()}</p><h1>Acceso</h1></div></header><div class="content">${viewBloqueo()}</div>`;
+    const appEl = document.getElementById("app");
+    appEl.style.padding = "0";
+    appEl.style.background = NAVY;
+    appEl.innerHTML = viewBloqueo();
     document.title = nombreNegocio();
-    const elp = document.getElementById("f_pinIngresado");
+    const elp = document.getElementById(state.mostrarRecuperar ? "f_codigoRecuperacion" : "f_pinIngresado");
     if(elp) elp.focus();
     return;
   }
+  document.getElementById("app").style.padding = "";
+  document.getElementById("app").style.background = "";
   // Guarda qué campo tenía el foco (y la posición del cursor) antes de reconstruir el DOM.
   // Sin esto, cada tecla presionada destruye y recrea el <input>, lo que en el celular
   // hace que el teclado parpadee o se cierre con cada dígito.
@@ -419,6 +469,18 @@ function render(){
 
   html += `</div>` + viewTabbar();
   document.getElementById("app").innerHTML = html;
+
+  // El panel de "Ajustes protegidos" debe verse centrado en el espacio que queda entre el
+  // encabezado y la barra inferior. En vez de adivinar esas alturas (que cambian según el
+  // celular, el notch, etc.), se miden de verdad ya insertado en la pantalla.
+  const panelClave = document.getElementById("panelAjustesClave");
+  if(panelClave){
+    const headerEl = document.querySelector("#app > header");
+    const tabbarEl = document.querySelector("#app > .tabbar");
+    const altoHeader = headerEl ? headerEl.offsetHeight : 0;
+    const altoTabbar = tabbarEl ? tabbarEl.offsetHeight : 0;
+    panelClave.style.minHeight = `calc(100vh - ${altoHeader + altoTabbar}px)`;
+  }
 
   // Restaura el foco (y la posición del cursor) en el mismo campo, si seguía existiendo.
   if(activoId){
@@ -751,12 +813,12 @@ function abrirAjustes(){
   render();
 }
 function viewAjustesClave(){
-  return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px 20px;">
-    <div style="width:56px;height:56px;border-radius:16px;background:${NAVY};display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;">🔒</div>
-    <p style="font-weight:700;color:${NAVY};margin:0 0 4px;font-size:16px;">Ajustes protegidos</p>
-    <p class="hint" style="text-align:center;margin:0 0 22px;">Es la misma clave con la que abres la app.</p>
+  return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    <div style="width:56px;height:56px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;">🔒</div>
+    <p style="font-weight:700;color:#fff;margin:0 0 2px;font-size:16px;line-height:1.3;">Ajustes protegidos</p>
+    <p style="text-align:center;margin:0 0 22px;color:rgba(255,255,255,.6);font-size:13px;line-height:1.3;">Es la misma clave con la que abres la app.</p>
     <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off"
-      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:1px solid #ddd;border-radius:12px;box-sizing:border-box;"
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
       maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarAjustes()">
     <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarAjustes()">Entrar</button>
   </div>`;
@@ -847,10 +909,12 @@ function viewAjustes(){
   <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Clave de acceso</p>
     <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "Esta misma clave protege la app al abrirla y también te la vuelve a pedir al entrar a Ajustes, por seguridad extra." : "Protege toda la app: la pedirá cada vez que se abra en este celular, y también al entrar a Ajustes."}</p>
-    <div class="flexrow">
-      <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}">
-      <button class="btn btn-outline" style="width:auto;padding:0 16px;" onclick="guardarPin()">Guardar</button>
-    </div>
+    <label style="margin-bottom:10px;"><span>${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}</span>
+      <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="Ej. 1234"></label>
+    <label style="margin-bottom:10px;"><span>Código de recuperación (algo que solo tú sepas, por si olvidas la clave)</span>
+      <input id="f_nuevaRecuperacion" type="text" autocomplete="off" placeholder="Ej. una palabra o frase que recuerdes" value="${state.config.pinRecovery||""}"></label>
+    <p class="hint" style="margin:0 0 10px;">Si algún día olvidas la clave, la pantalla de acceso te pedirá este código en vez de dejarte entrar sin más — así nadie puede saltarse la clave con solo tocar un botón.</p>
+    <button class="btn btn-outline" onclick="guardarPin()">Guardar</button>
     ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
   </div>`;
 }
