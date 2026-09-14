@@ -53,7 +53,8 @@
   .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
   .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
   .searchbar:focus-within{border-color:#1B2A4A;box-shadow:0 0 0 2px rgba(27,42,74,.15);}
-  .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#222;min-width:0;}
+  .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#222;min-width:0;-webkit-appearance:none;appearance:none;}
+  .searchbar input::-webkit-search-decoration,.searchbar input::-webkit-search-cancel-button,.searchbar input::-webkit-search-results-button,.searchbar input::-webkit-search-results-decoration{display:none;-webkit-appearance:none;}
   .toprow{display:flex;gap:8px;margin-bottom:16px;}
   .iconbtn{background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;flex-shrink:0;}
   .flexrow{display:flex;gap:8px;}
@@ -303,9 +304,19 @@ function badge(estado){
 function nombreNegocio(){
   return (state.config && state.config.nombreNegocio) ? state.config.nombreNegocio : "JR PRESTAMITO";
 }
+function siglasNegocio(){
+  const nombre = nombreNegocio().replace(/[^\p{L}\p{N}\s]/gu, "").trim();
+  const partes = nombre.split(/\s+/).filter(Boolean);
+  if(partes.length===0) return "JR";
+  // Si la primera palabra ya es una sigla (2 a 4 letras mayúsculas, ej. "JR"), se usa tal cual
+  // en vez de combinarla con la inicial de la siguiente palabra (evita "JR Prestamito" -> "JP").
+  if(/^[A-ZÁÉÍÓÚÑ]{2,4}$/.test(partes[0])) return partes[0];
+  if(partes.length>=2) return (partes[0][0]+partes[1][0]).toUpperCase();
+  return partes[0].slice(0,2).toUpperCase();
+}
 function viewBloqueo(){
   const nombre = nombreNegocio();
-  const sigla = nombre.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase() || "N";
+  const sigla = siglasNegocio();
   return `<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px 20px;">
     <div style="width:56px;height:56px;border-radius:16px;background:${NAVY};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;margin-bottom:14px;">${sigla}</div>
     <p style="font-weight:700;color:${NAVY};margin:0 0 4px;font-size:16px;">${nombre}</p>
@@ -706,10 +717,12 @@ function viewInicio(){
     cobrado += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
     if(r.estado==="Activo"){ activos++; if(r.proximaFecha && diasAtraso(r.proximaFecha)>0) vencidos++; }
   });
+  // "Próximos a vencer" muestra solo las cuotas que caen exactamente un día antes de su fecha
+  // de pago (faltan===1). Las que ya están atrasadas no van aquí — esas se ven en "Cuotas vencidas".
   let prox = state.prestamos.map(p=>({p, r:resumen(p)}))
     .filter(x=>x.r.estado==="Activo" && x.r.proximaFecha)
-    .map(x=>({...x, atraso: diasAtraso(x.r.proximaFecha), faltan: diasParaVencer(x.r.proximaFecha)}))
-    .filter(x=> x.atraso>0 || (x.faltan!==null && x.faltan>=0 && x.faltan<=1))
+    .map(x=>({...x, faltan: diasParaVencer(x.r.proximaFecha)}))
+    .filter(x=> x.faltan===1)
     .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha));
 
   let html = `<div class="grid2">
@@ -722,14 +735,12 @@ function viewInicio(){
   <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
   <p class="section-title" style="margin-top:16px;">Próximos a vencer</p>`;
 
-  if(prox.length===0) html += `<p class="empty">No tienes cuotas vencidas ni por vencer mañana. 🎉</p>`;
-  prox.forEach(({p,r,atraso,faltan})=>{
+  if(prox.length===0) html += `<p class="empty">No tienes cuotas por vencer mañana. 🎉</p>`;
+  prox.forEach(({p,r})=>{
     const cli = state.clientes.find(c=>c.id===p.clienteId);
-    const esVencido = atraso>0;
-    const etiqueta = esVencido ? `${atraso} día${atraso===1?"":"s"}` : (faltan===0 ? "Vence hoy" : "Vence mañana");
-    html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+    html += `<div class="row-card" style="cursor:pointer;" onclick="state.tab='prestamos'; verDetalle('${p.id}')">
       <div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>
-      ${esVencido ? `<span class="badge b-vencido">${etiqueta}</span>` : `<span class="badge" style="background:#EEF1F6;color:${NAVY};">${etiqueta}</span>`}
+      <span class="badge" style="background:#EEF1F6;color:${NAVY};">Vence mañana</span>
     </div>`;
   });
   return html;
@@ -846,7 +857,7 @@ function viewAjustes(){
 
 function viewClientes(){
   let html = `<div class="toprow">
-    <div class="searchbar"><span style="color:#9c9890">⌕</span><input id="f_buscarCliente" placeholder="Buscar cliente" value="${state.q}" oninput="state.q=this.value; filtrarListaClientes();"></div>
+    <input id="f_buscarCliente" type="text" name="q" placeholder="Buscar cliente" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1;" value="${state.q}" oninput="state.q=this.value; filtrarListaClientes();">
     <button class="iconbtn" onclick="abrirFormCliente(null)">+</button>
   </div>`;
 
@@ -882,8 +893,14 @@ function renderListaClientes(){
 function filtrarListaClientes(){
   // Solo actualiza la lista filtrada, sin redibujar toda la pantalla — así el cuadro de
   // búsqueda nunca se destruye ni parpadea mientras escribes.
-  const el = document.getElementById("lista-clientes");
-  if(el) el.innerHTML = renderListaClientes();
+  // Además, se retrasa un frame con requestAnimationFrame: así el navegador primero pinta
+  // la letra que acabas de teclear y luego, ya sin competir por el mismo instante, reconstruye
+  // la lista filtrada. Esto evita que escribir se sienta trabado cuando hay muchos clientes.
+  if(filtrarListaClientes._raf) cancelAnimationFrame(filtrarListaClientes._raf);
+  filtrarListaClientes._raf = requestAnimationFrame(()=>{
+    const el = document.getElementById("lista-clientes");
+    if(el) el.innerHTML = renderListaClientes();
+  });
 }
 function abrirFormCliente(id){
   state.clienteEditId = id;
@@ -952,7 +969,7 @@ function viewPrestamos(){
   if(state.vista==="refinanciar") return viewRefinanciar();
 
   let html = `<div class="toprow">
-    <div class="searchbar"><span style="color:#9c9890">⌕</span><input id="f_buscarPrestamo" placeholder="Buscar préstamo (código o cliente)" value="${state.qPrestamos||""}" oninput="state.qPrestamos=this.value; filtrarListaPrestamos();"></div>
+    <input id="f_buscarPrestamo" type="text" name="q" placeholder="Buscar préstamo (código o cliente)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1;" value="${state.qPrestamos||""}" oninput="state.qPrestamos=this.value; filtrarListaPrestamos();">
     <button class="iconbtn" onclick="abrirNuevoPrestamo()">+</button>
   </div>
   <div id="lista-prestamos">${renderListaPrestamos()}</div>`;
@@ -984,9 +1001,13 @@ function renderListaPrestamos(){
   }).join("");
 }
 function filtrarListaPrestamos(){
-  // Igual que en clientes: solo se actualiza la lista, el cuadro de búsqueda no se toca.
-  const el = document.getElementById("lista-prestamos");
-  if(el) el.innerHTML = renderListaPrestamos();
+  // Igual que en clientes: solo se actualiza la lista, el cuadro de búsqueda no se toca,
+  // y se retrasa un frame con requestAnimationFrame para que teclear no se sienta trabado.
+  if(filtrarListaPrestamos._raf) cancelAnimationFrame(filtrarListaPrestamos._raf);
+  filtrarListaPrestamos._raf = requestAnimationFrame(()=>{
+    const el = document.getElementById("lista-prestamos");
+    if(el) el.innerHTML = renderListaPrestamos();
+  });
 }
 function verDetalle(id){ state.seleccionId=id; state.vista="detalle"; render(); }
 function volverLista(){ state.vista="lista"; render(); }
@@ -1295,10 +1316,10 @@ function viewDetallePrestamo(){
       const sms = linkSms(cli, mensaje);
       const titulo = atraso>0 ? `Cuota vencida hace ${atraso} día${atraso===1?"":"s"}` : (faltan===0 ? "Cuota vence hoy" : "Cuota vence mañana");
       return `<div class="row-card" style="display:block;padding:10px 12px;">
-        <p style="font-weight:600;margin:0 0 6px;font-size:13px;color:${atraso>0?"#A32D2D":NAVY};">${titulo}</p>
+        <p style="font-weight:600;margin:0 0 6px;color:${atraso>0?"#A32D2D":NAVY};">${titulo}</p>
         ${(wa||sms) ? `<div class="flexrow" style="gap:6px;">
-          ${wa?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;font-size:12px;padding:7px;" href="${wa}" target="_blank" rel="noopener">Recordar por WhatsApp</a>`:""}
-          ${sms?`<a class="btn btn-outline" style="text-decoration:none;text-align:center;font-size:12px;padding:7px;" href="${sms}">Recordar por SMS</a>`:""}
+          ${wa?`<a class="btn btn-outline" style="flex:1;text-decoration:none;text-align:center;font-size:13.5px;padding:10px 6px;white-space:nowrap;" href="${wa}" target="_blank" rel="noopener">Enviar WhatsApp</a>`:""}
+          ${sms?`<a class="btn btn-outline" style="flex:1;text-decoration:none;text-align:center;font-size:13.5px;padding:10px 6px;white-space:nowrap;" href="${sms}">Enviar SMS</a>`:""}
         </div>` : `<p class="hint" style="margin:0;font-size:12px;">Este cliente no tiene celular registrado — agrégalo en su ficha para poder enviarle recordatorio.</p>`}
       </div>`;
     })()}
