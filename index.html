@@ -36,6 +36,9 @@
   .b-vencido{background:#FCEBEB;color:#A32D2D;}
   .b-refinanciado{background:#EAF0FB;color:#2255A0;}
   input,select{width:100%;border:1px solid #d8d3c8;border-radius:10px;padding:9px 11px;font-size:15px;background:#fff;}
+  .input-clave-bloqueo{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);color:#fff;transition:border-color .15s, box-shadow .15s;}
+  .input-clave-bloqueo::placeholder{color:rgba(255,255,255,.32);}
+  .input-clave-bloqueo:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,151,62,.25);}
   label{display:block;margin-bottom:12px;}
   label span{display:block;font-size:13px;color:#666;margin-bottom:4px;}
   .btn{border:none;border-radius:10px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;width:100%;}
@@ -323,6 +326,10 @@ function siglasNegocio(){
   if(partes.length>=2) return (partes[0][0]+partes[1][0]).toUpperCase();
   return partes[0].slice(0,2).toUpperCase();
 }
+function autoIntentarSiListo(valorActual, fn){
+  const pin = (state.config && state.config.pin) ? String(state.config.pin) : "";
+  if(pin && valorActual.length >= pin.length) fn();
+}
 function viewBloqueo(){
   // El nombre y las iniciales de esta pantalla de acceso quedan FIJOS en "JR Prestamito",
   // sin importar el "Nombre del negocio" que se configure en Ajustes (ese nombre configurable
@@ -330,24 +337,24 @@ function viewBloqueo(){
   const nombre = "JR PRESTAMITO";
   const sigla = "JR";
   if(state.mostrarRecuperar){
-    return `<div style="min-height:100vh;min-height:100dvh;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
-      <div style="width:60px;height:60px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;margin-bottom:16px;">${sigla}</div>
+    return `<div style="min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+      <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
       <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">Recuperar acceso</p>
       <p style="text-align:center;margin:0 0 24px;color:rgba(255,255,255,.6);font-size:13px;max-width:260px;">Escribe el código de recuperación que definiste al crear tu clave.</p>
-      <input type="text" id="f_codigoRecuperacion" autocomplete="off"
-        style="width:100%;max-width:240px;text-align:center;font-size:16px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
+      <input type="text" id="f_codigoRecuperacion" autocomplete="off" class="input-clave-bloqueo"
+        style="width:100%;max-width:240px;text-align:center;font-size:16px;padding:12px;border-radius:12px;box-sizing:border-box;"
         placeholder="Código de recuperación" onkeypress="if(event.key==='Enter') verificarRecuperacion()">
       <button class="btn btn-gold" style="max-width:240px;width:100%;margin-top:14px;" onclick="verificarRecuperacion()">Verificar</button>
       <a href="javascript:void(0)" onclick="cancelarRecuperar()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">Cancelar</a>
     </div>`;
   }
-  return `<div style="min-height:100vh;min-height:100dvh;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
-    <div style="width:60px;height:60px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;margin-bottom:16px;">${sigla}</div>
-    <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">${nombre}</p>
-    <p style="text-align:center;margin:0 0 24px;color:rgba(255,255,255,.6);font-size:13px;">Ingresa tu clave para continuar</p>
-    <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off"
-      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
-      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarDesbloquear()">
+  return `<div style="min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
+    <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:18px;text-align:center;letter-spacing:.02em;">${nombre}</p>
+    <p style="text-align:center;margin:0 0 26px;color:rgba(255,255,255,.55);font-size:13px;">Ingresa tu clave para continuar</p>
+    <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off" class="input-clave-bloqueo"
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:12px;box-sizing:border-box;"
+      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarDesbloquear()" oninput="autoIntentarSiListo(this.value, intentarDesbloquear)">
     <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarDesbloquear()">Entrar</button>
     <a href="javascript:void(0)" onclick="olvidoClavePregunta()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">¿Olvidaste tu clave?</a>
   </div>`;
@@ -825,13 +832,13 @@ function abrirAjustes(){
   render();
 }
 function viewAjustesClave(){
-  return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:${NAVY};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
-    <div style="width:56px;height:56px;border-radius:16px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px;">🔒</div>
+  return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    <div style="width:80px;height:80px;border-radius:22px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25);">🔒</div>
     <p style="font-weight:700;color:#fff;margin:0 0 2px;font-size:16px;line-height:1.3;">Ajustes protegidos</p>
-    <p style="text-align:center;margin:0 0 22px;color:rgba(255,255,255,.6);font-size:13px;line-height:1.3;">Es la misma clave con la que abres la app.</p>
-    <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off"
-      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border:none;border-radius:12px;box-sizing:border-box;"
-      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarAjustes()">
+    <p style="text-align:center;margin:0 0 22px;color:rgba(255,255,255,.55);font-size:13px;line-height:1.3;">Es la misma clave con la que abres la app.</p>
+    <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off" class="input-clave-bloqueo"
+      style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:12px;box-sizing:border-box;"
+      maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarAjustes()" oninput="autoIntentarSiListo(this.value, intentarAjustes)">
     <button class="btn btn-gold" style="max-width:220px;width:100%;margin-top:14px;" onclick="intentarAjustes()">Entrar</button>
   </div>`;
 }
