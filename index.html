@@ -19,7 +19,7 @@
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#222;}
   #app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:70px;background:var(--cream);}
   header{background:var(--navy);padding:calc(20px + env(safe-area-inset-top)) 16px 16px;}
-  header p{color:rgba(255,255,255,.7);font-size:11px;margin:0 0 2px;letter-spacing:.03em;}
+  header p{color:var(--gold);font-weight:700;font-size:11px;margin:0 0 2px;letter-spacing:.04em;}
   header h1{color:#fff;font-size:19px;margin:0;font-weight:600;}
   .content{padding:16px;}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
@@ -187,11 +187,58 @@ function fmtDate(dateStr){
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("es-HN", {day:"2-digit", month:"short", year:"numeric"});
 }
+function hoyISO(){
+  // OJO: usar el día calendario LOCAL, no toISOString() (que da la fecha en UTC).
+  // Honduras está en UTC-6, así que desde ~6:00pm hora local, toISOString() ya
+  // muestra la fecha del día siguiente, lo cual cobraba un día de mora de más
+  // (o marcaba cuotas vencidas antes de tiempo). Por eso se arma con la fecha local.
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dd}`;
+}
 function diasAtraso(fecha){
   if(!fecha) return 0;
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = hoyISO();
   const diff = Math.round((new Date(hoy) - new Date(fecha))/86400000);
   return Math.max(0, diff);
+}
+// Cuenta cuántas cuotas programadas ya vencieron (fecha pasada) y aún no están
+// completamente pagadas, a partir de la próxima cuota pendiente en adelante.
+function cuotasVencidas(r){
+  if(!r || !r.tabla || !r.tabla.length) return 0;
+  const hoy = hoyISO();
+  let n = 0;
+  for(let i=r.pagosHechos; i<r.tabla.length; i++){
+    if(r.tabla[i].fecha < hoy) n++; else break;
+  }
+  return n;
+}
+// Calcula cuánto corresponde pagar en total para ponerse al día: si solo está pendiente la
+// cuota en curso (aún no vencida o recién vencida) es lo de siempre, pero si ya se acumulan
+// varias cuotas vencidas, suma el monto de TODAS ellas y calcula la mora de cada una según
+// sus propios días de atraso (no solo los de la cuota más próxima).
+function calcularPendiente(p, r){
+  const tasaMora = Number(state.config.tasaMoraDiaria)||0;
+  const nVenc = cuotasVencidas(r);
+  const diasAtr = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
+  let monto = r.faltaEnCuotaActual || r.cuota || 0;
+  let mora = 0;
+  if(r.proximaFecha && tasaMora>0 && diasAtr>0){
+    const cuotaRef = r.cuotaActual ? r.cuotaActual.cuota : r.cuota;
+    mora += round2(cuotaRef*tasaMora/100*diasAtr);
+  }
+  for(let i=1;i<nVenc;i++){
+    const fila = r.tabla[r.pagosHechos+i];
+    if(!fila) break;
+    monto += fila.cuota;
+    if(tasaMora>0){
+      const diasAtrFila = diasAtraso(fila.fecha);
+      if(diasAtrFila>0) mora += round2(fila.cuota*tasaMora/100*diasAtrFila);
+    }
+  }
+  return { monto: round2(monto), mora: round2(mora), nVenc, diasAtr };
 }
 
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
@@ -302,8 +349,15 @@ function resumen(p){
   const abonadoEnCuotaActual = cuotaActual ? Math.max(0, totalPagado - baseAnterior) : 0;
   const faltaEnCuotaActual = cuotaActual ? Math.max(0, cuotaActual.cuota - abonadoEnCuotaActual) : 0;
   const saldoPendiente = Math.max(0, (acumulados[totalCuotas-1]||0) - totalPagado);
-  // capital realmente pendiente (sin contar el interés de las cuotas que faltan), util para refinanciar
-  const capitalPendiente = pagado ? 0 : (cuotasCompletas>0 ? Math.max(0, tabla[cuotasCompletas-1].saldo||0) : capital);
+  // Capital realmente pendiente (sin contar el interés de las cuotas que faltan), útil para
+  // refinanciar. OJO: no basta con tomar el saldo de la última cuota ya COMPLETA — si llevas
+  // un abono parcial en la cuota en curso, la parte de ese abono que corresponde a capital
+  // (según el propio cronograma: primero se cubre el interés de esa cuota, el resto es abono
+  // a capital) también hay que restarla, o el capital pendiente queda inflado.
+  const saldoBase = cuotasCompletas>0 ? Math.max(0, tabla[cuotasCompletas-1].saldo||0) : capital;
+  const interesCuotaActual = cuotaActual ? (cuotaActual.interes||0) : 0;
+  const abonoCapitalEnCuotaActual = Math.max(0, abonadoEnCuotaActual - interesCuotaActual);
+  const capitalPendiente = pagado ? 0 : Math.max(0, saldoBase - abonoCapitalEnCuotaActual);
 
   return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente, capitalPendiente, estado: pagado?"Pagado":"Activo",
     proximaFecha: pagado?null:(cuotaActual?cuotaActual.fecha:null), tabla, pagosHechos: cuotasCompletas,
@@ -332,8 +386,10 @@ function autoIntentarSiListo(valorActual, fn){
 }
 function viewBloqueo(){
   const sigla = "JR";
+  const marca = `<p style="position:absolute;top:calc(16px + env(safe-area-inset-top));left:20px;color:${GOLD};font-weight:700;font-size:13px;letter-spacing:.04em;margin:0;">JR PRESTAMITO</p>`;
   if(state.mostrarRecuperar){
-    return `<div style="min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+      ${marca}
       <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
       <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">Recuperar acceso</p>
       <p style="text-align:center;margin:0 0 24px;color:rgba(255,255,255,.6);font-size:13px;max-width:260px;">Escribe el código de recuperación que definiste al crear tu clave.</p>
@@ -344,8 +400,10 @@ function viewBloqueo(){
       <a href="javascript:void(0)" onclick="cancelarRecuperar()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">Cancelar</a>
     </div>`;
   }
-  return `<div style="min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
-    <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:22px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
+  return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    ${marca}
+    <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
+    <p style="text-align:center;margin:0 0 16px;color:rgba(255,255,255,.6);font-size:13px;">Ingresar clave</p>
     <input type="password" id="f_pinIngresado" inputmode="numeric" autocomplete="off" class="input-clave-bloqueo"
       style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:12px;box-sizing:border-box;"
       maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarDesbloquear()" oninput="autoIntentarSiListo(this.value, intentarDesbloquear)">
@@ -513,7 +571,7 @@ function exportarDatos(){
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const fecha = new Date().toISOString().slice(0,10);
+  const fecha = hoyISO();
   a.href = url;
   a.download = `jr-prestamito-respaldo-${fecha}.json`;
   document.body.appendChild(a);
@@ -590,7 +648,7 @@ function exportarExcel(){
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasClientes), "Clientes");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasPrestamos), "Préstamos");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasPagos), "Pagos");
-      const fecha = new Date().toISOString().slice(0,10);
+      const fecha = hoyISO();
       XLSX.writeFile(wb, `jr-prestamito-reporte-${fecha}.xlsx`);
     } catch(err){
       alert("Ocurrió un error generando el Excel. Intenta de nuevo.");
@@ -626,7 +684,7 @@ function viewReportePDF(){
   return `
     <div id="reporte-imprimible">
       <h2>${nombreNegocio()}</h2>
-      <p class="hint" style="margin:0 0 14px;">Reporte general · ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+      <p class="hint" style="margin:0 0 14px;">Reporte general · ${fmtDate(hoyISO())}</p>
       <div class="grid2" style="margin-bottom:16px;">
         <div><p class="hint" style="margin:0;">Capital prestado</p><p style="font-weight:700;margin:2px 0;">${money(prestado)}</p></div>
         <div><p class="hint" style="margin:0;">Total cobrado</p><p style="font-weight:700;margin:2px 0;">${money(cobrado)}</p></div>
@@ -689,7 +747,7 @@ function viewEstadoResultados(){
   return `
     <div id="reporte-imprimible">
       <h2>${nombreNegocio()}</h2>
-      <p class="hint" style="margin:0 0 14px;">Estado de resultados (base efectivo) · ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+      <p class="hint" style="margin:0 0 14px;">Estado de resultados (base efectivo) · ${fmtDate(hoyISO())}</p>
       <p style="font-weight:700;margin:0 0 6px;">Ingresos</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
         ${fila("Intereses cobrados", interesesCobrados)}
@@ -826,7 +884,8 @@ function abrirAjustes(){
 }
 function viewAjustesClave(){
   return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
-    <div style="width:80px;height:80px;border-radius:22px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);">🔒</div>
+    <div style="width:80px;height:80px;border-radius:22px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);">🔒</div>
+    <p style="text-align:center;margin:0 0 16px;color:rgba(255,255,255,.6);font-size:13px;">Ingresar clave</p>
     <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off" class="input-clave-bloqueo"
       style="width:100%;max-width:220px;text-align:center;font-size:22px;letter-spacing:6px;padding:12px;border-radius:12px;box-sizing:border-box;"
       maxlength="12" placeholder="••••" onkeypress="if(event.key==='Enter') intentarAjustes()" oninput="autoIntentarSiListo(this.value, intentarAjustes)">
@@ -898,7 +957,7 @@ function viewAjustes(){
     <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
       <textarea id="f_plantillaRecordatorio" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaRecordatorio=this.value; save();">${(state.config.plantillaRecordatorio||PLANTILLA_RECORDATORIO_DEFAULT)}</textarea>
     </label>
-    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajeRecordatorio({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:new Date().toISOString().slice(0,10)}, 5)}</p>
+    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajeRecordatorio({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:hoyISO()}, 5)}</p>
     <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de recordatorio original?')){ state.config.plantillaRecordatorio=PLANTILLA_RECORDATORIO_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
   </div>
   <div class="row-card" style="display:block;">
@@ -907,7 +966,7 @@ function viewAjustes(){
     <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
       <textarea id="f_plantillaPendiente" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaPendiente=this.value; save();">${(state.config.plantillaPendiente||PLANTILLA_PENDIENTE_DEFAULT)}</textarea>
     </label>
-    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajePendiente({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:new Date().toISOString().slice(0,10)})}</p>
+    <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajePendiente({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:hoyISO()})}</p>
     <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de pendiente original?')){ state.config.plantillaPendiente=PLANTILLA_PENDIENTE_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
   </div>
   <div class="row-card" style="display:block;">
@@ -1109,7 +1168,7 @@ function mensajeRecordatorio(p, cli, r, atraso){
 }
 function diasParaVencer(fecha){
   if(!fecha) return null;
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = hoyISO();
   return Math.round((new Date(fecha) - new Date(hoy))/86400000);
 }
 const PLANTILLA_PENDIENTE_DEFAULT = "Hola {nombre}, le saluda {negocio}. Le recordamos que su préstamo {codigo} tiene una cuota de {cuota} pendiente de cobro, con fecha {fecha}. Cualquier duda, con gusto le atendemos. ¡Gracias!";
@@ -1217,7 +1276,7 @@ function viewNuevoPrestamo(){
 function abrirNuevoPrestamo(){
   window._nf = {
     clienteId: state.clientes[0]?state.clientes[0].id:"", capital:"", tasa:"", cuotas:"",
-    periodo:"Mensual", metodo:METODOS[0], fechaInicio:new Date().toISOString().slice(0,10)
+    periodo:"Mensual", metodo:METODOS[0], fechaInicio:hoyISO()
   };
   state.vista = "nuevo";
   render();
@@ -1256,7 +1315,7 @@ function abrirRefinanciar(id){
   if(!p) return;
   window._rf = {
     origenId: id, enganche:"", adicional:"", tasa:p.tasa, periodo:p.periodo, metodo:p.metodo,
-    cuotas: p.cuotas || "", fechaInicio: new Date().toISOString().slice(0,10)
+    cuotas: p.cuotas || "", fechaInicio: hoyISO()
   };
   state.vista = "refinanciar";
   render();
@@ -1411,11 +1470,10 @@ function viewDetallePrestamo(){
     <td style="text-align:right;white-space:nowrap;">${estadoCelda}</td></tr>`;
   }).join("");
 
-  const tasaMora = Number(state.config.tasaMoraDiaria)||0;
-  const diasAtr = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
-  const cuotaRef = r.cuotaActual ? r.cuotaActual.cuota : r.cuota;
-  const moraCalc = (tasaMora>0 && diasAtr>0) ? Math.round(cuotaRef*tasaMora/100*diasAtr*100)/100 : 0;
-  const sugerido = r.faltaEnCuotaActual || r.cuota;
+  const pendiente = calcularPendiente(p, r);
+  const sugerido = pendiente.monto;
+  const moraCalc = pendiente.mora;
+  const nVenc = pendiente.nVenc;
   const esBullet = p.metodo === METODOS[3] || p.metodo === METODOS[4];
 
   return `
@@ -1451,19 +1509,19 @@ function viewDetallePrestamo(){
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 10px;">Registrar pago</p>
       ${r.abonadoEnCuotaActual>0 ? `<p class="hint" style="color:#8A6416;margin:0 0 10px;">Ya abonaste ${money(r.abonadoEnCuotaActual)} a esta cuota. Falta ${money(r.faltaEnCuotaActual)}.</p>` : ""}
-      ${moraCalc>0 ? `<p class="hint" style="color:#A32D2D;margin:0 0 6px;">Este pago tiene ${diasAtr} día(s) de atraso. Mora calculada: ${money(moraCalc)}</p>
+      ${moraCalc>0 ? `<p class="hint" style="color:#A32D2D;margin:0 0 6px;">${nVenc>1 ? `Tienes ${nVenc} cuotas vencidas. Mora total calculada: ${money(moraCalc)}` : `Este pago tiene ${pendiente.diasAtr} día(s) de atraso. Mora calculada: ${money(moraCalc)}`}</p>
       <label style="display:flex;align-items:center;gap:6px;margin-bottom:12px;"><input type="checkbox" id="incluirMora" checked style="width:auto;"><span style="margin:0;font-size:13px;color:#666;">Cobrar la mora junto con este pago</span></label>` : ""}
       <div class="flexrow">
         <input type="text" inputmode="decimal" id="montoPago" placeholder="${sugerido.toFixed(2)}">
         <button class="btn btn-gold" style="width:auto;padding:0 18px;" onclick="registrarPago('${p.id}')">Pagar</button>
       </div>
-      <p class="hint">Déjalo vacío para pagar lo sugerido. Un monto menor queda como abono parcial; uno mayor se aplica como abono a capital.</p>
+      <p class="hint">${nVenc>1 ? `El monto sugerido ya incluye las ${nVenc} cuotas vencidas.` : "Déjalo vacío para pagar lo sugerido."} Un monto menor queda como abono parcial; uno mayor se aplica como abono a capital.</p>
     </div>
     ${esBullet ? `
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 6px;">Liquidar anticipado</p>
       <p class="hint" style="margin:0 0 10px;">Calcula el interés real, prorateado por los días que realmente pasaron, si cancelas antes de la fecha de la cuota.</p>
-      <label><span>Fecha de liquidación</span><input type="date" id="fechaLiquidacion" value="${new Date().toISOString().slice(0,10)}"></label>
+      <label><span>Fecha de liquidación</span><input type="date" id="fechaLiquidacion" value="${hoyISO()}"></label>
       <button class="btn btn-outline" onclick="liquidarAnticipado('${p.id}')">Calcular y liquidar</button>
     </div>` : ""}` : ""}
     <p class="section-title" style="margin-top:16px;">Tabla de amortización</p>
@@ -1687,38 +1745,37 @@ function imprimirRecibo(){
 function registrarPago(id){
   const p = state.prestamos.find(x=>x.id===id);
   const r = resumen(p);
-  const tasaMora = Number(state.config.tasaMoraDiaria)||0;
-  const diasAtr = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
-  const cuotaRef = r.cuotaActual ? r.cuotaActual.cuota : r.cuota;
-  let mora = 0;
-  if(tasaMora>0 && diasAtr>0){
-    mora = Math.round(cuotaRef*tasaMora/100*diasAtr*100)/100;
+  const pendiente = calcularPendiente(p, r);
+  let mora = pendiente.mora;
+  if(mora>0){
     const chk = document.getElementById("incluirMora");
     if(chk && !chk.checked) mora = 0;
   }
   const val = document.getElementById("montoPago").value;
-  const sugerido = r.faltaEnCuotaActual || r.cuota;
+  const sugerido = pendiente.monto;
   const monto = val ? Number(val) : sugerido;
   if(!monto || monto<=0) return;
   const cli = state.clientes.find(c=>c.id===p.clienteId);
   const total = monto + mora;
+  const etiqueta = pendiente.nVenc>1 ? `Cuotas vencidas (${pendiente.nVenc})` : "Cuota/abono";
   const ok = confirm(
     `Vas a registrar un pago:\n` +
     `Cliente: ${cli?cli.nombre:"—"}\n` +
     `Préstamo: ${p.codigo}\n` +
-    (mora>0 ? `Cuota/abono: ${money(monto)}\nMora: ${money(mora)}\n` : `Monto: ${money(monto)}\n`) +
+    `${etiqueta}: ${money(monto)}\n` +
+    (mora>0 ? `Mora: ${money(mora)}\n` : ``) +
     `Total a pagar: ${money(total)}\n\n` +
     `¿Confirmas este pago?`
   );
   if(!ok) return;
   p.pagos = p.pagos || [];
-  p.pagos.push({ id:uid(), fecha:new Date().toISOString().slice(0,10), monto, mora });
+  p.pagos.push({ id:uid(), fecha:hoyISO(), monto, mora });
   save(); render();
 }
 function liquidarAnticipado(id){
   const p = state.prestamos.find(x=>x.id===id);
   const r = resumen(p);
-  const fechaLiq = document.getElementById("fechaLiquidacion").value || new Date().toISOString().slice(0,10);
+  const fechaLiq = document.getElementById("fechaLiquidacion").value || hoyISO();
   const diasPeriodo = DIAS_PERIODO[p.periodo] || 30;
   const tasaDiaria = (Number(p.tasa)||0)/100/diasPeriodo;
   const fechaBase = r.pagosHechos>0 ? r.tabla[r.pagosHechos-1].fecha : p.fechaInicio;
