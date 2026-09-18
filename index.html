@@ -396,7 +396,13 @@ function generarTablaDinamica(p){
   }
 
   const filas = [];
-  const totalFilasIndef = esIndef ? Math.max((p.pagos||[]).length + 4, 6) : 0;
+  // El buffer no puede depender solo de cuántos pagos hay: un préstamo indefinido muy
+  // atrasado y sin pagos igual necesita filas hasta el día de hoy (+1) para que la fila del
+  // período que toca pueda aparecer. Por eso también se calcula cuántos períodos han pasado
+  // de verdad según la fecha, y se usa el que sea más grande de los dos.
+  const diasTranscurridos = esIndef ? Math.max(0, Math.floor((new Date(hoyISO()+"T00:00:00") - new Date(p.fechaInicio+"T00:00:00")) / 86400000)) : 0;
+  const periodosTranscurridos = esIndef && dias>0 ? Math.floor(diasTranscurridos/dias) : 0;
+  const totalFilasIndef = esIndef ? Math.max((p.pagos||[]).length + 4, periodosTranscurridos + 4, 6) : 0;
   let idxAj = 0;
   for(let i=1; i<=(esIndef?totalFilasIndef:9999); i++){
     if(!esIndef && i>nTotalVigente) break;
@@ -455,13 +461,26 @@ function resumen(p){
   }
 
   if(esIndef){
-    const cuotaPeriodo = capital*tasa;
-    const periodosPagados = cuotaPeriodo>0 ? Math.floor((totalPagado+0.01)/cuotaPeriodo) : 0;
-    const abonadoEnCuotaActual = Math.max(0, totalPagado - periodosPagados*cuotaPeriodo);
-    return { cuota:cuotaPeriodo, saldoPendiente:capital, capitalPendiente:capital, estado:"Activo",
-      proximaFecha: tabla[periodosPagados] ? tabla[periodosPagados].fecha : null, tabla,
-      pagosHechos: periodosPagados, cuotaActual: tabla[periodosPagados]||null,
-      abonadoEnCuotaActual, faltaEnCuotaActual: Math.max(0, cuotaPeriodo-abonadoEnCuotaActual), moraTotal, totalPagado };
+    // Antes se usaba una fórmula fija (capital*tasa) para saber cuántos períodos ya se
+    // pagaron. El problema: si hubo un abono a capital, el interés real de los períodos
+    // siguientes baja (eso ya lo calcula bien generarTablaDinamica en "tabla"), pero la
+    // fórmula fija seguía comparando contra el interés ORIGINAL, más alto. Ahora se compara
+    // contra la cuota real de cada fila de "tabla", igual que se hace para los demás métodos.
+    let cumI = 0, periodosPagados = 0;
+    for(let i=0;i<tabla.length;i++){
+      cumI += tabla[i].cuota;
+      if(totalPagado+0.01 >= cumI) periodosPagados = i+1; else break;
+    }
+    const cuotaActualRow = tabla[periodosPagados] || null;
+    const baseAnterior = periodosPagados>0 ? tabla.slice(0,periodosPagados).reduce((s,f)=>s+f.cuota,0) : 0;
+    const abonadoEnCuotaActual = Math.max(0, totalPagado-baseAnterior);
+    const capitalPendienteIndef = periodosPagados>0 ? (tabla[periodosPagados-1].saldo||capital) : capital;
+    return { cuota: cuotaActualRow ? cuotaActualRow.cuota : (tabla[tabla.length-1]?tabla[tabla.length-1].cuota:0),
+      saldoPendiente: capitalPendienteIndef, capitalPendiente: capitalPendienteIndef, estado:"Activo",
+      proximaFecha: cuotaActualRow ? cuotaActualRow.fecha : null, tabla,
+      pagosHechos: periodosPagados, cuotaActual: cuotaActualRow,
+      abonadoEnCuotaActual, faltaEnCuotaActual: cuotaActualRow ? Math.max(0, cuotaActualRow.cuota-abonadoEnCuotaActual) : 0,
+      moraTotal, totalPagado };
   }
 
   // acumulado de cuotas: una cuota se marca "completa" cuando lo pagado alcanza su acumulado,
@@ -1597,7 +1616,20 @@ function viewDetallePrestamo(){
   const r = resumen(p);
   const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
 
-  let filasHtml = r.tabla.map((f,i)=>{
+  // El método Indefinido no tiene número de cuotas fijo: internamente se generan varias
+  // filas "de reserva" (generarTablaDinamica) para poder calcular fechas y mora con
+  // anticipación, pero mostrarlas todas de una vez confundiría (se verían períodos que
+  // todavía faltan meses). En la tabla que se VE, cada fila aparece un día antes de que se
+  // cumpla ese período, y se va quedando ahí ya como pagada o pendiente.
+  const esIndefDetalle = p.metodo === METODOS[5];
+  const filasParaTabla = esIndefDetalle
+    ? (function(){
+        const limite = addDays(hoyISO(), 1);
+        const visibles = r.tabla.filter(f=>f.fecha <= limite);
+        return visibles.length ? visibles : [r.tabla[0]];
+      })()
+    : r.tabla;
+  let filasHtml = filasParaTabla.map((f,i)=>{
     let estadoCelda;
     if(i < r.pagosHechos) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
     else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};font-size:11px;">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
@@ -1771,7 +1803,15 @@ function generarPDFTabla(p, cli, r){
     doc.setTextColor(40,40,40); doc.setFont("helvetica","normal"); doc.setFontSize(9);
   }
   dibujarEncabezado();
-  r.tabla.forEach((f,i)=>{
+  const esIndefPDF = p.metodo === METODOS[5];
+  const filasPDF = esIndefPDF
+    ? (function(){
+        const limite = addDays(hoyISO(), 1);
+        const visibles = r.tabla.filter(f=>f.fecha <= limite);
+        return visibles.length ? visibles : [r.tabla[0]];
+      })()
+    : r.tabla;
+  filasPDF.forEach((f,i)=>{
     if(y > pageH-14){ doc.addPage(); y=16; dibujarEncabezado(); }
     const est = i<r.pagosHechos ? "Pagada" : (i===r.pagosHechos && r.abonadoEnCuotaActual>0 ? `Abonado ${money(r.abonadoEnCuotaActual)}` : "Pendiente");
     const valores = [String(f.n), fmtDate(f.fecha), money(f.interes), money(f.abono), money(f.cuota), money(f.saldo), est];
