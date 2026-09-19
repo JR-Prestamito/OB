@@ -141,6 +141,43 @@ function migrarClaveVieja(base){
 // DENTRO de cada modificación (fecha, capitalAnterior, capitalNuevo, enganche, adicional,
 // pagosPrevios, ajustesPrevios...) no cambiaron, así que basta con copiar el arreglo completo
 // al nombre nuevo -- no hace falta traducir cada campo por separado.
+function asegurarEnganchesRegistrados(p){
+  // Compatibilidad con datos de versiones anteriores de la app: en algún momento, el enganche
+  // de un refinanciamiento se guardaba solo como número (engancheAlRefinanciar / m.enganche)
+  // sin crear el pago correspondiente en "pagos" — por eso no aparecía en la pantalla de Pagos,
+  // aunque el préstamo sí tenía el dato. Esto reconstruye ese pago si hace falta, sin duplicar
+  // si ya existe.
+  function tieneEnganche(lista, monto){
+    return (lista||[]).some(pg=> pg.tipo==="enganche" && Math.abs((Number(pg.monto)||0)-monto)<0.01);
+  }
+  // Caso "sustancial": el enganche vive en el préstamo NUEVO, como pago vigente.
+  if(p.refinanciaDe && Number(p.engancheAlRefinanciar)>0){
+    p.pagos = p.pagos || [];
+    if(!tieneEnganche(p.pagos, Number(p.engancheAlRefinanciar))){
+      p.pagos.unshift({ id: uid(), fecha: p.fechaInicio, monto: Number(p.engancheAlRefinanciar), mora:0, tipo:"enganche" });
+    }
+  }
+  // Caso "no sustancial": cada modificación de historialModificaciones puede traer su propio
+  // enganche. Si es la ÚLTIMA modificación registrada, ese enganche debería estar en p.pagos
+  // (vigente); si hubo una modificación posterior, debería estar archivado dentro del
+  // pagosPrevios de ESA modificación siguiente (que es lo que lo "reemplazó").
+  const hist = p.historialModificaciones || [];
+  hist.forEach((m, i)=>{
+    if(!(Number(m.enganche)>0)) return;
+    const esUltima = i === hist.length-1;
+    if(esUltima){
+      p.pagos = p.pagos || [];
+      if(!tieneEnganche(p.pagos, Number(m.enganche))){
+        p.pagos.unshift({ id: uid(), fecha: m.fecha, monto: Number(m.enganche), mora:0, tipo:"enganche" });
+      }
+    } else if(hist[i+1]){
+      hist[i+1].pagosPrevios = hist[i+1].pagosPrevios || [];
+      if(!tieneEnganche(hist[i+1].pagosPrevios, Number(m.enganche))){
+        hist[i+1].pagosPrevios.unshift({ id: uid(), fecha: m.fecha, monto: Number(m.enganche), mora:0, tipo:"enganche" });
+      }
+    }
+  });
+}
 function migrarPrestamosAntiguos(lista){
   (lista||[]).forEach(p=>{
     if(p.modificaciones && p.modificaciones.length){
@@ -157,6 +194,7 @@ function migrarPrestamosAntiguos(lista){
       });
       p.historialModificaciones.sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
     }
+    asegurarEnganchesRegistrados(p);
   });
   return lista||[];
 }
