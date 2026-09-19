@@ -143,8 +143,19 @@ function migrarClaveVieja(base){
 // al nombre nuevo -- no hace falta traducir cada campo por separado.
 function migrarPrestamosAntiguos(lista){
   (lista||[]).forEach(p=>{
-    if((!p.historialModificaciones || !p.historialModificaciones.length) && p.modificaciones && p.modificaciones.length){
-      p.historialModificaciones = p.modificaciones;
+    if(p.modificaciones && p.modificaciones.length){
+      p.historialModificaciones = p.historialModificaciones || [];
+      // Se fusiona (no se reemplaza) por si el archivo ya traía una mezcla: parte bajo el
+      // nombre nuevo (de una modificación reciente) y parte bajo el viejo (de una anterior,
+      // como un reenganche de un segundo refinanciamiento). El chequeo de "¿ya existe?" es
+      // por fecha+capitalAnterior, que en la práctica identifica cada modificación de forma
+      // única, para no duplicar una que ya se hubiera migrado antes.
+      p.modificaciones.forEach(mVieja=>{
+        const yaExiste = p.historialModificaciones.some(mNueva=>
+          mNueva.fecha===mVieja.fecha && mNueva.capitalAnterior===mVieja.capitalAnterior);
+        if(!yaExiste) p.historialModificaciones.push(mVieja);
+      });
+      p.historialModificaciones.sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
     }
   });
   return lista||[];
@@ -235,7 +246,17 @@ function money(n){
 // recalculado). Se usa para que "Total cobrado" y el Reporte general no pierdan de vista
 // ese dinero ya cobrado, aunque ya no esté en p.pagos.
 function pagosArchivados(p){
-  return (p.historialModificaciones||[]).flatMap(m=>m.pagosPrevios||[]);
+  // Red de seguridad: normalmente todo ya vive en p.historialModificaciones (ver
+  // migrarPrestamosAntiguos), pero si por alguna razón un dato llega sin migrar
+  // (p. ej. se agregó a mano, o vino de un origen que no pasó por esa función),
+  // también se revisa el nombre viejo p.modificaciones para no perder esos pagos
+  // de vista — fusionando sin duplicar por fecha+capitalAnterior.
+  const historial = (p.historialModificaciones || []).slice();
+  (p.modificaciones||[]).forEach(mVieja=>{
+    const yaExiste = historial.some(mNueva=> mNueva.fecha===mVieja.fecha && mNueva.capitalAnterior===mVieja.capitalAnterior);
+    if(!yaExiste) historial.push(mVieja);
+  });
+  return historial.flatMap(m=>m.pagosPrevios||[]);
 }
 function capitalDesembolsadoNeto(p){
   // Bajo NIF (y cualquier criterio contable razonable), refinanciar un préstamo NO es
