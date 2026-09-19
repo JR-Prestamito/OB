@@ -18,6 +18,10 @@
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#222;overscroll-behavior-y:contain;}
   html{overscroll-behavior-y:contain;}
+  #pull-refresh-indicator{position:fixed;top:0;left:50%;transform:translate(-50%,-100%);background:var(--navy);color:#fff;font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:0 0 12px 12px;z-index:9999;display:flex;align-items:center;gap:8px;transition:transform .18s ease,opacity .18s ease;opacity:0;pointer-events:none;}
+  #pull-refresh-indicator.mostrando{transform:translate(-50%,0);opacity:1;}
+  #pull-refresh-indicator .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:pr-spin .7s linear infinite;}
+  @keyframes pr-spin{to{transform:rotate(360deg);}}
   #app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:70px;background:var(--cream);}
   header{background:var(--navy);padding:calc(20px + env(safe-area-inset-top)) 16px 16px;}
   header p{color:var(--gold);font-weight:700;font-size:11px;margin:0 0 2px;letter-spacing:.04em;}
@@ -119,19 +123,49 @@ function migrarClaveVieja(base){
 }
 ["jr_clientes","jr_prestamos","jr_config"].forEach(migrarClaveVieja);
 
+// Guarda en qué pantalla está el usuario (pestaña, vista y qué cliente/préstamo tiene
+// abierto) para poder devolverlo exactamente ahí después de una recarga del navegador —
+// por ejemplo, la que dispara el gesto de "deslizar hacia abajo para actualizar" (ver más
+// abajo). sessionStorage se limpia solo al cerrar la pestaña, así que no interfiere entre
+// distintas sesiones.
+function navGuardada(){
+  try{
+    const raw = sessionStorage.getItem(LK("jr_nav"));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+const _navPrevia = navGuardada();
+// Los formularios de "nuevo préstamo" y "refinanciar" guardan lo que se va escribiendo en
+// window._nf / window._rf (fuera de "state" a propósito). Si solo restauramos state.vista
+// pero no esto, una recarga a mitad de esos formularios los deja apuntando a "undefined" y
+// la pantalla se rompe — o, si el deslizón fue sin querer justo mientras se llenaba un
+// formulario, se pierde lo que ya se había escrito. Por eso también se guardan aquí.
+window._nf = (_navPrevia && _navPrevia._nf) || null;
+window._rf = (_navPrevia && _navPrevia._rf) || null;
+
 let state = {
-  tab: "inicio",
+  tab: (_navPrevia && _navPrevia.tab) || "inicio",
   clientes: JSON.parse(localStorage.getItem(LK("jr_clientes")) || "[]"),
   prestamos: JSON.parse(localStorage.getItem(LK("jr_prestamos")) || "[]"),
   config: JSON.parse(localStorage.getItem(LK("jr_config")) || '{"tasaMoraDiaria":0}'),
-  vista: "lista",
-  seleccionId: null,
-  showFormCliente: false,
+  vista: (_navPrevia && _navPrevia.vista) || "lista",
+  seleccionId: (_navPrevia && _navPrevia.seleccionId) || null,
+  showFormCliente: (_navPrevia && _navPrevia.showFormCliente) || false,
+  clienteEditId: (_navPrevia && _navPrevia.clienteEditId) || null,
   desbloqueado: sessionStorage.getItem(LK("jr_desbloqueado")) === "1",
   ajustesDesbloqueado: sessionStorage.getItem(LK("jr_ajustes_desbloqueado")) === "1",
   q: "",
   qPrestamos: ""
 };
+function guardarNav(){
+  try{
+    sessionStorage.setItem(LK("jr_nav"), JSON.stringify({
+      tab: state.tab, vista: state.vista, seleccionId: state.seleccionId,
+      showFormCliente: state.showFormCliente, clienteEditId: state.clienteEditId,
+      _nf: window._nf || null, _rf: window._rf || null
+    }));
+  }catch(e){}
+}
 
 let autoSyncTimer = null;
 function save(opts){
@@ -183,11 +217,6 @@ function capitalDesembolsadoNeto(p){
   // ningún lado). Por eso usamos el capital ORIGINAL (el capitalAnterior de la primera
   // modificación en el historial, si existe) y le sumamos cualquier "adicional" (dinero
   // nuevo realmente entregado) que se haya guardado en modificaciones posteriores.
-  // Si el préstamo es de antes de que se empezara a guardar ese historial, no hay forma de
-  // recuperar el capital original solo — por eso existe capitalOriginalManual, una
-  // corrección manual opcional que se pone desde "Editar préstamo" y siempre gana.
-  const manual = Number(p.capitalOriginalManual)||0;
-  if(manual>0) return manual;
   const historial = p.historialModificaciones || [];
   const capitalOriginal = historial.length ? Number(historial[0].capitalAnterior)||0 : Number(p.capital)||0;
   const adicionalesModificaciones = historial.reduce((s,m)=> s + (Number(m.adicional)||0), 0);
@@ -659,6 +688,7 @@ function render(){
   }
   document.getElementById("app").style.padding = "";
   document.getElementById("app").style.background = "";
+  guardarNav();
   // Guarda qué campo tenía el foco (y la posición del cursor) antes de reconstruir el DOM.
   // Sin esto, cada tecla presionada destruye y recrea el <input>, lo que en el celular
   // hace que el teclado parpadee o se cierre con cada dígito.
@@ -1449,12 +1479,6 @@ function viewNuevoPrestamo(){
     <label><span>Método de amortización</span><select onchange="window._nf.metodo=this.value; render()">${metodoOpts}</select></label>
     ${esIndef?"":`<label><span>Cantidad de cuotas</span><input id="nf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._nf.cuotas=filtrarEntero(this.value); render()"></label>`}
     <label><span>Fecha del préstamo</span><input id="nf_fecha" type="date" value="${f.fechaInicio}" oninput="window._nf.fechaInicio=this.value; render()"></label>
-    ${editando ? `
-    <div class="card" style="background:#F5F3EE;margin:4px 0 16px;">
-      <p style="font-size:13px;font-weight:600;margin:0 0 4px;">Corrección de capital histórico (opcional)</p>
-      <p class="hint" style="margin:0 0 10px;">Solo si este préstamo tuvo alguna modificación de condiciones o refinanciamiento y "Capital prestado" en Resumen no refleja el monto que realmente desembolsaste al inicio (por ejemplo, porque la modificación fue de antes de que la app guardara ese historial): pon aquí ese monto original para corregirlo. Si nunca se ha modificado, déjalo vacío. No afecta el saldo actual ni la tabla de pagos, solo el total histórico.</p>
-      <label style="margin:0;"><span>Capital originalmente desembolsado (L)</span><input id="nf_capitalOriginalManual" type="text" inputmode="decimal" placeholder="Déjalo vacío para usar el cálculo automático" value="${f.capitalOriginalManual||""}" oninput="window._nf.capitalOriginalManual=filtrarDecimal(this.value); render()"></label>
-    </div>` : ""}
     ${previewHtml}
     <div class="flexrow">
       <button class="btn btn-outline" onclick="window._nf=null; state.vista=${editando?"'detalle'":"'lista'"}; render()">Cancelar</button>
@@ -1474,9 +1498,7 @@ function abrirEditarPrestamo(id){
   const p = state.prestamos.find(x=>x.id===id);
   if(!p) return;
   window._nf = { editId:p.id, codigo:p.codigo, clienteId:p.clienteId, capital:p.capital, tasa:p.tasa,
-    cuotas:p.cuotas, periodo:p.periodo, metodo:p.metodo, fechaInicio:p.fechaInicio,
-    tieneModificaciones: !!(p.historialModificaciones && p.historialModificaciones.length),
-    capitalOriginalManual: p.capitalOriginalManual||"" };
+    cuotas:p.cuotas, periodo:p.periodo, metodo:p.metodo, fechaInicio:p.fechaInicio };
   state.vista = "nuevo";
   render();
 }
@@ -1492,8 +1514,7 @@ function guardarPrestamo(){
     const p = state.prestamos.find(x=>x.id===f.editId);
     Object.assign(p, {
       codigo:codigoDeseado, clienteId:f.clienteId, capital:f.capital, tasa:f.tasa, periodo:f.periodo,
-      metodo:f.metodo, fechaInicio:f.fechaInicio, cuotas: esIndef?0:Number(f.cuotas),
-      capitalOriginalManual: f.capitalOriginalManual ? (Number(f.capitalOriginalManual)||0) : undefined
+      metodo:f.metodo, fechaInicio:f.fechaInicio, cuotas: esIndef?0:Number(f.cuotas)
     });
     window._nf = null;
     state.vista = "detalle";
@@ -2168,6 +2189,48 @@ function viewTabbar(){
       ${ICONS[icon]}<span>${label}</span>
     </button>`).join("")}</div>`;
 }
+
+// --- "Deslizar hacia abajo para actualizar" hecho a mano: dispara una recarga REAL del
+// navegador (para traer siempre la última versión del archivo) pero, gracias a guardarNav()
+// / navGuardada() de arriba, al volver a cargar la app te deja exactamente en la misma
+// pantalla en la que estabas — no te manda a Inicio como haría el gesto nativo del navegador
+// (que overscroll-behavior, arriba, ya bloquea para que no dispare solo por accidente).
+(function(){
+  let indicador = null;
+  function getIndicador(){
+    if(!indicador){
+      indicador = document.createElement("div");
+      indicador.id = "pull-refresh-indicator";
+      document.body.appendChild(indicador);
+    }
+    return indicador;
+  }
+  const UMBRAL = 70;
+  let startY = null, disparado = false;
+  document.addEventListener("touchstart", function(e){
+    if(window.scrollY > 0){ startY = null; return; }
+    if(e.touches.length !== 1) { startY = null; return; }
+    startY = e.touches[0].clientY;
+    disparado = false;
+  }, { passive: true });
+  document.addEventListener("touchmove", function(e){
+    if(startY===null || disparado) return;
+    const delta = e.touches[0].clientY - startY;
+    if(delta <= 0){ return; }
+    if(window.scrollY > 0){ startY = null; return; }
+    if(delta > UMBRAL){
+      disparado = true;
+      const ind = getIndicador();
+      ind.classList.add("mostrando");
+      ind.innerHTML = `<span class="spin"></span> Actualizando…`;
+      guardarNav();
+      setTimeout(function(){ location.reload(); }, 200);
+    }
+  }, { passive: true });
+  document.addEventListener("touchend", function(){
+    startY = null;
+  }, { passive: true });
+})();
 
 render();
 </script>
