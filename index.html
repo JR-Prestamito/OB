@@ -176,7 +176,17 @@ function capitalDesembolsadoNeto(p){
   // realmente sale de caja en ese momento — el "monto adicional" entregado al refinanciar —
   // es capital nuevo. Un préstamo que no viene de un refinanciamiento sí cuenta completo.
   if(p.refinanciaDe) return Number(p.adicionalAlRefinanciar)||0;
-  return Number(p.capital)||0;
+  // Cuando una modificación se clasifica como NO sustancial (NIF), no se crea préstamo
+  // nuevo: se sobrescribe p.capital con el nuevo monto (capital pendiente − enganche +
+  // adicional). Si aquí solo miráramos p.capital actual, un enganche que redujo el capital
+  // "desaparecería" del total histórico (el capital original ya no queda registrado en
+  // ningún lado). Por eso usamos el capital ORIGINAL (el capitalAnterior de la primera
+  // modificación en el historial, si existe) y le sumamos cualquier "adicional" (dinero
+  // nuevo realmente entregado) que se haya guardado en modificaciones posteriores.
+  const historial = p.historialModificaciones || [];
+  const capitalOriginal = historial.length ? Number(historial[0].capitalAnterior)||0 : Number(p.capital)||0;
+  const adicionalesModificaciones = historial.reduce((s,m)=> s + (Number(m.adicional)||0), 0);
+  return capitalOriginal + adicionalesModificaciones;
 }
 function addDays(dateStr, days){
   const d = new Date(dateStr + "T00:00:00");
@@ -888,6 +898,7 @@ function viewEstadoResultados(){
     capitalCobrado += d.capital;
     moraCobrada += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.mora)||0),0);
     if(p.refinanciaDe) enganches += Number(p.engancheAlRefinanciar)||0;
+    (p.historialModificaciones||[]).forEach(m=> enganches += Number(m.enganche)||0);
     desembolsos += capitalDesembolsadoNeto(p);
   });
   const ingresos = interesesCobrados + capitalCobrado + moraCobrada + enganches;
@@ -994,10 +1005,11 @@ function viewInicio(){
   if(state.vista==="estadoResultados") return viewEstadoResultados();
   if(state.vista==="ajustesClave") return viewAjustesClave();
   if(state.vista==="ajustes") return viewAjustes();
-  let prestado=0, cobrado=0, activos=0, vencidos=0;
+  let prestado=0, capitalActual=0, cobrado=0, activos=0, vencidos=0;
   state.prestamos.forEach(p=>{
     const r = resumen(p);
     prestado += capitalDesembolsadoNeto(p);
+    capitalActual += r.capitalPendiente||0;
     cobrado += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
     if(r.estado==="Activo"){ activos++; if(r.proximaFecha && diasAtraso(r.proximaFecha)>0) vencidos++; }
   });
@@ -1014,6 +1026,11 @@ function viewInicio(){
     <div class="card" style="background:#FBF3E4;"><p class="lbl">Total cobrado</p><p class="val" style="color:#8A6416">${money(cobrado)}</p></div>
     <div class="card" style="background:#EAF3DE;"><p class="lbl">Préstamos activos</p><p class="val" style="color:#3B6D11">${activos}</p></div>
     <div class="card" style="background:#FCEBEB;cursor:pointer;" onclick="verCartera()"><p class="lbl">Cuotas vencidas</p><p class="val" style="color:#A32D2D">${vencidos}</p></div>
+    <div class="card" style="background:#F0EAFB;grid-column:1/-1;">
+      <p class="lbl">Capital actual prestado</p>
+      <p class="val" style="color:#5B3E96">${money(capitalActual)}</p>
+      <p class="hint" style="margin:2px 0 0;">Saldo de capital que tus clientes todavía te deben (no incluye interés de cuotas futuras).</p>
+    </div>
   </div>
   <p class="section-title">Clientes</p>
   <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
@@ -1592,7 +1609,8 @@ function guardarRefinanciamiento(){
     origen.historialModificaciones = origen.historialModificaciones || [];
     origen.historialModificaciones.push({
       fecha: f.fechaInicio, capitalAnterior: origen.capital, capitalNuevo: nuevoCapital,
-      tasaAnterior: origen.tasa, tasaNueva: f.tasa, motivo: "Modificación de condiciones (no sustancial, NIF)"
+      tasaAnterior: origen.tasa, tasaNueva: f.tasa, motivo: "Modificación de condiciones (no sustancial, NIF)",
+      enganche, adicional
     });
     origen.capital = nuevoCapital;
     origen.tasa = f.tasa;
