@@ -183,6 +183,11 @@ function capitalDesembolsadoNeto(p){
   // ningún lado). Por eso usamos el capital ORIGINAL (el capitalAnterior de la primera
   // modificación en el historial, si existe) y le sumamos cualquier "adicional" (dinero
   // nuevo realmente entregado) que se haya guardado en modificaciones posteriores.
+  // Si el préstamo es de antes de que se empezara a guardar ese historial, no hay forma de
+  // recuperar el capital original solo — por eso existe capitalOriginalManual, una
+  // corrección manual opcional que se pone desde "Editar préstamo" y siempre gana.
+  const manual = Number(p.capitalOriginalManual)||0;
+  if(manual>0) return manual;
   const historial = p.historialModificaciones || [];
   const capitalOriginal = historial.length ? Number(historial[0].capitalAnterior)||0 : Number(p.capital)||0;
   const adicionalesModificaciones = historial.reduce((s,m)=> s + (Number(m.adicional)||0), 0);
@@ -1436,6 +1441,7 @@ function viewNuevoPrestamo(){
   return `
     ${editando ? `<p class="hint" style="margin-bottom:12px;">Editando ${f.codigo} — cambiar estos datos puede afectar la tabla de amortización y los pagos ya registrados.</p>` : ""}
     ${state.clientes.length===0 ? `<p style="color:#c0433b;font-size:13px;">Agrega un cliente primero en la pestaña Clientes.</p>` : ""}
+    <label><span>Código de préstamo</span><input id="nf_codigo" type="text" value="${f.codigo||""}" ${editando?"disabled style='opacity:.6;background:#eee;'":""} oninput="window._nf.codigo=this.value.toUpperCase(); render()"></label>
     <label><span>Cliente</span><select onchange="window._nf.clienteId=this.value; render()">${opts}</select></label>
     <label><span>Capital a financiar (L)</span><input id="nf_capital" type="text" inputmode="decimal" value="${f.capital}" oninput="window._nf.capital=filtrarDecimal(this.value); render()"></label>
     <label><span>Tasa de interés por período (%)</span><input id="nf_tasa" type="text" inputmode="decimal" value="${f.tasa}" oninput="window._nf.tasa=filtrarDecimal(this.value); render()"></label>
@@ -1443,6 +1449,12 @@ function viewNuevoPrestamo(){
     <label><span>Método de amortización</span><select onchange="window._nf.metodo=this.value; render()">${metodoOpts}</select></label>
     ${esIndef?"":`<label><span>Cantidad de cuotas</span><input id="nf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._nf.cuotas=filtrarEntero(this.value); render()"></label>`}
     <label><span>Fecha del préstamo</span><input id="nf_fecha" type="date" value="${f.fechaInicio}" oninput="window._nf.fechaInicio=this.value; render()"></label>
+    ${editando ? `
+    <div class="card" style="background:#F5F3EE;margin:4px 0 16px;">
+      <p style="font-size:13px;font-weight:600;margin:0 0 4px;">Corrección de capital histórico (opcional)</p>
+      <p class="hint" style="margin:0 0 10px;">Solo si este préstamo tuvo alguna modificación de condiciones o refinanciamiento y "Capital prestado" en Resumen no refleja el monto que realmente desembolsaste al inicio (por ejemplo, porque la modificación fue de antes de que la app guardara ese historial): pon aquí ese monto original para corregirlo. Si nunca se ha modificado, déjalo vacío. No afecta el saldo actual ni la tabla de pagos, solo el total histórico.</p>
+      <label style="margin:0;"><span>Capital originalmente desembolsado (L)</span><input id="nf_capitalOriginalManual" type="text" inputmode="decimal" placeholder="Déjalo vacío para usar el cálculo automático" value="${f.capitalOriginalManual||""}" oninput="window._nf.capitalOriginalManual=filtrarDecimal(this.value); render()"></label>
+    </div>` : ""}
     ${previewHtml}
     <div class="flexrow">
       <button class="btn btn-outline" onclick="window._nf=null; state.vista=${editando?"'detalle'":"'lista'"}; render()">Cancelar</button>
@@ -1451,6 +1463,7 @@ function viewNuevoPrestamo(){
 }
 function abrirNuevoPrestamo(){
   window._nf = {
+    codigo: nextCode("P", state.prestamos),
     clienteId: state.clientes[0]?state.clientes[0].id:"", capital:"", tasa:"", cuotas:"",
     periodo:"Mensual", metodo:METODOS[0], fechaInicio:hoyISO()
   };
@@ -1461,7 +1474,9 @@ function abrirEditarPrestamo(id){
   const p = state.prestamos.find(x=>x.id===id);
   if(!p) return;
   window._nf = { editId:p.id, codigo:p.codigo, clienteId:p.clienteId, capital:p.capital, tasa:p.tasa,
-    cuotas:p.cuotas, periodo:p.periodo, metodo:p.metodo, fechaInicio:p.fechaInicio };
+    cuotas:p.cuotas, periodo:p.periodo, metodo:p.metodo, fechaInicio:p.fechaInicio,
+    tieneModificaciones: !!(p.historialModificaciones && p.historialModificaciones.length),
+    capitalOriginalManual: p.capitalOriginalManual||"" };
   state.vista = "nuevo";
   render();
 }
@@ -1469,17 +1484,21 @@ function guardarPrestamo(){
   const f = window._nf;
   const esIndef = f.metodo === METODOS[5];
   if(!f.clienteId || !f.capital || !f.tasa || (!esIndef && !f.cuotas)) return;
+  const codigoDeseado = (f.codigo||"").trim();
+  if(!codigoDeseado){ alert("Ponle un código al préstamo."); return; }
+  const duplicado = state.prestamos.find(x=>x.codigo===codigoDeseado && x.id!==f.editId);
+  if(duplicado){ alert(`Ya existe el préstamo ${codigoDeseado}. Usa otro código.`); return; }
   if(f.editId){
     const p = state.prestamos.find(x=>x.id===f.editId);
     Object.assign(p, {
-      clienteId:f.clienteId, capital:f.capital, tasa:f.tasa, periodo:f.periodo,
-      metodo:f.metodo, fechaInicio:f.fechaInicio, cuotas: esIndef?0:Number(f.cuotas)
+      codigo:codigoDeseado, clienteId:f.clienteId, capital:f.capital, tasa:f.tasa, periodo:f.periodo,
+      metodo:f.metodo, fechaInicio:f.fechaInicio, cuotas: esIndef?0:Number(f.cuotas),
+      capitalOriginalManual: f.capitalOriginalManual ? (Number(f.capitalOriginalManual)||0) : undefined
     });
     window._nf = null;
     state.vista = "detalle";
   } else {
-    const codigo = nextCode("P", state.prestamos);
-    state.prestamos.push({ id:uid(), codigo, ...f, cuotas: esIndef?0:Number(f.cuotas), pagos:[] });
+    state.prestamos.push({ id:uid(), ...f, codigo:codigoDeseado, cuotas: esIndef?0:Number(f.cuotas), pagos:[] });
     window._nf = null;
     state.vista = "lista";
   }
