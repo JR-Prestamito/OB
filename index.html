@@ -68,6 +68,18 @@
   table{width:100%;border-collapse:collapse;font-size:12px;}
   th{background:#F5F3EE;text-align:left;padding:8px 6px;}
   td{padding:6px;border-top:1px solid #eee;}
+  /* Tabla de amortización: a diferencia de las tablas normales de arriba (que dejaban
+     desbordar y scrollear hacia los lados en pantallas angostas), esta va SIEMPRE al ancho
+     exacto del celular (table-layout:fixed reparte las columnas en % fijos, nunca más
+     ancho que el contenedor) y "cuadrada" — cada celda con su propio borde completo, como
+     una cuadrícula, en vez de solo una línea arriba de cada fila. */
+  /* Tabla de amortización: cuadrícula (borde completo en cada celda) que nunca parte un
+     dato en dos líneas — si no cabe todo en el ancho de la pantalla, la tarjeta que la
+     envuelve (ver más abajo, overflow-x:auto) deja deslizar hacia los lados en vez de
+     cortar o apretar el contenido. */
+  .tabla-amort{border-collapse:collapse;font-size:12px;}
+  .tabla-amort th, .tabla-amort td{border:1px solid #e5e1d8;padding:6px 8px;text-align:center;white-space:nowrap;}
+  .tabla-amort th{background:#F5F3EE;font-weight:600;}
   .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
   .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
   .searchbar:focus-within{border-color:#1B2A4A;box-shadow:0 0 0 2px rgba(27,42,74,.15);}
@@ -335,6 +347,16 @@ function fmtDate(dateStr){
   if(!dateStr) return "—";
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("es-HN", {day:"2-digit", month:"short", year:"numeric"});
+}
+// Fecha compacta (DD/MM/AA), solo para la tabla de amortización — con el formato largo de
+// fmtDate ("07 de ago de 2026") esa columna se partía en dos líneas siempre.
+function fmtDateCorta(dateStr){
+  if(!dateStr) return "—";
+  const d = new Date(dateStr + "T00:00:00");
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
 }
 function hoyISO(){
   // OJO: usar el día calendario LOCAL, no toISOString() (que da la fecha en UTC).
@@ -1857,14 +1879,14 @@ function viewDetallePrestamo(){
   let filasHtml = filasParaTabla.map((f,i)=>{
     let estadoCelda;
     if(i < r.pagosHechos) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
-    else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};font-size:11px;">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
+    else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
     else estadoCelda = '<span style="color:#aaa">Pendiente</span>';
     return `<tr><td>${f.n}</td><td>${fmtDate(f.fecha)}</td>
-    <td style="text-align:right">${money(f.interes)}</td>
-    <td style="text-align:right">${money(f.abono)}</td>
-    <td style="text-align:right;font-weight:600;">${money(f.cuota)}</td>
-    <td style="text-align:right">${money(f.saldo)}</td>
-    <td style="text-align:right;white-space:nowrap;">${estadoCelda}</td></tr>`;
+    <td>${money(f.interes)}</td>
+    <td>${money(f.abono)}</td>
+    <td style="font-weight:600;">${money(f.cuota)}</td>
+    <td>${money(f.saldo)}</td>
+    <td>${estadoCelda}</td></tr>`;
   }).join("");
 
   const pendiente = calcularPendiente(p, r);
@@ -1927,7 +1949,7 @@ function viewDetallePrestamo(){
       <h2 class="solo-imprimir">${nombreNegocio()}</h2>
       <p class="hint solo-imprimir" style="margin:0 0 10px;">${p.codigo} · ${cli?cli.nombre:"—"} · Capital ${money(p.capital)} · Tasa ${p.tasa}% · ${p.periodo} · ${p.metodo}</p>
       <div style="border:1px solid #e5e1d8;border-radius:16px;overflow-x:auto;margin-bottom:16px;">
-        <table style="min-width:620px;"><thead><tr><th>#</th><th>Fecha</th><th style="text-align:right">Interés</th><th style="text-align:right">Abono</th><th style="text-align:right">Cuota</th><th style="text-align:right">Saldo</th><th style="text-align:right">Estado</th></tr></thead>
+        <table class="tabla-amort" style="width:100%;"><thead><tr><th>#</th><th>Fecha</th><th>Interés</th><th>Abono</th><th>Cuota</th><th>Saldo</th><th>Estado</th></tr></thead>
         <tbody>${filasHtml}</tbody></table>
       </div>
     </div>
