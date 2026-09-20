@@ -440,7 +440,18 @@ function generarTabla(p){
     }
   } else if(p.metodo === METODOS[5]){ // Indefinido (solo interés)
     const interesFijo = round2(capital*tasa);
-    const hechas = (p.pagos||[]).length, total = Math.max(hechas+4,6);
+    const hechas = (p.pagos||[]).length;
+    // Este método no tiene plazo fijo: la siguiente cuota debe "aparecer" sola al día
+    // siguiente de que vence la anterior, así el cliente nunca se quede pagado hasta hoy
+    // pero sin la próxima cuota visible (por ejemplo, si lleva mucho tiempo atrasado y no
+    // hay pagos recientes que empujen el conteo). Por eso, además de generar 4 cuotas de
+    // colchón después de las ya pagadas, se calculan cuántos períodos completos han pasado
+    // desde la fecha del préstamo hasta hoy y se generan al menos esas más 4 de colchón —
+    // lo que sea mayor entre las dos reglas manda. (Misma regla que ya usa
+    // generarTablaDinamica() más abajo para este mismo método, para que ambas coincidan.)
+    const diasTranscurridos = Math.max(0, Math.floor((new Date(hoyISO()+"T00:00:00") - new Date(p.fechaInicio+"T00:00:00")) / 86400000));
+    const periodosTranscurridos = dias>0 ? Math.floor(diasTranscurridos/dias) : 0;
+    const total = Math.max(hechas+4, periodosTranscurridos+4, 6);
     for(let i=1;i<=total;i++){
       filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota:interesFijo, interes:interesFijo, abono:0, saldo:capital});
     }
@@ -1163,12 +1174,13 @@ function viewInicio(){
              + pagosArchivados(p).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
     if(r.estado==="Activo"){ activos++; if(r.proximaFecha && diasAtraso(r.proximaFecha)>0) vencidos++; }
   });
-  // "Próximos a vencer" muestra solo las cuotas que caen exactamente un día antes de su fecha
-  // de pago (faltan===1). Las que ya están atrasadas no van aquí — esas se ven en "Cuotas vencidas".
+  // "Próximos a vencer" muestra las cuotas desde un día antes de su fecha de pago (faltan===1)
+  // y se quedan ahí hasta el mismo día de pago (faltan===0) — recién al día siguiente, si no
+  // se pagó, pasan a "Cuotas vencidas" (diasAtraso>0) y desaparecen de aquí.
   let prox = state.prestamos.map(p=>({p, r:resumen(p)}))
     .filter(x=>x.r.estado==="Activo" && x.r.proximaFecha)
     .map(x=>({...x, faltan: diasParaVencer(x.r.proximaFecha)}))
-    .filter(x=> x.faltan===1)
+    .filter(x=> x.faltan===1 || x.faltan===0)
     .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha));
 
   let html = `<div class="grid2">
@@ -1186,12 +1198,12 @@ function viewInicio(){
   <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
   <p class="section-title" style="margin-top:16px;">Próximos a vencer</p>`;
 
-  if(prox.length===0) html += `<p class="empty">No tienes cuotas por vencer mañana. 🎉</p>`;
+  if(prox.length===0) html += `<p class="empty">No tienes cuotas por cobrar hoy ni mañana. 🎉</p>`;
   prox.forEach(({p,r})=>{
     const cli = state.clientes.find(c=>c.id===p.clienteId);
     html += `<div class="row-card" style="cursor:pointer;" onclick="state.tab='prestamos'; verDetalle('${p.id}')">
       <div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>
-      <span class="badge" style="background:#EEF1F6;color:${NAVY};">Vence mañana</span>
+      <span class="badge" style="background:#EEF1F6;color:${NAVY};">Por cobrar</span>
     </div>`;
   });
   return html;
@@ -1404,6 +1416,21 @@ function guardarCliente(){
   state.clienteEditId = null;
   save(); render();
 }
+// Gate de seguridad para eliminar (cliente, préstamo o pago): si la app tiene clave
+// configurada, la vuelve a pedir justo antes de borrar — igual que ya se hace al entrar a
+// Ajustes — para que un dedazo o un tercero con el celular en la mano no pueda destruir
+// datos sin la clave. Si no hay clave configurada en la app, no pide nada (nada que
+// verificar) y deja pasar, igual que el resto de la app se comporta sin clave.
+function pedirClaveParaEliminar(){
+  if(!state.config.pin) return true;
+  const val = prompt("Escribe tu clave para confirmar esta eliminación:");
+  if(val === null) return false; // canceló
+  if(String(val) !== String(state.config.pin)){
+    mostrarAlertaSimple("Clave incorrecta. No se eliminó nada.");
+    return false;
+  }
+  return true;
+}
 function eliminarCliente(id){
   const c = state.clientes.find(x=>x.id===id);
   if(!c) return;
@@ -1415,6 +1442,7 @@ function eliminarCliente(id){
       `¿Seguro que quieres eliminar a "${c.nombre}"? Esta acción no se puede deshacer.`;
   }
   if(!confirm(msg)) return;
+  if(!pedirClaveParaEliminar()) return;
   state.clientes = state.clientes.filter(x=>x.id!==id);
   save(); render();
 }
@@ -2261,6 +2289,7 @@ function eliminarPrestamo(id){
     msg += `\n\nOjo: este préstamo tiene ${p.historialModificaciones.length} modificación(es) de condiciones (NIF, no sustancial) guardadas en su propio historial. Eliminar el préstamo borra ese historial para siempre — si lo que quieres es volver a las condiciones anteriores a la última modificación en vez de borrar todo, usa "Deshacer última modificación" en el detalle del préstamo.`;
   }
   if(!confirm(msg)) return;
+  if(!pedirClaveParaEliminar()) return;
   if(origen){
     origen.refinanciado = false;
     delete origen.fechaRefinanciado;
@@ -2364,6 +2393,7 @@ function eliminarPago(prestamoId, pagoId){
     : `¿Eliminar el pago de ${money(total)} del ${fmtDate(pg.fecha)} (${p.codigo}${cli?" · "+cli.nombre:""})?\n\n`+
       `El préstamo recalculará sus cuotas pendientes sin este pago. Esta acción no se puede deshacer.`;
   if(!confirm(msg)) return;
+  if(!pedirClaveParaEliminar()) return;
   if(pg.liquidacion) p.liquidadoAnticipado = false;
   pagos.splice(idx,1);
   p.pagos = pagos;
