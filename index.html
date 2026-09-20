@@ -320,9 +320,16 @@ function capitalDesembolsadoNeto(p){
   return capitalOriginal + adicionalesModificaciones;
 }
 function addDays(dateStr, days){
+  // Ojo con la zona horaria aquí también: si se arma el resultado con toISOString() (que
+  // convierte a UTC) el día se podía correr uno para atrás en zonas con offset positivo
+  // (al este de UTC). Honduras (UTC-6) no lo sufre, pero se arma igual que hoyISO() —a
+  // partir del año/mes/día LOCALES— para que quede correcto sin importar la zona horaria.
   const d = new Date(dateStr + "T00:00:00");
   d.setDate(d.getDate()+days);
-  return d.toISOString().slice(0,10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dd}`;
 }
 function fmtDate(dateStr){
   if(!dateStr) return "—";
