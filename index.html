@@ -80,6 +80,12 @@
   .tabla-amort{border-collapse:collapse;font-size:12px;}
   .tabla-amort th, .tabla-amort td{border:1px solid #e5e1d8;padding:6px 8px;text-align:center;white-space:nowrap;}
   .tabla-amort th{background:#F5F3EE;font-weight:600;}
+  /* La tabla de amortización en pantalla se limita a mostrar 6 filas de datos a la vez
+     (sin contar el encabezado, que queda fijo arriba al hacer scroll) — si tiene más
+     cuotas, se desplazan verticalmente dentro de su propio recuadro. */
+  .tabla-amort-scroll{max-height:218px;overflow-y:auto;overflow-x:auto;}
+  .tabla-amort thead th{position:sticky;top:0;z-index:1;}
+  .tabla-amort tfoot td{position:sticky;bottom:0;background:#F5F3EE;}
   .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
   .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
   .searchbar:focus-within{border-color:#1B2A4A;box-shadow:0 0 0 2px rgba(27,42,74,.15);}
@@ -1157,13 +1163,15 @@ async function subirNube(silencioso){
   state.syncBusy = null; render();
 }
 
-async function descargarNube(){
+async function descargarNube(silencioso){
   const url = (state.config.syncUrl||"").trim();
   const key = (state.config.syncKey||"").trim();
-  if(!url || !key){ alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
+  if(!url || !key){ if(!silencioso) alert("Primero ingresa la URL y la clave de la aplicación web (ver instrucciones)."); return; }
   if(state.syncBusy) return;
-  const ok = confirm("Esto va a REEMPLAZAR los clientes y préstamos de este celular con los que están guardados en la nube. ¿Continuar?");
-  if(!ok) return;
+  if(!silencioso){
+    const ok = confirm("Esto va a REEMPLAZAR los clientes y préstamos de este celular con los que están guardados en la nube. ¿Continuar?");
+    if(!ok) return;
+  }
   state.syncBusy = "pull"; render();
   try{
     const sep = url.includes("?") ? "&" : "?";
@@ -1177,16 +1185,25 @@ async function descargarNube(){
       }
       state.config.ultimaDescarga = new Date().toISOString();
       save({sinAutoSync:true});
-      alert("Datos descargados correctamente.");
+      if(!silencioso) alert("Datos descargados correctamente.");
     } else if(data.ok && !data.datos){
-      alert("La nube todavía no tiene datos guardados. Primero sube los datos desde algún celular.");
+      if(!silencioso) alert("La nube todavía no tiene datos guardados. Primero sube los datos desde algún celular.");
     } else {
-      alert("Error al descargar: " + (data.error || "desconocido"));
+      if(!silencioso) alert("Error al descargar: " + (data.error || "desconocido"));
     }
   } catch(err){
-    alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
+    if(!silencioso) alert("No se pudo conectar con la nube. Revisa la URL, la clave y tu conexión a internet.");
   }
   state.syncBusy = null; render();
+}
+// Al abrir la app, si hay nube configurada, se descarga sola lo más reciente, sin pedir
+// nada (sin la ventana de "¿continuar?" ni avisos) — la subida sigue funcionando como
+// siempre: automática, pero solo al guardar un cambio (ver save()), no aquí al abrir.
+async function autoSincronizarAlAbrir(){
+  const url = (state.config.syncUrl||"").trim();
+  const key = (state.config.syncKey||"").trim();
+  if(!url || !key) return;
+  await descargarNube(true);
 }
 
 function viewInicio(){
@@ -1888,6 +1905,9 @@ function viewDetallePrestamo(){
     <td>${money(f.saldo)}</td>
     <td>${estadoCelda}</td></tr>`;
   }).join("");
+  const totalInteres = filasParaTabla.reduce((s,f)=>s+(Number(f.interes)||0),0);
+  const totalAbono = filasParaTabla.reduce((s,f)=>s+(Number(f.abono)||0),0);
+  const totalCuota = filasParaTabla.reduce((s,f)=>s+(Number(f.cuota)||0),0);
 
   const pendiente = calcularPendiente(p, r);
   const sugerido = pendiente.monto;
@@ -1944,13 +1964,24 @@ function viewDetallePrestamo(){
       <label><span>Fecha de liquidación</span><input type="date" id="fechaLiquidacion" value="${hoyISO()}"></label>
       <button class="btn btn-outline" onclick="liquidarAnticipado('${p.id}')">Calcular y liquidar</button>
     </div>` : ""}` : ""}
-    <p class="section-title" style="margin-top:16px;">Tabla de amortización</p>
-    <div id="tabla-imprimible">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;">
+      <p class="section-title" style="margin:0;">Tabla de amortización</p>
+      <p style="font-size:13px;font-weight:700;color:${NAVY};margin:0;">Capital: ${money(p.capital)}</p>
+    </div>
+    <div id="tabla-imprimible" style="margin:0 -16px 16px;padding:0 6px;">
       <h2 class="solo-imprimir">${nombreNegocio()}</h2>
       <p class="hint solo-imprimir" style="margin:0 0 10px;">${p.codigo} · ${cli?cli.nombre:"—"} · Capital ${money(p.capital)} · Tasa ${p.tasa}% · ${p.periodo} · ${p.metodo}</p>
-      <div style="border:1px solid #e5e1d8;border-radius:16px;overflow-x:auto;margin-bottom:16px;">
+      <div class="tabla-amort-scroll" style="border:1px solid #e5e1d8;border-radius:16px;">
         <table class="tabla-amort" style="width:100%;"><thead><tr><th>#</th><th>Fecha</th><th>Interés</th><th>Abono</th><th>Cuota</th><th>Saldo</th><th>Estado</th></tr></thead>
-        <tbody>${filasHtml}</tbody></table>
+        <tbody>${filasHtml}</tbody>
+        <tfoot><tr style="font-weight:700;background:#F5F3EE;">
+          <td colspan="2">Total</td>
+          <td>${money(totalInteres)}</td>
+          <td>${money(totalAbono)}</td>
+          <td>${money(totalCuota)}</td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+        </table>
       </div>
     </div>
     <button class="btn btn-outline" style="margin-bottom:10px;" onclick="imprimirTabla('${p.id}')">Imprimir tabla de amortización</button>
@@ -2355,11 +2386,11 @@ function viewPagos(){
       capitalPendiente: r.capitalPendiente||0,
       ultimaFecha: todos.length ? todos.map(pg=>pg.fecha).sort().reverse()[0] : p.fechaInicio
     };
-  }); // Ya NO se filtran los préstamos sin pagos — antes desaparecían por completo de esta
-  // pantalla, lo que hacía imposible distinguir "este préstamo no tiene pagos todavía" de
-  // "algo no se está mostrando". Ahora todos los préstamos aparecen, con su tarjeta abierta
-  // diciendo explícitamente si no tiene pagos registrados.
-  if(grupos.length===0) return `<p class="empty">Todavía no has registrado ningún préstamo.</p>`;
+  }).filter(g => g.vigentes.length>0 || g.previos.length>0);
+  // Solo se listan los préstamos que SÍ tienen algún pago (vigente o archivado) — los que
+  // todavía no tienen ningún pago registrado no aparecen aquí, ya que no hay nada que
+  // mostrar; siguen viéndose igual dentro del detalle de cada préstamo.
+  if(grupos.length===0) return `<p class="empty">Todavía no se ha registrado ningún pago.</p>`;
   grupos.sort((a,b)=> new Date(b.ultimaFecha)-new Date(a.ultimaFecha));
   const filaVigente = (pg)=>{
     const total = (Number(pg.monto)||0) + (Number(pg.mora)||0);
@@ -2526,6 +2557,7 @@ function viewTabbar(){
 })();
 
 render();
+autoSincronizarAlAbrir();
 </script>
 </body>
 </html>
