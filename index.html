@@ -1359,6 +1359,11 @@ function viewAjustes(){
   </div>
   <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Clave de acceso</p>
+    <label style="display:flex;align-items:center;gap:8px;margin:0 0 10px;cursor:pointer;">
+      <input type="checkbox" style="width:auto;" ${(state.config.pin || state.mostrarFormClave)?"checked":""} onchange="if(this.checked){ state.mostrarFormClave=true; render(); } else { state.mostrarFormClave=false; if(state.config.pin) quitarPin(); else render(); }">
+      <span style="font-size:14px;">Activar clave de acceso</span>
+    </label>
+    ${(state.config.pin || state.mostrarFormClave) ? `
     <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "Esta misma clave protege la app al abrirla y también te la vuelve a pedir al entrar a Ajustes, por seguridad extra." : "Protege toda la app: la pedirá cada vez que se abra en este celular, y también al entrar a Ajustes."}</p>
     <label style="margin-bottom:10px;"><span>${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}</span>
       <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="Ej. 1234"></label>
@@ -1367,6 +1372,7 @@ function viewAjustes(){
     <p class="hint" style="margin:0 0 10px;">Si algún día olvidas la clave, la pantalla de acceso te pedirá este código en vez de dejarte entrar sin más — así nadie puede saltarse la clave con solo tocar un botón.</p>
     <button class="btn btn-outline" onclick="guardarPin()">Guardar</button>
     ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
+    ` : ""}
   </div>`;
 }
 
@@ -1883,13 +1889,14 @@ function viewDetallePrestamo(){
   // El método Indefinido no tiene número de cuotas fijo: internamente se generan varias
   // filas "de reserva" (generarTablaDinamica) para poder calcular fechas y mora con
   // anticipación, pero mostrarlas todas de una vez confundiría (se verían períodos que
-  // todavía faltan meses). En la tabla que se VE, cada fila aparece un día antes de que se
-  // cumpla ese período, y se va quedando ahí ya como pagada o pendiente.
+  // todavía faltan meses). En la tabla que se VE, la fila de un período nuevo se crea el
+  // día DESPUÉS de la fecha de la cuota anterior — se haya pagado esa cuota anterior o no,
+  // esto es puramente por calendario — y se va quedando ahí ya como pagada o pendiente.
   const esIndefDetalle = p.metodo === METODOS[5];
   const filasParaTabla = esIndefDetalle
     ? (function(){
-        const limite = addDays(hoyISO(), 1);
-        const visibles = r.tabla.filter(f=>f.fecha <= limite);
+        const hoy = hoyISO();
+        const visibles = r.tabla.filter((f,i)=> i===0 || addDays(r.tabla[i-1].fecha,1) <= hoy);
         return visibles.length ? visibles : [r.tabla[0]];
       })()
     : r.tabla;
@@ -2086,8 +2093,8 @@ function generarPDFTabla(p, cli, r){
   const esIndefPDF = p.metodo === METODOS[5];
   const filasPDF = esIndefPDF
     ? (function(){
-        const limite = addDays(hoyISO(), 1);
-        const visibles = r.tabla.filter(f=>f.fecha <= limite);
+        const hoy = hoyISO();
+        const visibles = r.tabla.filter((f,i)=> i===0 || addDays(r.tabla[i-1].fecha,1) <= hoy);
         return visibles.length ? visibles : [r.tabla[0]];
       })()
     : r.tabla;
@@ -2245,7 +2252,8 @@ function registrarPago(id){
   p.pagos = p.pagos || [];
   p.pagos.push({ id:uid(), fecha:fechaPago, monto:montoCuota, mora, tipo:"cuota" });
   if(excedente > 0.01){
-    p.pagos.push({ id:uid(), fecha:fechaPago, monto:excedente, mora:0, tipo:"abono_capital" });
+    const idAbono = uid();
+    p.pagos.push({ id:idAbono, fecha:fechaPago, monto:excedente, mora:0, tipo:"abono_capital" });
     // Registrar el abono como un ajuste real de saldo (no solo un pago más), para que
     // generarTablaDinamica() recalcule cuota/plazo según el método a partir de aquí. Si el
     // abono alcanza para cubrir todo el saldo pendiente, se marca como liquidado.
@@ -2254,10 +2262,15 @@ function registrarPago(id){
       p.liquidadoAnticipado = true;
     } else {
       // El ajuste debe aplicarse DESPUÉS de la(s) cuota(s) que se completan en este mismo
-      // pago (r.pagosHechos + pendiente.nVenc), no antes — esa(s) cuota(s) ya generó su
-      // interés; el abono a capital solo baja el saldo de ahí en adelante.
+      // pago, no antes — esa(s) cuota(s) ya generó su interés; el abono a capital solo baja
+      // el saldo de ahí en adelante. OJO: cuando el cliente está al día, pendiente.nVenc es
+      // 0 (no hay cuotas vencidas que "ponerse al día"), pero la cuota ACTUAL que se está
+      // pagando ahora mismo sigue siendo una cuota más — por eso hace falta el mínimo de 1
+      // aquí. Sin él, el abono terminaba apuntando a la cuota ANTERIOR (ya pagada antes de
+      // esta transacción) en vez de a la cuota que se acaba de pagar, y por eso no aparecía
+      // en la columna de abono de la fila correcta.
       p.ajustesCapital = p.ajustesCapital || [];
-      p.ajustesCapital.push({ despuesDeFila: (r.pagosHechos||0) + pendiente.nVenc, monto: excedente, fecha: fechaPago });
+      p.ajustesCapital.push({ despuesDeFila: (r.pagosHechos||0) + Math.max(1, pendiente.nVenc), monto: excedente, fecha: fechaPago, pagoId: idAbono });
     }
   }
   save(); render();
@@ -2455,6 +2468,17 @@ function eliminarPago(prestamoId, pagoId){
   if(!confirm(msg)) return;
   if(!pedirClaveParaEliminar()) return;
   if(pg.liquidacion) p.liquidadoAnticipado = false;
+  if(pg.tipo==="abono_capital" && (p.ajustesCapital||[]).length){
+    // Se busca primero por el enlace directo (pagoId); si el ajuste es de antes de que
+    // existiera ese enlace, se usa como respaldo la fecha+monto para no dejarlo huérfano.
+    const porId = p.ajustesCapital.findIndex(a=>a.pagoId===pg.id);
+    if(porId>=0) p.ajustesCapital.splice(porId,1);
+    else {
+      const porFechaMonto = p.ajustesCapital.findIndex(a=>a.fecha===pg.fecha && round2(a.monto)===round2(pg.monto));
+      if(porFechaMonto>=0) p.ajustesCapital.splice(porFechaMonto,1);
+    }
+  }
+  if(p.liquidadoAnticipado) p.liquidadoAnticipado = false;
   pagos.splice(idx,1);
   p.pagos = pagos;
   if(state.vista==="recibo") state.vista = "lista";
