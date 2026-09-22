@@ -1814,10 +1814,14 @@ function guardarRefinanciamiento(){
   const tasaOriginalPeriodica = (Number(origen.tasa)||0)/100;
   const vp = calcularVP(tablaNueva, tasaOriginalPeriodica);
   const umbralPct = Number(state.config.umbralModificacionSustancial)||10;
-  const diferenciaPct = capitalPendiente>0 ? Math.abs(vp - capitalPendiente)/capitalPendiente*100 : 100;
+  // OJO: la comparación es contra nuevoCapital (el capital que de verdad queda como base del
+  // préstamo DESPUÉS del enganche/adicional), no contra capitalPendiente (el saldo ANTES de
+  // esos movimientos de caja). Comparar contra capitalPendiente hacía que CUALQUIER enganche
+  // o monto adicional, por sí solo, ya disparara "sustancial" aunque la tasa no cambiara nada.
+  const diferenciaPct = nuevoCapital>0 ? Math.abs(vp - nuevoCapital)/nuevoCapital*100 : 100;
   const esSustancial = diferenciaPct >= umbralPct;
 
-  const resumenNumeros = `Capital pendiente: ${money(capitalPendiente)}\nEnganche/abono: ${money(enganche)}\nMonto adicional entregado: ${money(adicional)}\nNuevo capital: ${money(nuevoCapital)}\n\nCambio en valor presente vs. saldo actual: ${diferenciaPct.toFixed(1)}% (umbral: ${umbralPct}%)`;
+  const resumenNumeros = `Capital pendiente: ${money(capitalPendiente)}\nEnganche/abono: ${money(enganche)}\nMonto adicional entregado: ${money(adicional)}\nNuevo capital: ${money(nuevoCapital)}\n\nCambio en valor presente vs. capital nuevo: ${diferenciaPct.toFixed(1)}% (umbral: ${umbralPct}%)`;
 
   if(esSustancial){
     const ok = confirm(`Vas a refinanciar ${origen.codigo} — cambio SUSTANCIAL según NIF:\n${resumenNumeros}\n\nSe cerrará este préstamo (queda como "Refinanciado") y se creará uno nuevo. ¿Confirmas?`);
