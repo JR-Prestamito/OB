@@ -268,10 +268,10 @@ function save(opts){
   localStorage.setItem(LK("jr_prestamos"), JSON.stringify(state.prestamos));
   localStorage.setItem(LK("jr_config"), JSON.stringify(state.config));
   // Guardado automático en la nube: si ya hay URL y clave configuradas (y no se desactivó
-  // a propósito), unos segundos después de cada cambio se sube solo, en silencio.
+  // a propósito), poco después de cada cambio se sube solo, en silencio.
   if(!opts.sinAutoSync && state.config.autoSync !== false && (state.config.syncUrl||"").trim() && (state.config.syncKey||"").trim()){
     clearTimeout(autoSyncTimer);
-    autoSyncTimer = setTimeout(()=>{ subirNube(true); }, 2500);
+    autoSyncTimer = setTimeout(()=>{ subirNube(true); }, 600);
   }
 }
 function soloDigitos(s){ return (s||"").toString().replace(/\D/g,""); }
@@ -531,13 +531,22 @@ function generarTablaDinamica(p){
       saldoSeg = round2(Math.max(0, saldoSeg-(Number(aj.monto)||0)));
       desdeFila = aj.despuesDeFila;
     }
+    // "saldo" de cada fila intermedia (lo que resumen() usa como capital pendiente antes de
+    // la fila final, y lo que se propone al refinanciar): debe reflejar los abonos que ya se
+    // hicieron hasta ese punto, no quedarse en el capital original completo. Se recorre otra
+    // vez, bajando el saldo mostrado en el momento exacto (despuesDeFila) de cada abono.
     const filas = [];
+    let saldoMostrado = capitalOriginal, idxAj = 0;
     for(let i=1;i<=nOriginal;i++){
       const esUltima = i===nOriginal;
+      while(idxAj<ajustes.length && ajustes[idxAj].despuesDeFila===i){
+        saldoMostrado = round2(Math.max(0, saldoMostrado-(Number(ajustes[idxAj].monto)||0)));
+        idxAj++;
+      }
       const interes = esUltima ? round2(interesAcum + saldoSeg*tasa*(nOriginal-desdeFila)) : 0;
       const abono = esUltima ? saldoSeg : 0;
       const cuota = round2(interes+abono);
-      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes, abono, saldo: esUltima?0:capitalOriginal});
+      filas.push({n:i, fecha:addDays(p.fechaInicio, dias*i), cuota, interes, abono, saldo: esUltima?0:saldoMostrado});
     }
     return filas;
   }
@@ -1256,7 +1265,8 @@ function viewInicio(){
 }
 function abrirAjustes(){
   state.tab = "inicio";
-  state.vista = (state.config.pin && !state.ajustesDesbloqueado) ? "ajustesClave" : "ajustes";
+  const pedirClave = state.config.pin && state.config.pedirClaveEnAjustes !== false;
+  state.vista = (pedirClave && !state.ajustesDesbloqueado) ? "ajustesClave" : "ajustes";
   render();
 }
 function viewAjustesClave(){
@@ -1364,7 +1374,7 @@ function viewAjustes(){
       <span style="font-size:14px;">Activar clave de acceso</span>
     </label>
     ${(state.config.pin || state.mostrarFormClave) ? `
-    <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "Esta misma clave protege la app al abrirla y también te la vuelve a pedir al entrar a Ajustes, por seguridad extra." : "Protege toda la app: la pedirá cada vez que se abra en este celular, y también al entrar a Ajustes."}</p>
+    <p class="hint" style="margin:0 0 10px;">${state.config.pin ? "Esta misma clave protege la app al abrirla, y por defecto también te la vuelve a pedir al entrar a Ajustes (puedes desactivar esto último más abajo)." : "Protege toda la app: la pedirá cada vez que se abra en este celular, y por defecto también al entrar a Ajustes."}</p>
     <label style="margin-bottom:10px;"><span>${state.config.pin?"Nueva clave":"Crear clave (mínimo 4 dígitos)"}</span>
       <input id="f_nuevoPin" type="password" inputmode="numeric" autocomplete="off" placeholder="Ej. 1234"></label>
     <label style="margin-bottom:10px;"><span>Código de recuperación (algo que solo tú sepas, por si olvidas la clave)</span>
@@ -1373,6 +1383,14 @@ function viewAjustes(){
     <button class="btn btn-outline" onclick="guardarPin()">Guardar</button>
     ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
     ` : ""}
+    ${state.config.pin ? `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #eee;">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;">
+        <input type="checkbox" style="width:auto;" ${state.config.pedirClaveEnAjustes!==false?"checked":""} onchange="state.config.pedirClaveEnAjustes=this.checked; save();">
+        <span style="font-size:14px;">Pedir esta clave también al entrar a Ajustes</span>
+      </label>
+      <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
+    </div>` : ""}
   </div>`;
 }
 
