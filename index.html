@@ -1800,14 +1800,75 @@ function viewRefinanciar(){
       <button class="btn btn-gold" onclick="guardarRefinanciamiento()" ${nuevoCapital<=0?"disabled style='opacity:.4'":""}>Confirmar refinanciamiento</button>
     </div>`;
 }
-function calcularVP(tabla, tasaPeriodica){
-  // Valor presente de los flujos de un préstamo, descontados a una tasa periódica dada.
-  // Simplificación práctica: se descuenta cada cuota por su posición en el cronograma nuevo,
-  // usando la tasa del préstamo ORIGINAL (así se compara "lo que valdría hoy seguir cobrando
-  // como antes" contra "lo que se va a cobrar con las condiciones nuevas").
-  let vp = 0;
-  tabla.forEach((f,i)=>{ vp += f.cuota / Math.pow(1+tasaPeriodica, i+1); });
-  return vp;
+function valorPresente(flujos, tasaPeriodica){
+  return flujos.reduce((pv, monto, i) => pv + (Number(monto)||0) / Math.pow(1+tasaPeriodica, i+1), 0);
+}
+// Tasa Interna de Retorno (TIR) periódica: la tasa que hace que el valor presente de
+// "flujos" sea exactamente "capitalInicial". En Francés, Alemán y Capital al final el
+// interés se calcula sobre saldos que decrecen de forma compuesta, así que esta TIR sale
+// idéntica a la tasa nominal del préstamo. Pero en "Tasa plana" (interés fijo, no decrece
+// con el saldo) y "Sistema Americano" (interés simple, no compuesto) la tasa nominal NO es
+// la tasa efectiva real — y usar la nominal para descontar distorsiona la prueba del 10%.
+// Por eso siempre se calcula la TIR real aquí (por bisección, ya que no hay fórmula
+// cerrada general) y esa es la que se usa como "tasa efectiva original".
+function calcularTIR(flujos, capitalInicial){
+  if(!flujos.length || !(capitalInicial>0)) return null;
+  const f = (r) => valorPresente(flujos, r) - capitalInicial;
+  if(f(0) < 0) return null; // ni siquiera sin descuento los flujos alcanzan el capital: no hay TIR válida
+  let lo = 0, hi = 10, hiVal = f(hi), intentos = 0;
+  while(hiVal > 0 && intentos < 20){ hi *= 2; hiVal = f(hi); intentos++; }
+  if(hiVal > 0) return null;
+  for(let i=0;i<100;i++){
+    const mid = (lo+hi)/2, val = f(mid);
+    if(Math.abs(val) < 1e-9) return mid;
+    if(val > 0) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+// Prueba de modificación sustancial (criterio NIF / IFRS 9 para instrumentos financieros):
+// se compara el valor presente de los flujos del préstamo NUEVO, descontados a la tasa
+// EFECTIVA del préstamo original (su TIR real, no solo la tasa nominal), contra una base
+// de comparación. Si la diferencia es igual o mayor al umbral configurado (10% por
+// defecto), el cambio es "sustancial" (préstamo nuevo); si no, es solo un ajuste de
+// condiciones sobre el mismo préstamo. Misma función, palabra por palabra, que usa la
+// versión pro — incluida la corrección para Indefinido (ver comentario abajo).
+function evaluarModificacionNIF(origen, capitalBase, flujosNuevos, opts){
+  opts = opts || {};
+  if(!(Number(capitalBase)>0)){
+    return { esSustancial:true, diffPct:null, pvOriginal:0, pvNuevo:0, gananciaPerdida:0 };
+  }
+  const tasaNominalOriginal = (Number(origen.tasa)||0)/100;
+  let tasaEfectivaOriginal = tasaNominalOriginal;
+  // El método Indefinido no tiene un número de cuotas que amortice el capital a cero, así
+  // que no se le puede calcular una TIR (no hay tabla que "cierre" en capital); ahí se usa
+  // la tasa nominal directamente, tal como ya se hace en toda la app para ese método.
+  if(origen.metodo !== METODOS[5]){
+    const capitalOrigenActual = Number(origen.capital)||0;
+    const tablaOrigenActual = generarTabla({capital:capitalOrigenActual, tasa:origen.tasa, cuotas:origen.cuotas, periodo:origen.periodo, metodo:origen.metodo, fechaInicio:origen.fechaInicio});
+    const tir = calcularTIR(tablaOrigenActual.map(f=>f.cuota), capitalOrigenActual);
+    if(tir!==null) tasaEfectivaOriginal = tir;
+  }
+  let pvNuevo;
+  if(opts.esIndefinidoNuevo){
+    // El método Indefinido paga solo interés, para siempre, sin plazo fijo: es una
+    // "perpetuidad". El valor presente de una perpetuidad es pago/tasa.
+    const cuotaPeriodica = Number(flujosNuevos[0])||0;
+    pvNuevo = tasaEfectivaOriginal>0 ? cuotaPeriodica/tasaEfectivaOriginal : cuotaPeriodica;
+  } else {
+    pvNuevo = valorPresente(flujosNuevos, tasaEfectivaOriginal);
+  }
+  // Para Indefinido, la cuota nueva SIEMPRE se calcula como capitalBase * tasaNueva. Si la
+  // tasa no cambió, pvNuevo = (capitalBase*tasa)/tasa = capitalBase, EXACTO, sin importar
+  // cuánto haya cambiado el capital — la prueba quedaría incapaz de detectar NINGÚN aumento
+  // de capital en este método si se comparara contra capitalBase. Por eso aquí (solo para
+  // Indefinido) se compara contra el capital pendiente ANTES del refinanciamiento (origen),
+  // no contra capitalBase (el capital nuevo, después del enganche/adicional).
+  const baseComparacion = opts.esIndefinidoNuevo ? (Number(resumen(origen).capitalPendiente)||capitalBase) : capitalBase;
+  const diffPct = Math.abs(pvNuevo-baseComparacion)/baseComparacion;
+  const umbral = (Number(state.config.umbralModificacionSustancial)||10)/100;
+  const esSustancial = diffPct >= umbral;
+  const gananciaPerdida = esSustancial ? 0 : (pvNuevo - capitalBase);
+  return { esSustancial, diffPct, pvOriginal: capitalBase, pvNuevo, gananciaPerdida, tasaEfectivaOriginal };
 }
 function guardarRefinanciamiento(){
   const f = window._rf;
@@ -1823,21 +1884,14 @@ function guardarRefinanciamiento(){
   if(nuevoCapital<=0) return;
 
   // --- Prueba de modificación sustancial (criterio NIF / IFRS 9 para instrumentos financieros) ---
-  // Se compara el valor presente de los flujos del préstamo nuevo, descontado a la tasa
-  // ORIGINAL, contra el saldo pendiente actual. Si la diferencia es igual o mayor al umbral
-  // configurado (10% por defecto), el cambio es "sustancial" y se trata como préstamo nuevo
-  // (se da de baja el original y se da de alta uno nuevo). Si es menor, se considera solo un
-  // ajuste de condiciones y se modifica el MISMO préstamo, sin crear uno nuevo.
+  // Usa evaluarModificacionNIF() de arriba (idéntica a la de la versión pro, TIR incluida)
+  // en vez del cálculo simplificado de antes, para que las dos apps clasifiquen siempre
+  // igual, incluso en casos que queden cerca del umbral del 10%.
   const tablaNueva = generarTabla({capital:nuevoCapital, tasa:f.tasa, cuotas: esIndef?1:f.cuotas, periodo:f.periodo, metodo:f.metodo, fechaInicio:f.fechaInicio});
-  const tasaOriginalPeriodica = (Number(origen.tasa)||0)/100;
-  const vp = calcularVP(tablaNueva, tasaOriginalPeriodica);
+  const evalNIF = evaluarModificacionNIF(origen, nuevoCapital, tablaNueva.map(x=>x.cuota), {esIndefinidoNuevo: esIndef});
   const umbralPct = Number(state.config.umbralModificacionSustancial)||10;
-  // OJO: la comparación es contra nuevoCapital (el capital que de verdad queda como base del
-  // préstamo DESPUÉS del enganche/adicional), no contra capitalPendiente (el saldo ANTES de
-  // esos movimientos de caja). Comparar contra capitalPendiente hacía que CUALQUIER enganche
-  // o monto adicional, por sí solo, ya disparara "sustancial" aunque la tasa no cambiara nada.
-  const diferenciaPct = nuevoCapital>0 ? Math.abs(vp - nuevoCapital)/nuevoCapital*100 : 100;
-  const esSustancial = diferenciaPct >= umbralPct;
+  const diferenciaPct = evalNIF.diffPct===null ? 100 : evalNIF.diffPct*100;
+  const esSustancial = evalNIF.esSustancial;
 
   const resumenNumeros = `Capital pendiente: ${money(capitalPendiente)}\nEnganche/abono: ${money(enganche)}\nMonto adicional entregado: ${money(adicional)}\nNuevo capital: ${money(nuevoCapital)}\n\nCambio en valor presente vs. capital nuevo: ${diferenciaPct.toFixed(1)}% (umbral: ${umbralPct}%)`;
 
