@@ -420,17 +420,15 @@ function calcularPendiente(p, r){
 
 function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
 
+// La fecha de la primera cuota normalmente se calcula sola (un período exacto después de la
+// fecha del préstamo), pero se puede fijar a mano con p.fechaPrimeraCuota (por ejemplo el
+// día de pago fijo del cliente). Las cuotas siguientes siempre caen cada "dias" después.
+function fechaCuotaDe(p, dias, i){
+  return p.fechaPrimeraCuota ? addDays(p.fechaPrimeraCuota, dias*(i-1)) : addDays(p.fechaInicio, dias*i);
+}
 function generarTabla(p){
   const capital = Number(p.capital)||0, tasa = (Number(p.tasa)||0)/100, n = Number(p.cuotas)||0;
   const dias = DIAS_PERIODO[p.periodo] || 30;
-  // La fecha de la primera cuota normalmente se calcula sola (un período exacto después de
-  // la fecha del préstamo), pero se puede fijar a mano con p.fechaPrimeraCuota — por ejemplo
-  // si el desembolso fue hoy pero quieres que la primera cuota caiga en una fecha específica
-  // (fin de mes, día de pago del cliente, etc.) en vez de "un período exacto después". Las
-  // cuotas siguientes siempre caen cada "dias" después de esa primera.
-  const fechaCuota = p.fechaPrimeraCuota
-    ? (i => addDays(p.fechaPrimeraCuota, dias*(i-1)))
-    : (i => addDays(p.fechaInicio, dias*i));
   const filas = [];
   if(p.metodo === METODOS[0]){ // Francés (cuota fija)
     const cuotaFija = n===0 ? 0 : (tasa===0 ? capital/n : (capital*tasa)/(1-Math.pow(1+tasa,-n)));
@@ -441,7 +439,7 @@ function generarTabla(p){
       const abono = (i===n) ? saldo : round2(cuotaRed - interes);
       const cuota = round2(interes + abono);
       const nuevoSaldo = round2(Math.max(0, saldo - abono));
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes, abono, saldo: nuevoSaldo});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: nuevoSaldo});
       saldo = nuevoSaldo;
     }
   } else if(p.metodo === METODOS[1]){ // Alemán (cuota decreciente): abono fijo, interés sobre saldo
@@ -452,7 +450,7 @@ function generarTabla(p){
       const abono = (i===n) ? saldo : abonoFijo;
       const cuota = round2(interes + abono);
       const nuevoSaldo = round2(Math.max(0, saldo - abono));
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes, abono, saldo: nuevoSaldo});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: nuevoSaldo});
       saldo = nuevoSaldo;
     }
   } else if(p.metodo === METODOS[2]){ // Tasa plana (interés fijo): interés siempre sobre el capital original
@@ -463,7 +461,7 @@ function generarTabla(p){
       const abono = (i===n) ? saldo : abonoFijo;
       const cuota = round2(interesFijo + abono);
       const nuevoSaldo = round2(Math.max(0, saldo - abono));
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes:interesFijo, abono, saldo: nuevoSaldo});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes:interesFijo, abono, saldo: nuevoSaldo});
       saldo = nuevoSaldo;
     }
   } else if(p.metodo === METODOS[3]){ // Capital al final (bullet): solo interés cada período, capital al final
@@ -471,7 +469,7 @@ function generarTabla(p){
     for(let i=1;i<=n;i++){
       const esUltima = i===n, abono = esUltima?capital:0;
       const cuota = round2(interesFijo + abono);
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes:interesFijo, abono, saldo: esUltima?0:capital});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes:interesFijo, abono, saldo: esUltima?0:capital});
     }
   } else if(p.metodo === METODOS[4]){ // Sistema Americano (puro): nada hasta el final, ahí capital + todo el interés junto
     for(let i=1;i<=n;i++){
@@ -479,7 +477,7 @@ function generarTabla(p){
       const interes = esUltima ? round2(capital*tasa*n) : 0;
       const abono = esUltima ? capital : 0;
       const cuota = round2(interes + abono);
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes, abono, saldo: esUltima?0:capital});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: esUltima?0:capital});
     }
   } else if(p.metodo === METODOS[5]){ // Indefinido (solo interés)
     const interesFijo = round2(capital*tasa);
@@ -496,7 +494,7 @@ function generarTabla(p){
     const periodosTranscurridos = dias>0 ? Math.floor(diasTranscurridos/dias) : 0;
     const total = Math.max(hechas+4, periodosTranscurridos+4, 6);
     for(let i=1;i<=total;i++){
-      filas.push({n:i, fecha:fechaCuota(i), cuota:interesFijo, interes:interesFijo, abono:0, saldo:capital});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota:interesFijo, interes:interesFijo, abono:0, saldo:capital});
     }
   }
   return filas;
@@ -529,9 +527,6 @@ function generarTablaDinamica(p){
   const esIndef = metodo === METODOS[5];
   const nOriginal = Number(p.cuotas)||0;
   const ajustes = (p.ajustesCapital||[]).slice().sort((a,b)=>a.despuesDeFila-b.despuesDeFila);
-  const fechaCuota = p.fechaPrimeraCuota
-    ? (i => addDays(p.fechaPrimeraCuota, dias*(i-1)))
-    : (i => addDays(p.fechaInicio, dias*i));
 
   if(metodo === METODOS[4] && ajustes.length){
     // Sistema Americano (puro): nada se paga hasta el final; cada abono recalcula el
@@ -557,7 +552,7 @@ function generarTablaDinamica(p){
       const interes = esUltima ? round2(interesAcum + saldoSeg*tasa*(nOriginal-desdeFila)) : 0;
       const abono = esUltima ? saldoSeg : 0;
       const cuota = round2(interes+abono);
-      filas.push({n:i, fecha:fechaCuota(i), cuota, interes, abono, saldo: esUltima?0:saldoMostrado});
+      filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: esUltima?0:saldoMostrado});
     }
     return filas;
   }
@@ -641,7 +636,7 @@ function generarTablaDinamica(p){
     }
     const cuota = round2(interes+abono);
     const nuevoSaldo = round2(Math.max(0, saldoInicial-abono));
-    filas.push({n:i, fecha:fechaCuota(i), cuota, interes, abono, saldo: nuevoSaldo});
+    filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: nuevoSaldo});
     saldo = nuevoSaldo;
     if(huboAjuste) recalcularVigente(i);
   }
@@ -1123,7 +1118,8 @@ function viewEstadoResultados(){
     (p.historialModificaciones||[]).forEach(m=>{ gananciaPerdidaModificaciones += Number(m.gananciaPerdida)||0; });
   });
   const ingresos = interesesCobrados + capitalCobrado + moraCobrada + enganches + cobradoArchivado;
-  const utilidad = ingresos - desembolsos + gananciaPerdidaModificaciones;
+  const mostrarGananciaModif = state.config.mostrarGananciaModificaciones===true;
+  const utilidad = ingresos - desembolsos + (mostrarGananciaModif ? gananciaPerdidaModificaciones : 0);
   const fila = (label, valor, negrita)=>`<tr>
       <td style="padding:6px 6px;${negrita?"font-weight:700;":""}">${label}</td>
       <td style="padding:6px 6px;text-align:right;${negrita?"font-weight:700;":""}">${money(valor)}</td>
@@ -1146,7 +1142,7 @@ function viewEstadoResultados(){
         ${fila("Desembolsos (capital prestado)", desembolsos)}
         ${fila("Total egresos", desembolsos, true)}
       </table>
-      ${gananciaPerdidaModificaciones!==0 ? `
+      ${(mostrarGananciaModif && gananciaPerdidaModificaciones!==0) ? `
       <p style="font-weight:700;margin:0 0 6px;">Ganancia/(pérdida) por modificación de préstamos (NIIF PYMES)</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
         ${fila(gananciaPerdidaModificaciones>=0?"Ganancia por modificación":"Pérdida por modificación", gananciaPerdidaModificaciones, true)}
@@ -1474,7 +1470,12 @@ function viewAjustes(){
   <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Umbral de modificación sustancial (refinanciamiento)</p>
     <p class="hint" style="margin:0 0 10px;">Al refinanciar, la app compara el valor presente del préstamo nuevo (descontado a la tasa efectiva original) contra el capital que queda como base, según NIIF para las PYMES, Sección 11. Si el cambio es igual o mayor a este porcentaje, se trata como préstamo nuevo; si es menor, solo se ajustan las condiciones del mismo préstamo y la diferencia se reconoce como ganancia o pérdida. El estándar de mercado es 10%.</p>
-    <label style="margin-bottom:0;"><span>Umbral (%)</span><input type="text" inputmode="decimal" step="0.1" min="0" value="${state.config.umbralModificacionSustancial!==undefined?state.config.umbralModificacionSustancial:10}" oninput="state.config.umbralModificacionSustancial=filtrarDecimal(this.value); save();"></label>
+    <label style="margin-bottom:10px;"><span>Umbral (%)</span><input type="text" inputmode="decimal" step="0.1" min="0" value="${state.config.umbralModificacionSustancial!==undefined?state.config.umbralModificacionSustancial:10}" oninput="state.config.umbralModificacionSustancial=filtrarDecimal(this.value); save();"></label>
+    <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
+      <input type="checkbox" style="width:auto;" ${state.config.mostrarGananciaModificaciones===true?"checked":""} onchange="state.config.mostrarGananciaModificaciones=this.checked; save();">
+      <span style="font-size:13px;">Mostrar la ganancia/(pérdida) por modificación en el Estado de resultados</span>
+    </label>
+    <p class="hint" style="margin:6px 0 0;">Viene desactivado por defecto. Si está desmarcado, esa línea no aparece en el Estado de resultados y no se suma a la utilidad. El reporte "Modificaciones (NIIF PYMES)" sigue disponible.</p>
   </div>
   <div class="row-card" style="display:block;">
     <p style="font-weight:600;margin:0 0 4px;">Clave de acceso</p>
@@ -1793,7 +1794,7 @@ function viewNuevoPrestamo(){
   return `
     ${editando ? `<p class="hint" style="margin-bottom:12px;">Editando ${f.codigo} — cambiar estos datos puede afectar la tabla de amortización y los pagos ya registrados.</p>` : ""}
     ${state.clientes.length===0 ? `<p style="color:#c0433b;font-size:13px;">Agrega un cliente primero en la pestaña Clientes.</p>` : ""}
-    <label><span>Código de préstamo</span><input id="nf_codigo" type="text" value="${f.codigo||""}" ${editando?"disabled style='opacity:.6;background:#eee;'":""} oninput="window._nf.codigo=this.value.toUpperCase(); render()"></label>
+    <label><span>N° de préstamo</span><input id="nf_codigo" type="text" value="${f.codigo||""}" ${editando?"disabled style='opacity:.6;background:#eee;'":""} oninput="window._nf.codigo=this.value.toUpperCase(); render()"></label>
     <label><span>Cliente</span><select onchange="window._nf.clienteId=this.value; render()">${opts}</select></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <label style="margin:0;"><span>Capital a financiar (L)</span><input id="nf_capital" type="text" inputmode="decimal" value="${f.capital}" oninput="window._nf.capital=filtrarDecimal(this.value); render()"></label>
@@ -1803,12 +1804,12 @@ function viewNuevoPrestamo(){
       <label style="margin:0;"><span>Período de pago</span><select onchange="window._nf.periodo=this.value; render()">${periodoOpts}</select></label>
       <label style="margin:0;"><span>Método de amortización</span><select onchange="window._nf.metodo=this.value; render()">${metodoOpts}</select></label>
     </div>
-    ${esIndef?"":`<label><span>Cantidad de cuotas</span><input id="nf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._nf.cuotas=filtrarEntero(this.value); render()"></label>`}
+    ${esIndef ? "" : `<label><span>Cantidad de cuotas</span><input id="nf_cuotas" type="text" inputmode="numeric" value="${f.cuotas}" oninput="window._nf.cuotas=filtrarEntero(this.value); render()"></label>`}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
       <label style="margin:0;"><span>Fecha del préstamo</span><input id="nf_fecha" type="date" value="${f.fechaInicio}" oninput="window._nf.fechaInicio=this.value; render()"></label>
       <label style="margin:0;"><span>Fecha 1ª cuota</span><input id="nf_fecha1ra" type="date" value="${f.fechaPrimeraCuota||""}" oninput="window._nf.fechaPrimeraCuota=this.value; render()"></label>
     </div>
-    <p class="hint nota-ayuda" style="margin:0 0 16px;">"Fecha 1ª cuota" es opcional — déjala vacía para que se calcule sola (un período exacto después de la fecha del préstamo). Ponla solo si quieres que la primera cuota caiga en una fecha específica (por ejemplo, el día de pago fijo del cliente); las cuotas siguientes siguen cayendo cada período después de esa.</p>
+    <p class="hint" style="margin:0 0 16px;">"Fecha 1ª cuota" es opcional — déjala vacía para que se calcule sola (un período exacto después de la fecha del préstamo). Ponla solo si quieres que la primera cuota caiga en una fecha específica (por ejemplo, el día de pago fijo del cliente); las cuotas siguientes siguen cayendo cada período después de esa.</p>
     ${previewHtml}
     <div class="flexrow">
       <button class="btn btn-outline" onclick="window._nf=null; state.vista=${editando?"'detalle'":"'lista'"}; render()">Cancelar</button>
@@ -1819,7 +1820,7 @@ function abrirNuevoPrestamo(){
   window._nf = {
     codigo: nextCode("P", state.prestamos),
     clienteId: state.clientes[0]?state.clientes[0].id:"", capital:"", tasa:"", cuotas:"",
-    periodo:"Mensual", metodo:METODOS[0], fechaInicio:hoyISO(), fechaPrimeraCuota:""
+    periodo:"Mensual", metodo:METODOS[5], fechaInicio:hoyISO(), fechaPrimeraCuota:""
   };
   state.vista = "nuevo";
   render();
@@ -1838,9 +1839,9 @@ function guardarPrestamo(){
   const esIndef = f.metodo === METODOS[5];
   if(!f.clienteId || !f.capital || !f.tasa || (!esIndef && !f.cuotas)) return;
   const codigoDeseado = (f.codigo||"").trim();
-  if(!codigoDeseado){ alert("Ponle un código al préstamo."); return; }
+  if(!codigoDeseado){ alert("Ponle un número de préstamo."); return; }
   const duplicado = state.prestamos.find(x=>x.codigo===codigoDeseado && x.id!==f.editId);
-  if(duplicado){ alert(`Ya existe el préstamo ${codigoDeseado}. Usa otro código.`); return; }
+  if(duplicado){ alert(`Ya existe el préstamo ${codigoDeseado}. Usa otro número de préstamo.`); return; }
   if(f.editId){
     const p = state.prestamos.find(x=>x.id===f.editId);
     Object.assign(p, {
