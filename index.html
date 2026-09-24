@@ -2930,8 +2930,14 @@ async function licVerificar(clave){
   const ctrl = new AbortController();
   const corte = setTimeout(function(){ ctrl.abort(); }, 12000);   // que nunca se quede colgado
   try{
-    resp = await fetch(`${LIC_SUPABASE_URL}/rest/v1/licencias?clave=eq.${encodeURIComponent(clave)}&select=*`, {
-      headers: licHeaders(), signal: ctrl.signal
+    // Ya no se lee la tabla "licencias" directamente (queda cerrada con RLS): se llama a la
+    // función verificar_licencia, la única puerta permitida. Ella revisa todo del lado del
+    // servidor y responde solo 'ok' / 'invalida' / 'inactiva' / 'otro_dispositivo'.
+    resp = await fetch(`${LIC_SUPABASE_URL}/rest/v1/rpc/verificar_licencia`, {
+      method: "POST",
+      headers: licHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ p_clave: clave, p_dispositivo: deviceId }),
+      signal: ctrl.signal
     });
     data = await resp.json();
   } catch(e){
@@ -2939,25 +2945,14 @@ async function licVerificar(clave){
     return { ok:false, red:true, motivo:"No se pudo conectar para verificar la licencia. Revisa tu conexión a internet e intenta de nuevo." };
   }
   clearTimeout(corte);
-  if(!resp.ok || !Array.isArray(data)) return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
-  if(!data.length) return { ok:false, motivo:"Esa clave de licencia no existe." };
-  const lic = data[0];
-  if(!lic.activa) return { ok:false, motivo:"Esta licencia está desactivada." };
-  if(lic.dispositivo_id && lic.dispositivo_id !== deviceId){
-    return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
-  }
-  try{
-    await fetch(`${LIC_SUPABASE_URL}/rest/v1/licencias?clave=eq.${encodeURIComponent(clave)}`, {
-      method: "PATCH",
-      headers: licHeaders({ "Content-Type": "application/json", Prefer: "return=minimal" }),
-      body: JSON.stringify({ dispositivo_id: deviceId, ultima_conexion: new Date().toISOString() })
-    });
-  } catch(e){ /* si esto falla no bloqueamos el acceso, ya se confirmó que la licencia es válida */ }
-  return { ok:true };
+  if(!resp.ok || typeof data !== "string") return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
+  if(data === "ok") return { ok:true };
+  if(data === "invalida") return { ok:false, motivo:"Esa clave de licencia no existe." };
+  if(data === "inactiva") return { ok:false, motivo:"Esta licencia está desactivada." };
+  if(data === "otro_dispositivo") return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
+  return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
 }
 
-// La pantalla de licencia va ENCIMA de la app (un div aparte). Antes reemplazaba todo el
-// <body>, borraba el contenedor #app y por eso la app ya no podía dibujarse al validar.
 function licPantalla(html){
   let ov = document.getElementById("lic-overlay");
   if(!ov){ ov = document.createElement("div"); ov.id = "lic-overlay"; document.body.appendChild(ov); }
