@@ -117,6 +117,102 @@
     #recibo-imprimible, #reporte-imprimible, #tabla-imprimible{position:absolute;top:0;left:0;width:100%;border:none;}
     .solo-imprimir{display:block;}
   }
+
+  /* Pantalla de inicio */
+  .hero{margin:-16px -16px 18px;padding:6px 18px 22px;color:#fff;border-radius:0 0 26px 26px;position:relative;overflow:hidden;
+    background:radial-gradient(circle at 88% 8%,rgba(201,151,62,.38) 0,rgba(201,151,62,0) 42%),linear-gradient(165deg,#22376A 0%,#1B2A4A 55%,#121D36 100%);box-shadow:0 10px 24px rgba(27,42,74,.28);}
+  .hero .hero-lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.65);margin:0 0 4px;font-weight:600;}
+  .hero .hero-val{font-size:34px;font-weight:700;margin:0;line-height:1.1;color:#fff;}
+  .hero .hero-val em{font-style:normal;color:#E6B45A;}
+  .hero .hero-note{font-size:11.5px;color:rgba(255,255,255,.55);margin:6px 0 16px;}
+  .hero .hero-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .hero .hero-mini div{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 12px;}
+  .hero .hero-mini p{margin:0;}
+  .hero .hero-mini .m-lbl{font-size:11px;color:rgba(255,255,255,.62);margin-bottom:2px;}
+  .hero .hero-mini .m-val{font-size:16px;font-weight:700;color:#fff;}
+  .tile{border-radius:18px;padding:14px 14px 13px;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.14);}
+  .tile .t-lbl{font-size:12px;margin:0 0 6px;color:rgba(255,255,255,.85);font-weight:600;}
+  .tile .t-val{font-size:26px;font-weight:700;margin:0;}
+  .tile-verde{background:linear-gradient(135deg,#3E8E5A,#276B40);}
+  .tile-rojo{background:linear-gradient(135deg,#C9503F,#9A2F2F);cursor:pointer;}
+  .tile-clientes{grid-column:1/-1;background:linear-gradient(135deg,#C9973E,#A8761F);display:flex;justify-content:space-between;align-items:center;}
+  .tile-clientes .t-val{font-size:22px;}
+  .fila-inicio{border-left:4px solid var(--gold);background:linear-gradient(90deg,#FFF9EC,#fff 60%);box-shadow:0 2px 8px rgba(27,42,74,.07);}
+  .section-title.dorado{color:var(--navy);font-size:14px;display:flex;align-items:center;gap:8px;}
+  .section-title.dorado::before{content:"";width:4px;height:15px;border-radius:2px;background:var(--gold);}
+
+  /* Parte de abajo del inicio: panel + barra de pestañas */
+  .panel-prox{background:linear-gradient(180deg,#E6EBF4,#D6DFEE);border-radius:22px;padding:14px 14px 10px;min-height:190px;margin-bottom:8px;}
+  .panel-prox .section-title{margin-top:0;}
+  .panel-prox .empty{color:#1B2A4A;opacity:.75;padding:14px 0 10px;font-size:13.5px;}
+  .panel-prox .empty::before{content:"✓";display:block;width:46px;height:46px;line-height:46px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,#D9A84B,#B8842A);color:#fff;font-size:22px;font-weight:700;box-shadow:0 6px 14px rgba(201,151,62,.35);}
+  .tabbar{background:linear-gradient(180deg,#22376A,#1B2A4A);border-top:2px solid var(--gold);box-shadow:0 -6px 18px rgba(27,42,74,.25);}
+  .tab-btn{color:rgba(255,255,255,.6);}
+  .tab-btn.active{color:#E6B45A;}
+
+  /* Inicio — diseño 2 (corporativo, tipografía compacta) */
+  .v2-hero{margin:-16px -16px 14px;padding:2px 16px 16px;background:linear-gradient(180deg,#1B2A4A,#16223D);border-bottom:2px solid var(--gold);color:#fff;}
+  .v2-lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0 0 3px;font-weight:600;}
+  .v2-val{font-size:25px;font-weight:700;margin:0;color:#fff;line-height:1.15;}
+  .v2-stats{display:grid;grid-template-columns:1fr 1fr;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);}
+  .v2-stats>div+div{border-left:1px solid rgba(255,255,255,.14);padding-left:14px;}
+  .v2-stats p{margin:0;}
+  .v2-sl{font-size:10.5px;color:rgba(255,255,255,.58);margin-bottom:2px!important;}
+  .v2-sv{font-size:14.5px;font-weight:600;color:#fff;}
+  .v2-sv.gold{color:#E6B45A;}
+  .v2-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+  .v2-kpi{border-radius:12px;padding:9px 10px 10px;border:1px solid rgba(27,42,74,.10);border-top-width:3px;box-shadow:0 2px 6px rgba(27,42,74,.06);}
+  .v2-kpi .k-l{font-size:10.5px;color:#5E6678;margin:0 0 3px;font-weight:600;}
+  .v2-kpi .k-v{font-size:19px;font-weight:700;margin:0;}
+  .k-verde{background:#EDF5E8;border-top-color:#3E8E5A;} .k-verde .k-v{color:#2F6B1A;}
+  .k-rojo{background:#FAECEC;border-top-color:#C9503F;cursor:pointer;} .k-rojo .k-v{color:#A32D2D;}
+  .k-dorado{background:#FAF2DF;border-top-color:#C9973E;} .k-dorado .k-v{color:#8A6416;}
+  .panel-prox .section-title.dorado{font-size:12.5px;}
+  .panel-prox .empty{font-size:12.5px;}
+  .fila-inicio .name{font-size:13px;} .fila-inicio .sub{font-size:11px;}
+  .fila-inicio .badge{font-size:10.5px;padding:2px 8px;}
+  .tab-btn{font-size:10.5px;}
+  [data-theme="dark"] .v2-kpi{border-color:rgba(255,255,255,.08);}
+  [data-theme="dark"] .k-verde{background:#1B2A20;} [data-theme="dark"] .k-verde .k-v{color:#8FCB5C;}
+  [data-theme="dark"] .k-rojo{background:#2E1D1F;} [data-theme="dark"] .k-rojo .k-v{color:#F0908A;}
+  [data-theme="dark"] .k-dorado{background:#2C2618;} [data-theme="dark"] .k-dorado .k-v{color:#E8C171;}
+  [data-theme="dark"] .v2-kpi .k-l{color:rgba(255,255,255,.55);}
+
+  /* Inicio — diseño 3 (diseño 1 con colores apagados, panel separado e íconos) */
+  .v3-hero{margin:4px 0 16px;padding:18px;border-radius:22px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(circle at 90% 6%,rgba(201,151,62,.20) 0,rgba(201,151,62,0) 45%),linear-gradient(160deg,#33466B 0%,#283858 60%,#213050 100%);box-shadow:0 8px 20px rgba(27,42,74,.18);}
+  .v3-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .v3-lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.68);margin:0 0 4px;font-weight:600;}
+  .v3-val{font-size:28px;font-weight:700;margin:0;line-height:1.1;color:#fff;}
+  .v3-val em{font-style:normal;color:var(--gold);}
+  .v3-note{font-size:11px;color:rgba(255,255,255,.58);margin:6px 0 14px;}
+  .v3-ico{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.12);display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;}
+  .v3-ico svg{width:20px;height:20px;}
+  .v3-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .v3-mini>div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 10px;display:flex;gap:9px;align-items:center;}
+  .v3-mini .v3-ico{width:30px;height:30px;border-radius:10px;}
+  .v3-mini .v3-ico svg{width:16px;height:16px;}
+  .v3-mini p{margin:0;}
+  .v3-mini .m-lbl{font-size:10.5px;color:rgba(255,255,255,.58);margin-bottom:1px;}
+  .v3-mini .m-val{font-size:14px;font-weight:700;color:#fff;}
+  .v3-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+  .v3-tile{border-radius:18px;padding:13px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.10);}
+  .v3-tile .v3-ico{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.2);margin-bottom:10px;}
+  .v3-tile .v3-ico svg{width:17px;height:17px;}
+  .v3-tile p{margin:0;}
+  .v3-tile .t-lbl{font-size:11.5px;color:rgba(255,255,255,.9);font-weight:600;margin-bottom:3px;}
+  .v3-tile .t-val{font-size:22px;font-weight:700;}
+  .t-verde{background:linear-gradient(135deg,#6A9877,#527F62);}
+  .t-rojo{background:linear-gradient(135deg,#BE7A73,#A2625B);cursor:pointer;}
+  .t-dorado{grid-column:1/-1;background:linear-gradient(135deg,#BC9A5B,#A2803F);display:flex;align-items:center;gap:12px;}
+  .t-dorado .v3-ico{margin:0;}
+  .t-dorado .t-lbl{margin:0;font-size:12.5px;}
+  .t-dorado .t-val{margin-left:auto;}
+  .panel-prox{background:linear-gradient(180deg,#E9ECF2,#DEE3EC);}
+  .panel-prox .empty::before{background:linear-gradient(135deg,#C7A566,#A98544);box-shadow:0 5px 12px rgba(169,133,68,.28);}
+  .section-title.dorado::before{background:#B89552;}
+  .fila-inicio{border-left-color:#B89552;}
+  .tabbar{background:#26375A;border-top:1px solid #B89552;box-shadow:0 -4px 14px rgba(27,42,74,.18);}
+  .tab-btn.active{color:var(--gold);}
 </style>
 </head>
 <body>
@@ -1318,6 +1414,14 @@ async function autoSincronizarAlAbrir(){
   await descargarNube(true);
 }
 
+const ICO_INI = {
+  banco:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5.5 10v8M9.8 10v8M14.2 10v8M18.5 10v8"/><path d="M3 21h18"/></svg>',
+  dinero:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.6 9.3c-.4-.8-1.4-1.3-2.6-1.3-1.4 0-2.5.7-2.5 1.8s1 1.5 2.5 1.9 2.5.8 2.5 1.9-1.1 1.8-2.5 1.8c-1.2 0-2.2-.5-2.6-1.3M12 6.5V8M12 16v1.5"/></svg>',
+  billetera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18v3"/><path d="M3 7.5V18a2 2 0 0 0 2 2h14.5a1 1 0 0 0 1-1V9.5a1 1 0 0 0-1-1H5.5A2.5 2.5 0 0 1 3 6"/><circle cx="16.5" cy="14" r="1.2"/></svg>',
+  tendencia:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+  alerta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.2v.01"/></svg>',
+  personas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>'
+};
 function viewInicio(){
   if(state.vista==="reportePDF") return viewReportePDF();
   if(state.vista==="estadoResultados") return viewEstadoResultados();
@@ -1342,29 +1446,34 @@ function viewInicio(){
     .filter(x=> x.faltan===1 || x.faltan===0)
     .sort((a,b)=> new Date(a.r.proximaFecha) - new Date(b.r.proximaFecha));
 
-  let html = `<div class="grid2">
-    <div class="card" style="background:#EEF1F6;"><p class="lbl">Capital prestado</p><p class="val" style="color:${NAVY}">${money(prestado)}</p></div>
-    <div class="card" style="background:#FBF3E4;"><p class="lbl">Total cobrado</p><p class="val" style="color:#8A6416">${money(cobrado)}</p></div>
-    <div class="card" style="background:#EAF3DE;"><p class="lbl">Préstamos activos</p><p class="val" style="color:#3B6D11">${activos}</p></div>
-    <div class="card" style="background:#FCEBEB;cursor:pointer;" onclick="verCartera()"><p class="lbl">Cuotas vencidas</p><p class="val" style="color:#A32D2D">${vencidos}</p></div>
-    <div class="card" style="background:#F0EAFB;grid-column:1/-1;">
-      <p class="lbl">Capital actual prestado</p>
-      <p class="val" style="color:#5B3E96">${money(capitalActual)}</p>
-      <p class="hint" style="margin:2px 0 0;">Saldo de capital que tus clientes todavía te deben (no incluye interés de cuotas futuras).</p>
+  let html = `<div class="v3-hero">
+    <div class="v3-top">
+      <div><p class="v3-lbl">Capital actual prestado</p>
+      <p class="v3-val"><em>L</em> ${money(capitalActual).replace(/^L\s*/,"")}</p></div>
+      <span class="v3-ico">${ICO_INI.banco}</span>
+    </div>
+    <p class="v3-note">Saldo de capital que tus clientes todavía te deben (sin interés de cuotas futuras).</p>
+    <div class="v3-mini">
+      <div><span class="v3-ico">${ICO_INI.dinero}</span><div><p class="m-lbl">Capital prestado</p><p class="m-val">${money(prestado)}</p></div></div>
+      <div><span class="v3-ico">${ICO_INI.billetera}</span><div><p class="m-lbl">Total cobrado</p><p class="m-val" style="color:var(--gold);">${money(cobrado)}</p></div></div>
     </div>
   </div>
-  <p class="section-title">Clientes</p>
-  <div class="row-card"><div class="flex-gap">${ICONS.users.replace("currentColor",NAVY)}<span>${state.clientes.length} registrados</span></div></div>
-  <p class="section-title" style="margin-top:16px;">Próximos a vencer</p>`;
+  <div class="v3-tiles">
+    <div class="v3-tile t-verde"><span class="v3-ico">${ICO_INI.tendencia}</span><p class="t-lbl">Préstamos activos</p><p class="t-val">${activos}</p></div>
+    <div class="v3-tile t-rojo" onclick="verCartera()"><span class="v3-ico">${ICO_INI.alerta}</span><p class="t-lbl">Cuotas vencidas</p><p class="t-val">${vencidos}</p></div>
+    <div class="v3-tile t-dorado"><span class="v3-ico">${ICO_INI.personas}</span><p class="t-lbl">Clientes registrados</p><p class="t-val">${state.clientes.length}</p></div>
+  </div>
+  <div class="panel-prox"><p class="section-title dorado">Próximos a vencer</p>`;
 
   if(prox.length===0) html += `<p class="empty">No tienes cuotas por cobrar hoy ni mañana. 🎉</p>`;
   prox.forEach(({p,r})=>{
     const cli = state.clientes.find(c=>c.id===p.clienteId);
-    html += `<div class="row-card" style="cursor:pointer;" onclick="state.tab='prestamos'; verDetalle('${p.id}')">
+    html += `<div class="row-card fila-inicio" style="cursor:pointer;" onclick="state.tab='prestamos'; verDetalle('${p.id}')">
       <div><p class="name">${cli?cli.nombre:"—"}</p><p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p></div>
       <span class="badge" style="background:#EEF1F6;color:${NAVY};">Por cobrar</span>
     </div>`;
   });
+  html += `</div>`;
   return html;
 }
 function abrirAjustes(){
@@ -2787,8 +2896,106 @@ function viewTabbar(){
   }, { passive: true });
 })();
 
-render();
-autoSincronizarAlAbrir();
+// --- Licencia de un solo dispositivo, verificada contra Supabase ------------------
+// Antes de arrancar la app se pregunta a Supabase si la clave de licencia ingresada
+// existe, está activa, y si ya está "amarrada" a otro dispositivo. Cada dispositivo
+// se identifica con un ID aleatorio guardado en localStorage (no es información
+// personal, es solo un identificador técnico de este navegador/dispositivo).
+const LIC_SUPABASE_URL = "https://kbskmdtgwnagdigtdlze.supabase.co";
+const LIC_SUPABASE_KEY = "sb_publishable_AnwNz39_voG8r7XnjCG6Vg_75jK9Aa7";
+
+function licDeviceId(){
+  let id = localStorage.getItem("jrp_device_id");
+  if(!id){
+    id = (crypto.randomUUID ? crypto.randomUUID() : ("dev-" + Date.now() + "-" + Math.random().toString(16).slice(2)));
+    localStorage.setItem("jrp_device_id", id);
+  }
+  return id;
+}
+
+async function licVerificar(clave){
+  const deviceId = licDeviceId();
+  let resp, data;
+  try{
+    resp = await fetch(`${LIC_SUPABASE_URL}/rest/v1/licencias?clave=eq.${encodeURIComponent(clave)}&select=*`, {
+      headers: { apikey: LIC_SUPABASE_KEY, Authorization: `Bearer ${LIC_SUPABASE_KEY}` }
+    });
+    data = await resp.json();
+  } catch(e){
+    return { ok:false, motivo:"No se pudo conectar para verificar la licencia. Revisa tu conexión a internet e intenta de nuevo." };
+  }
+  if(!resp.ok || !Array.isArray(data)) return { ok:false, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
+  if(!data.length) return { ok:false, motivo:"Esa clave de licencia no existe." };
+  const lic = data[0];
+  if(!lic.activa) return { ok:false, motivo:"Esta licencia está desactivada." };
+  if(lic.dispositivo_id && lic.dispositivo_id !== deviceId){
+    return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
+  }
+  try{
+    await fetch(`${LIC_SUPABASE_URL}/rest/v1/licencias?clave=eq.${encodeURIComponent(clave)}`, {
+      method: "PATCH",
+      headers: {
+        apikey: LIC_SUPABASE_KEY, Authorization: `Bearer ${LIC_SUPABASE_KEY}`,
+        "Content-Type": "application/json", Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ dispositivo_id: deviceId, ultima_conexion: new Date().toISOString() })
+    });
+  } catch(e){ /* si esto falla no bloqueamos el acceso, ya se confirmó que la licencia es válida */ }
+  return { ok:true };
+}
+
+function licPantalla(html){
+  document.body.innerHTML = `
+<div style="position:fixed;inset:0;z-index:99999;background:#1B2A4A;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-align:center;">
+${html}
+</div>`;
+}
+
+function licPedirClave(mensajeError){
+  licPantalla(`
+<div style="font-size:40px;margin-bottom:6px;">🔒</div>
+<h2 style="color:#fff;margin:0 0 6px;font-size:18px;">Licencia requerida</h2>
+<p style="color:#B9C2D6;font-size:13px;margin:0 0 16px;max-width:280px;">Ingresa la clave de licencia para usar esta app en este dispositivo.</p>
+${mensajeError ? `<p style="color:#F3A0A0;font-size:13px;margin:0 0 10px;max-width:280px;">${mensajeError}</p>` : ""}
+<input id="licClaveInput" type="text" placeholder="Clave de licencia" autocapitalize="off" autocorrect="off" style="width:240px;text-align:center;font-size:16px;padding:12px;border-radius:12px;border:none;margin-bottom:10px;">
+<button id="licEntrarBtn" style="width:240px;padding:12px;border-radius:12px;border:none;background:#C9973E;color:#1B2A4A;font-weight:700;font-size:15px;">Entrar</button>
+`);
+  const input = document.getElementById("licClaveInput");
+  const btn = document.getElementById("licEntrarBtn");
+  input.focus();
+  async function intentar(){
+    const clave = (input.value || "").trim();
+    if(!clave) return;
+    btn.disabled = true; btn.textContent = "Verificando…";
+    const r = await licVerificar(clave);
+    if(r.ok){
+      localStorage.setItem("jrp_licencia", clave);
+      render();
+      if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
+    } else {
+      btn.disabled = false; btn.textContent = "Entrar";
+      licPedirClave(r.motivo);
+    }
+  }
+  btn.addEventListener("click", intentar);
+  input.addEventListener("keydown", function(e){ if(e.key === "Enter") intentar(); });
+}
+
+async function licArrancar(){
+  const claveGuardada = localStorage.getItem("jrp_licencia");
+  if(!claveGuardada){ licPedirClave(); return; }
+  licPantalla(`<div style="font-size:40px;margin-bottom:6px;">🔒</div><p style="color:#B9C2D6;font-size:13px;">Verificando licencia…</p>`);
+  const r = await licVerificar(claveGuardada);
+  if(r.ok){
+    render();
+    if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
+  } else {
+    localStorage.removeItem("jrp_licencia");
+    licPedirClave(r.motivo);
+  }
+}
+
+licArrancar();
 </script>
 </body>
 </html>
