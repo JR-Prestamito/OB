@@ -2949,6 +2949,7 @@ async function licVerificar(clave){
   if(data === "ok") return { ok:true };
   if(data === "invalida") return { ok:false, motivo:"Esa clave de licencia no existe." };
   if(data === "inactiva") return { ok:false, motivo:"Esta licencia está desactivada." };
+  if(data === "vencida") return { ok:false, motivo:"Esta licencia venció. Contacta al proveedor de la app para renovarla." };
   if(data === "otro_dispositivo") return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
   return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
 }
