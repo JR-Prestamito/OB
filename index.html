@@ -23,10 +23,16 @@
   #pull-refresh-indicator .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:pr-spin .7s linear infinite;}
   @keyframes pr-spin{to{transform:rotate(360deg);}}
   #app{max-width:420px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:70px;background:var(--cream);}
-  header{background:var(--navy);padding:calc(20px + env(safe-area-inset-top)) 16px 16px;}
+  header{background:var(--navy);padding:calc(20px + env(safe-area-inset-top)) 16px 16px;position:sticky;top:0;z-index:400;}
   header p{color:var(--gold);font-weight:700;font-size:11px;margin:0 0 2px;letter-spacing:.04em;}
   header h1{color:#fff;font-size:19px;margin:0;font-weight:600;}
   .content{padding:16px;}
+  /* Botón flotante de "+" (Clientes y Préstamos): el contenedor se centra igual que la
+     barra inferior (mismo truco de max-width) pero no captura toques (pointer-events:none),
+     así solo el círculo del botón es tocable, sin bloquear la lista debajo de él. */
+  .fab-wrap{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:420px;bottom:calc(var(--tabbar-h,64px) + 16px);pointer-events:none;z-index:350;}
+  .fab{position:absolute;right:16px;bottom:0;width:56px;height:56px;border-radius:50%;background:var(--navy);color:#fff;border:none;font-size:28px;line-height:56px;text-align:center;padding:0;box-shadow:0 4px 14px rgba(27,42,74,.35);pointer-events:auto;cursor:pointer;}
+  .fab:active{transform:scale(.94);}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
   .card{border-radius:16px;padding:14px;}
   .card .lbl{font-size:12px;color:#8a8680;margin:0 0 4px;}
@@ -92,6 +98,8 @@
   .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#222;min-width:0;-webkit-appearance:none;appearance:none;}
   .searchbar input::-webkit-search-decoration,.searchbar input::-webkit-search-cancel-button,.searchbar input::-webkit-search-results-button,.searchbar input::-webkit-search-results-decoration{display:none;-webkit-appearance:none;}
   .toprow{display:flex;gap:8px;margin-bottom:16px;}
+  /* Buscador fijo: se queda pegado debajo del encabezado al desplazarse por la lista (igual que en la app Pro) */
+  .toprow.buscador{position:sticky;top:calc(var(--header-h,78px) - 1px);z-index:390;background:var(--cream);margin:-16px -16px 12px;padding:10px 16px;box-shadow:0 5px 8px -7px rgba(0,0,0,.28);}
   .iconbtn{background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;flex-shrink:0;}
   .flexrow{display:flex;gap:8px;}
   .hint{font-size:12px;color:#aaa;margin-top:6px;}
@@ -100,7 +108,11 @@
   .backbtn{background:none;border:none;color:#fff;font-size:20px;margin-right:6px;cursor:pointer;}
   .cartera-grupo{font-size:12px;font-weight:700;color:#A32D2D;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em;}
   .printbtn{background:none;border:none;color:#9c9890;font-size:16px;cursor:pointer;padding:4px;}
-  #recibo-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;}
+  #recibo-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;position:relative;overflow:hidden;}
+  /* Marca de agua del recibo: la palabra PAGADO, en diagonal y muy tenue, detrás del
+     contenido (el texto viene del atributo data-marca para no tener que duplicarlo). */
+  #recibo-imprimible::before{content:attr(data-marca);position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) rotate(-28deg);text-align:center;font-size:52px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase;color:rgba(27,42,74,.07);pointer-events:none;z-index:0;padding:0 8px;}
+  #recibo-imprimible > *{position:relative;z-index:1;}
   #recibo-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
   #recibo-imprimible .rline{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed #eee;}
   #recibo-imprimible .rtotal{font-size:17px;font-weight:700;color:var(--navy);}
@@ -340,7 +352,6 @@ let state = {
   config: JSON.parse(localStorage.getItem(LK("jr_config")) || '{"tasaMoraDiaria":0}'),
   vista: (_navPrevia && _navPrevia.vista) || "lista",
   seleccionId: (_navPrevia && _navPrevia.seleccionId) || null,
-  showFormCliente: (_navPrevia && _navPrevia.showFormCliente) || false,
   clienteEditId: (_navPrevia && _navPrevia.clienteEditId) || null,
   desbloqueado: sessionStorage.getItem(LK("jr_desbloqueado")) === "1",
   ajustesDesbloqueado: sessionStorage.getItem(LK("jr_ajustes_desbloqueado")) === "1",
@@ -351,7 +362,7 @@ function guardarNav(){
   try{
     sessionStorage.setItem(LK("jr_nav"), JSON.stringify({
       tab: state.tab, vista: state.vista, seleccionId: state.seleccionId,
-      showFormCliente: state.showFormCliente, clienteEditId: state.clienteEditId,
+      clienteEditId: state.clienteEditId,
       _nf: window._nf || null, _rf: window._rf || null
     }));
   }catch(e){}
@@ -778,8 +789,21 @@ function resumen(p){
     const baseAnterior = periodosPagados>0 ? tabla.slice(0,periodosPagados).reduce((s,f)=>s+f.cuota,0) : 0;
     const abonadoEnCuotaActual = Math.max(0, totalPagado-baseAnterior);
     const capitalPendienteIndef = periodosPagados>0 ? (tabla[periodosPagados-1].saldo||capital) : capital;
+    // Como este método es "solo interés", cada cuota vencida sin pagar es interés puro (el
+    // capital no baja por el cronograma normal, solo por abono a capital). Ese interés vencido
+    // SÍ es deuda real de hoy, así que se suma al saldo pendiente. capitalPendiente se deja
+    // solo con el capital puro porque es el que se usa para refinanciar. Igual que en los
+    // demás métodos, la mora no se incluye aquí (se maneja aparte).
+    const hoy = hoyISO();
+    let interesVencidoIndef = 0;
+    if(cuotaActualRow && cuotaActualRow.fecha < hoy){
+      interesVencidoIndef += Math.max(0, cuotaActualRow.cuota - abonadoEnCuotaActual);
+      for(let i=periodosPagados+1; i<tabla.length; i++){
+        if(tabla[i].fecha < hoy) interesVencidoIndef += tabla[i].cuota; else break;
+      }
+    }
     return { cuota: cuotaActualRow ? cuotaActualRow.cuota : (tabla[tabla.length-1]?tabla[tabla.length-1].cuota:0),
-      saldoPendiente: capitalPendienteIndef, capitalPendiente: capitalPendienteIndef, estado:"Activo",
+      saldoPendiente: capitalPendienteIndef + interesVencidoIndef, capitalPendiente: capitalPendienteIndef, estado:"Activo",
       proximaFecha: cuotaActualRow ? cuotaActualRow.fecha : null, tabla,
       pagosHechos: periodosPagados, cuotaActual: cuotaActualRow,
       abonadoEnCuotaActual, faltaEnCuotaActual: cuotaActualRow ? Math.max(0, cuotaActualRow.cuota-abonadoEnCuotaActual) : 0,
@@ -1023,7 +1047,17 @@ function render(){
   }
   window.scrollTo(0, scrollY);
   document.title = nombreNegocio();
+  medirEncabezado();
 }
+// Mide la altura real del encabezado (que ahora queda fijo/sticky arriba) para que el
+// buscador fijo (.toprow.buscador) sepa exactamente debajo de dónde pegarse — la altura
+// del encabezado varía según el celular (notch, barra de estado, etc.), así que se mide
+// ya insertado en la pantalla en vez de adivinarla.
+function medirEncabezado(){
+  const h = document.querySelector("#app header");
+  if(h && h.offsetHeight > 0) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
+}
+window.addEventListener("resize", medirEncabezado);
 
 function exportarDatos(){
   const payload = { clientes: state.clientes, prestamos: state.prestamos, config: state.config, exportado: new Date().toISOString() };
@@ -1188,37 +1222,104 @@ function abrirEstadoResultados(){
   state.vista = "estadoResultados";
   render();
 }
-function viewEstadoResultados(){
-  let interesesCobrados=0, capitalCobrado=0, moraCobrada=0, enganches=0, desembolsos=0, cobradoArchivado=0, gananciaPerdidaModificaciones=0;
-  state.prestamos.forEach(p=>{
+// Reparte los cobros hechos ANTES de cada modificación "no sustancial" (los que quedaron
+// archivados, ver pagosArchivados) entre interés, capital, abonos a capital, mora y enganche
+// — mismo método que usa la app Pro (desgloseCobrosArchivados), para que esos cobros viejos
+// se sumen con los vigentes en una sola cifra por concepto, en vez de aparecer aparte como
+// un "saldo antes de modificaciones" sin desglosar.
+// - Mora, enganche y abonos a capital salen EXACTOS (cada pago ya trae su tipo y su mora).
+// - Interés vs. capital: si TODOS los pagos del grupo traen el reparto guardado (interes/capital,
+//   que se guarda al registrar el pago) se usa tal cual; si no, se ESTIMA reconstruyendo el
+//   préstamo como era antes de modificarse (capital, tasa, método, cuotas y fecha anteriores).
+// Siempre se cumple: interes + capital + mora + enganche = lo cobrado (monto + mora) de esos pagos.
+function desgloseCobrosArchivados(p){
+  const res = { interes:0, capital:0, abonos:0, mora:0, enganche:0, estimado:false };
+  // Igual que pagosArchivados(): normalmente todo vive en p.historialModificaciones, pero se
+  // fusiona con el nombre viejo p.modificaciones (sin duplicar) por si algún dato no migró.
+  const historial = (p.historialModificaciones || []).slice();
+  (p.modificaciones||[]).forEach(mVieja=>{
+    const yaExiste = historial.some(mNueva=> mNueva.fecha===mVieja.fecha && mNueva.capitalAnterior===mVieja.capitalAnterior);
+    if(!yaExiste) historial.push(mVieja);
+  });
+  historial.forEach(function(m, idx){
+    const pagos = m.pagosPrevios || [];
+    if(!pagos.length) return;
+    const num = function(x){ return Number(x)||0; };
+    pagos.forEach(function(pg){
+      res.mora += num(pg.mora);
+      if(pg.tipo==="enganche") res.enganche += num(pg.monto);
+    });
+    const cuotasYAbonos = pagos.filter(function(pg){ return pg.tipo!=="enganche"; });
+    res.abonos += cuotasYAbonos.filter(function(pg){ return pg.tipo==="abono_capital"; }).reduce(function(s,pg){ return s+num(pg.monto); },0);
+    const totalG = cuotasYAbonos.reduce(function(s,pg){ return s+num(pg.monto); },0);
+    let i = 0, c = 0;
+    if(cuotasYAbonos.length && cuotasYAbonos.every(function(pg){ return pg.interes!==undefined && pg.capital!==undefined; })){
+      cuotasYAbonos.forEach(function(pg){ i += num(pg.interes); c += num(pg.capital); });
+    } else if(cuotasYAbonos.length){
+      res.estimado = true;
+      try{
+        const previo = Object.assign({}, p, {
+          id: p.id+"_previo"+idx, capital:m.capitalAnterior, tasa:m.tasaAnterior, periodo:m.periodoAnterior,
+          metodo:m.metodoAnterior, cuotas:m.cuotasAnterior, fechaInicio:m.fechaInicioAnterior||p.fechaInicio,
+          pagos:pagos, ajustesCapital:m.ajustesPrevios||[], historialModificaciones:[], modificaciones:[], liquidadoAnticipado:false
+        });
+        const d = desglosePagado(previo); i = d.interes; c = d.capital;
+      }catch(e){ i = 0; c = 0; }
+      // Lo que la tabla no alcance a repartir se deja como capital, para que el total nunca cambie.
+      c += totalG - (i + c);
+    }
+    res.interes += i; res.capital += c;
+  });
+  return res;
+}
+// El enganche VIGENTE (todavía en p.pagos, no archivado por una modificación posterior) se
+// excluye a propósito del reparto interés/capital en desglosePagado (no es ninguna de las
+// dos cosas) — se suma aparte aquí para no perderlo del renglón de ingresos.
+function enganchesDe(p){
+  return (p.pagos||[]).filter(pg=>pg.tipo==="enganche").reduce((s,pg)=>s+(Number(pg.monto)||0),0);
+}
+// Totales de ingresos cobrados de TODOS los préstamos (cobros vigentes + archivados), ya
+// unificados por concepto — mismo método que usa la app Pro (desgloseIngresosCobrados),
+// para que el Estado de resultados no tenga que mostrar una línea aparte de "cobrado antes
+// de modificaciones" sin desglosar: ese dinero entra a los mismos totales de siempre.
+// "capital" = todo el capital cobrado (cuotas + abonos a capital); "abonos" es la parte que
+// vino de abonos extra, y "capitalCuotas" el resto (lo que trae cada cuota).
+function desgloseIngresosCobrados(){
+  const t = { intereses:0, capital:0, abonos:0, capitalCuotas:0, mora:0, enganches:0, hayEstimado:false };
+  state.prestamos.forEach(function(p){
     const d = desglosePagado(p);
-    interesesCobrados += d.interes;
-    capitalCobrado += d.capital;
-    moraCobrada += (p.pagos||[]).reduce((s,pg)=>s+(Number(pg.mora)||0),0);
-    // El enganche VIGENTE (el que sigue en p.pagos, todavía no archivado por una modificación
-    // posterior) no pasa por desglosePagado -- se excluye a propósito del reparto
-    // interés/capital, porque no es ninguna de las dos cosas -- así que se suma aparte aquí.
-    // OJO: no se recorre p.historialModificaciones para sumar enganches de modificaciones
-    // viejas, porque esos ya quedaron adentro de pagosArchivados(p) (cobradoArchivado más
-    // abajo) en el momento en que se archivaron -- sumarlos también aquí los duplicaría.
-    enganches += (p.pagos||[]).filter(pg=>pg.tipo==="enganche").reduce((s,pg)=>s+(Number(pg.monto)||0),0);
-    // Los pagos hechos antes de una modificación "no sustancial" quedaron archivados bajo
-    // un cronograma que ya no existe, así que no se intenta repartir entre interés/capital
-    // (sería una separación artificial) — se suman aquí en una sola línea, para que el
-    // total de ingresos siga reflejando toda la plata que de verdad entró.
-    cobradoArchivado += pagosArchivados(p).reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
+    const a = desgloseCobrosArchivados(p);
+    const pagos = p.pagos || [];
+    t.intereses += d.interes + a.interes;
+    t.capital += d.capital + a.capital;
+    t.abonos += pagos.filter(function(pg){ return pg.tipo==="abono_capital"; }).reduce(function(s,pg){ return s+(Number(pg.monto)||0); },0) + a.abonos;
+    t.mora += pagos.reduce(function(s,pg){ return s+(Number(pg.mora)||0); },0) + a.mora;
+    t.enganches += enganchesDe(p) + a.enganche;
+    if(a.estimado) t.hayEstimado = true;
+  });
+  t.capitalCuotas = t.capital - t.abonos;
+  return t;
+}
+function viewEstadoResultados(){
+  let desembolsos=0, gananciaPerdidaModificaciones=0;
+  state.prestamos.forEach(p=>{
     desembolsos += capitalDesembolsadoNeto(p);
     // Ganancia/pérdida por modificaciones NO sustanciales (NIIF PYMES). Las sustanciales
     // nunca tienen (por definición se tratan como préstamo nuevo), así que solo se suma
     // lo guardado en el historial de cada préstamo.
     (p.historialModificaciones||[]).forEach(m=>{ gananciaPerdidaModificaciones += Number(m.gananciaPerdida)||0; });
   });
-  const ingresos = interesesCobrados + capitalCobrado + moraCobrada + enganches + cobradoArchivado;
+  const T = desgloseIngresosCobrados();
+  const ingresos = T.intereses + T.capital + T.mora + T.enganches;
   const mostrarGananciaModif = state.config.mostrarGananciaModificaciones===true;
   const utilidad = ingresos - desembolsos + (mostrarGananciaModif ? gananciaPerdidaModificaciones : 0);
   const fila = (label, valor, negrita)=>`<tr>
       <td style="padding:6px 6px;${negrita?"font-weight:700;":""}">${label}</td>
       <td style="padding:6px 6px;text-align:right;${negrita?"font-weight:700;":""}">${money(valor)}</td>
+    </tr>`;
+  const filaSub = (label, valor)=>`<tr>
+      <td style="padding:2px 6px 2px 22px;font-size:12px;color:#8a8680;">${label}</td>
+      <td style="padding:2px 6px;text-align:right;font-size:12px;color:#8a8680;">${money(valor)}</td>
     </tr>`;
   return `
     <div id="reporte-imprimible">
@@ -1226,11 +1327,12 @@ function viewEstadoResultados(){
       <p class="hint" style="margin:0 0 14px;">Estado de resultados (base efectivo) · ${fmtDate(hoyISO())}</p>
       <p style="font-weight:700;margin:0 0 6px;">Ingresos</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
-        ${fila("Intereses cobrados", interesesCobrados)}
-        ${fila("Abonos a capital cobrados", capitalCobrado)}
-        ${fila("Mora cobrada", moraCobrada)}
-        ${fila("Enganches al refinanciar", enganches)}
-        ${cobradoArchivado>0 ? fila("Cobrado antes de modificaciones (historial)", cobradoArchivado) : ""}
+        ${fila("Intereses cobrados", T.intereses)}
+        ${fila("Capital cobrado", T.capital)}
+        ${filaSub("De cuotas", T.capitalCuotas)}
+        ${filaSub("Por abonos a capital", T.abonos)}
+        ${fila("Mora cobrada", T.mora)}
+        ${fila("Enganches al refinanciar", T.enganches)}
         ${fila("Total ingresos", ingresos, true)}
       </table>
       <p style="font-weight:700;margin:0 0 6px;">Egresos</p>
@@ -1247,7 +1349,7 @@ function viewEstadoResultados(){
         <tr><td style="padding:8px 6px;font-weight:700;">${utilidad>=0?"Utilidad":"Pérdida"} del período</td>
         <td style="padding:8px 6px;text-align:right;font-weight:700;color:${utilidad>=0?"#3B6D11":"#c0433b"};">${money(Math.abs(utilidad))}</td></tr>
       </table>
-      <p class="hint" style="margin-top:14px;">Nota: es un estado en base efectivo (dinero que entra vs. dinero que sale), no un estado contable formal. Cuando un préstamo se refinancia, el saldo que se traslada del préstamo anterior NO se cuenta otra vez como desembolso — solo cuenta el monto adicional que realmente se entregó en efectivo en ese momento (si lo hubo). Cuando un refinanciamiento se clasifica como \"modificación no sustancial\" según NIIF para las PYMES, Sección 11 (prueba del umbral de valor presente), la diferencia se reconoce aquí como ganancia o pérdida; cuando es \"sustancial\", se trata como préstamo nuevo sin efecto adicional en este renglón.</p>
+      <p class="hint" style="margin-top:14px;">Nota: es un estado en base efectivo (dinero que entra vs. dinero que sale), no un estado contable formal. Cuando un préstamo se refinancia, el saldo que se traslada del préstamo anterior NO se cuenta otra vez como desembolso — solo cuenta el monto adicional que realmente se entregó en efectivo en ese momento (si lo hubo). Cuando un refinanciamiento se clasifica como "modificación no sustancial" según NIIF para las PYMES, Sección 11 (prueba del umbral de valor presente), la diferencia se reconoce aquí como ganancia o pérdida; cuando es "sustancial", se trata como préstamo nuevo sin efecto adicional en este renglón.${T.hayEstimado ? " Los cobros hechos antes de modificar un préstamo, cuando se registraron antes de que la app guardara el reparto, se dividen entre interés y capital por estimación (los abonos a capital, la mora y el total son exactos)." : ""}</p>
     </div>
     <div class="flexrow" style="margin-top:16px;">
       <button class="btn btn-outline" onclick="state.vista='ajustes'; render();">Volver</button>
@@ -1614,28 +1716,30 @@ function viewAjustes(){
 }
 
 function viewClientes(){
-  let html = `<div class="toprow">
+  if(state.vista==="nuevo") return viewNuevoCliente();
+  let html = `<div class="toprow buscador">
     <input id="f_buscarCliente" type="text" name="q" placeholder="Buscar cliente" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1;" value="${state.q}" oninput="state.q=this.value; filtrarListaClientes();">
-    <button class="iconbtn" onclick="abrirFormCliente(null)">+</button>
-  </div>`;
+  </div>
+  <div class="fab-wrap"><button class="fab" title="Nuevo cliente" onclick="abrirFormCliente(null)">+</button></div>`;
 
-  if(state.showFormCliente){
-    const ed = state.clienteEditId ? state.clientes.find(c=>c.id===state.clienteEditId) : null;
-    html += `<div class="row-card" style="display:block;">
+  html += `<div id="lista-clientes">${renderListaClientes()}</div>`;
+  return html;
+}
+// Pantalla separada para "Nuevo cliente" / "Editar cliente" (antes se abría inline arriba
+// de la lista) — mismo patrón de navegación que ya usa Préstamos con su vista "nuevo".
+function viewNuevoCliente(){
+  const ed = state.clienteEditId ? state.clientes.find(c=>c.id===state.clienteEditId) : null;
+  return `<div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 10px;">${ed?"Editar cliente":"Nuevo cliente"}</p>
       <label><span>Nombre</span><input id="f_nombre" value="${ed?ed.nombre:""}"></label>
       <label><span>Celular</span><input id="f_celular" placeholder="9999-9999 (8 dígitos)" value="${ed?ed.celular||"":""}"></label>
       <label><span>Cédula</span><input id="f_cedula" placeholder="0000-0000-00000 (13 dígitos)" value="${ed?ed.cedula||"":""}"></label>
       <label><span>Dirección</span><input id="f_direccion" value="${ed?ed.direccion||"":""}"></label>
       <div class="flexrow">
-        <button class="btn btn-outline" onclick="state.showFormCliente=false; state.clienteEditId=null; render()">Cancelar</button>
+        <button class="btn btn-outline" onclick="state.clienteEditId=null; state.vista='lista'; render()">Cancelar</button>
         <button class="btn btn-gold" onclick="guardarCliente()">${ed?"Guardar cambios":"Guardar cliente"}</button>
       </div>
     </div>`;
-  }
-
-  html += `<div id="lista-clientes">${renderListaClientes()}</div>`;
-  return html;
 }
 function renderListaClientes(){
   const filtrados = state.clientes.filter(c => (c.nombre+c.codigo).toLowerCase().includes(state.q.toLowerCase()));
@@ -1662,7 +1766,7 @@ function filtrarListaClientes(){
 }
 function abrirFormCliente(id){
   state.clienteEditId = id;
-  state.showFormCliente = true;
+  state.vista = "nuevo";
   render();
 }
 
@@ -1701,7 +1805,7 @@ function guardarCliente(){
     const codigo = nextCode("C", state.clientes);
     state.clientes.push({ id: uid(), codigo, ...datos });
   }
-  state.showFormCliente = false;
+  state.vista = "lista";
   state.clienteEditId = null;
   save(); render();
 }
@@ -1742,10 +1846,10 @@ function viewPrestamos(){
   if(state.vista==="cartera") return viewCartera();
   if(state.vista==="refinanciar") return viewRefinanciar();
 
-  let html = `<div class="toprow">
+  let html = `<div class="toprow buscador">
     <input id="f_buscarPrestamo" type="text" name="q" placeholder="Buscar préstamo (código o cliente)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1;" value="${state.qPrestamos||""}" oninput="state.qPrestamos=this.value; filtrarListaPrestamos();">
-    <button class="iconbtn" onclick="abrirNuevoPrestamo()">+</button>
   </div>
+  <div class="fab-wrap"><button class="fab" title="Nuevo préstamo" onclick="abrirNuevoPrestamo()">+</button></div>
   <div id="lista-prestamos">${renderListaPrestamos()}</div>`;
   return html;
 }
@@ -2327,48 +2431,78 @@ function cargarJsPDF(cb){
   s.onerror = function(){ state.pdfBusy = false; render(); alert("No se pudo cargar el generador de PDF. Revisa tu conexión a internet e intenta de nuevo."); };
   document.head.appendChild(s);
 }
-function generarPDFRecibo(p, cli, pg, r, numRecibo){
+// Texto diagonal muy tenue en el centro de la página. El ángulo se calcula a mano (en vez de
+// usar align:"center" con angle) porque jsPDF no centra bien el texto rotado.
+function dibujarMarcaDeAgua(doc, texto, anchoPag, altoPag){
+  const t = String(texto||"").toUpperCase().trim();
+  if(!t) return;
+  const ang = 30, rad = ang*Math.PI/180;
+  let size = 44;
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(size);
+  // Se achica la letra si el nombre es largo, para que la diagonal quepa dentro del ancho.
+  while(size>8 && doc.getTextWidth(t)*Math.cos(rad) > anchoPag-10){ size -= 1; doc.setFontSize(size); }
+  const w = doc.getTextWidth(t);
+  const cx = anchoPag/2, cy = altoPag/2;
+  const x0 = cx - (w/2)*Math.cos(rad), y0 = cy + (w/2)*Math.sin(rad);
+  doc.saveGraphicsState();
+  try{
+    doc.setGState(new doc.GState({opacity: 0.10}));
+    doc.setTextColor(27,42,74);
+  }catch(e){
+    // Si esta versión de jsPDF no maneja transparencia, se usa un gris muy claro.
+    doc.setTextColor(232,234,240);
+  }
+  doc.text(t, x0, y0, {angle: ang});
+  doc.restoreGraphicsState();
+  doc.setTextColor(0,0,0);
+}
+function generarPDFRecibo(p, cli, d){
   const { jsPDF } = window.jspdf;
-  const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0);
-  const concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota");
-  const filas = [
-    ["No. de recibo", "R-"+numRecibo],
-    ["Fecha", fmtDate(pg.fecha)],
-    ["Cliente", cli?cli.nombre:"—"]
-  ];
-  if(cli && cli.cedula) filas.push(["Cédula", cli.cedula]);
-  filas.push(["Préstamo", p.codigo]);
-  filas.push(["Método", p.metodo]);
-  filas.push(["Concepto", concepto]);
-  if(pg.mora>0){ filas.push(["Cuota/abono", money(pg.monto)]); filas.push(["Mora", money(pg.mora)]); }
-  filas.push(["Total pagado", money(totalPago)]);
-  filas.push(["Saldo pendiente", money(r.saldoPendiente)]);
-
   const width = 80; // ancho tipo recibo/ticket, no una hoja carta con espacio de sobra
-  const alto = 46 + filas.length*7 + 14;
-  const doc = new jsPDF({unit:"mm", format:[width, alto]});
-  let y = 12;
-  doc.setFont("helvetica","bold"); doc.setFontSize(13);
-  doc.setTextColor(27,42,74);
-  doc.text(nombreNegocio(), width/2, y, {align:"center"}); y+=6;
-  doc.setFont("helvetica","normal"); doc.setFontSize(9);
-  doc.setTextColor(120,120,120);
-  doc.text("Recibo de pago", width/2, y, {align:"center"}); y+=6;
-  doc.setDrawColor(220,220,220);
-  doc.line(6, y, width-6, y); y+=7;
+  // Se dibuja dos veces: una en una hoja de prueba muy alta, solo para medir cuánto mide el
+  // recibo (los valores largos, como el concepto, se parten en varias líneas), y otra en el
+  // PDF final con el alto exacto. Así nada se sale de la hoja ni sobra espacio.
+  const dibujar = (doc, altoFinal)=>{
+    if(altoFinal) dibujarMarcaDeAgua(doc, "PAGADO", width, altoFinal);
+    let y = 12;
+    doc.setFont("helvetica","bold"); doc.setFontSize(13);
+    doc.setTextColor(27,42,74);
+    doc.text(nombreNegocio(), width/2, y, {align:"center"}); y+=6;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9);
+    doc.setTextColor(120,120,120);
+    doc.text("Recibo de pago", width/2, y, {align:"center"}); y+=6;
+    doc.setDrawColor(220,220,220);
+    doc.line(6, y, width-6, y); y+=7;
 
-  doc.setTextColor(40,40,40); doc.setFontSize(9.5);
-  filas.forEach(([label, valor])=>{
-    doc.setFont("helvetica","normal");
-    doc.text(label, 6, y);
-    doc.setFont("helvetica","bold");
-    doc.text(String(valor), width-6, y, {align:"right"});
-    y+=7;
-  });
-  y+=3;
-  doc.setDrawColor(220,220,220); doc.line(6,y,width-6,y); y+=8;
-  doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(120,120,120);
-  doc.text("¡Gracias por su pago!", width/2, y, {align:"center"});
+    const fila = (label, valor, sub, total)=>{
+      const xL = sub ? 10 : 6;
+      doc.setFontSize(9.5);
+      doc.setFont("helvetica", total?"bold":"normal");
+      const wLabel = doc.getTextWidth(label);
+      doc.setFont("helvetica", sub?"normal":"bold");
+      const lin = doc.splitTextToSize(String(valor), Math.max(width-6-(xL+wLabel+3), 18));
+      if(sub) doc.setTextColor(110,110,110); else doc.setTextColor(40,40,40);
+      doc.setFont("helvetica", total?"bold":"normal");
+      doc.text(label, xL, y);
+      doc.setFont("helvetica", sub?"normal":"bold");
+      lin.forEach((t,i)=> doc.text(t, width-6, y + i*4.4, {align:"right"}));
+      y += 7 + (lin.length-1)*4.4;
+    };
+    d.lineas.forEach(x=> fila(x.l, x.v, x.sub, false));
+    y+=1;
+    fila("Total pagado", money(d.totalPago), false, true);
+    fila("Saldo pendiente", money(d.saldo), false, false);
+    y+=2;
+    doc.setDrawColor(220,220,220); doc.line(6,y,width-6,y); y+=8;
+    doc.setFont("helvetica","italic"); doc.setFontSize(9); doc.setTextColor(120,120,120);
+    doc.text("¡Gracias por su pago!", width/2, y, {align:"center"});
+    return y;
+  };
+  const yFinal = dibujar(new jsPDF({unit:"mm", format:[width, 1000]}), 0);
+  const alto = yFinal + 8;
+  const doc = new jsPDF({unit:"mm", format:[width, alto]});
+  dibujar(doc, alto);
   return doc;
 }
 function generarPDFTabla(p, cli, r){
@@ -2455,15 +2589,13 @@ function compartirRecibo(prestamoId, pagoId){
   const cli = state.clientes.find(c=>c.id===p.clienteId);
   const pagos = p.pagos||[];
   const idx = pagos.findIndex(x=>x.id===pagoId);
-  const pg = idx>=0 ? pagos[idx] : null;
-  if(!pg) return;
-  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
+  const pg0 = idx>=0 ? pagos[idx] : null;
+  if(!pg0) return;
   if(state.pdfBusy) return;
   state.pdfBusy = true; render();
   cargarJsPDF(async function(){
     try{
-      const r = resumen(p);
-      const doc = generarPDFRecibo(p, cli, pg, r, numRecibo);
+      const doc = generarPDFRecibo(p, cli, datosRecibo(p, cli, pg0, idx));
       await compartirPDF(doc, `recibo-${p.codigo}.pdf`);
     } finally {
       state.pdfBusy = false; render();
@@ -2517,12 +2649,10 @@ function imprimirRecibo(){
   const cli = state.clientes.find(c=>c.id===p.clienteId);
   const pagos = p.pagos || [];
   const idx = sel.pagoId ? pagos.findIndex(pg=>pg.id===sel.pagoId) : -1;
-  const pg = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
-  if(!pg) return;
-  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
-  const r = resumen(p);
+  const pg0 = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
+  if(!pg0) return;
   cargarJsPDF(function(){
-    const doc = generarPDFRecibo(p, cli, pg, r, numRecibo);
+    const doc = generarPDFRecibo(p, cli, datosRecibo(p, cli, pg0, idx));
     imprimirPDFDoc(doc);
   });
 }
@@ -2566,10 +2696,21 @@ function registrarPago(id){
   );
   if(!ok) return;
   p.pagos = p.pagos || [];
-  p.pagos.push({ id:uid(), fecha:fechaPago, monto:montoCuota, mora, tipo:"cuota" });
+  const pagoCuota = { id:uid(), fecha:fechaPago, monto:montoCuota, mora, tipo:"cuota" };
+  // Reparte lo que corresponde a esta cuota entre interés y capital, comparando el reparto
+  // acumulado del préstamo antes y después de este pago (misma lógica que la app Pro), para
+  // poder mostrar "Interés" y "Capital" por separado en el recibo, no solo el total.
+  const repartoAntes = desglosePagado(p);
+  p.pagos.push(pagoCuota);
+  const repartoDespues = desglosePagado(p);
+  pagoCuota.interes = round2(Math.max(0, Math.min(montoCuota, repartoDespues.interes - repartoAntes.interes)));
+  pagoCuota.capital = round2(montoCuota - pagoCuota.interes);
   if(excedente > 0.01){
     const idAbono = uid();
-    p.pagos.push({ id:idAbono, fecha:fechaPago, monto:excedente, mora:0, tipo:"abono_capital" });
+    // Se enlazan los dos pagos entre sí (mismo cobro, misma fecha) para que el recibo los
+    // pueda mostrar juntos como una sola transacción, en vez de dos recibos sueltos.
+    pagoCuota.abonoId = idAbono;
+    p.pagos.push({ id:idAbono, fecha:fechaPago, monto:excedente, mora:0, tipo:"abono_capital", interes:0, capital:excedente, cuotaId:pagoCuota.id });
     // Registrar el abono como un ajuste real de saldo (no solo un pago más), para que
     // generarTablaDinamica() recalcule cuota/plazo según el método a partir de aquí. Si el
     // abono alcanza para cubrir todo el saldo pendiente, se marca como liquidado.
@@ -2625,7 +2766,7 @@ function liquidarAnticipado(id){
   );
   if(!ok) return;
   p.pagos = p.pagos || [];
-  p.pagos.push({ id:uid(), fecha:fechaLiq, monto:total, mora:0, liquidacion:true });
+  p.pagos.push({ id:uid(), fecha:fechaLiq, monto:total, mora:0, liquidacion:true, interes: round2(interes), capital: round2(capitalPendiente) });
   p.liquidadoAnticipado = true;
   save(); render();
 }
@@ -2690,83 +2831,96 @@ function eliminarPrestamo(id){
 
 function viewPagos(){
   if(state.vista==="recibo") return viewRecibo();
-  // Agrupado por préstamo (en vez de una sola lista mezclada) para poder revisar, préstamo
-  // por préstamo, si lo cobrado cuadra con lo prestado — cada tarjeta es desplegable y trae
-  // su propio subtotal arriba, junto al capital prestado neto y el capital pendiente actual
-  // de ESE préstamo, para comparar los tres números uno al lado del otro. Los pagos vigentes
-  // y los de antes de una modificación se muestran en DOS bloques separados y con su propio
-  // encabezado (no mezclados en una sola lista), para que sea imposible no darse cuenta de
-  // si un préstamo tiene o no pagos archivados.
-  const grupos = state.prestamos.map(p=>{
-    const cli = state.clientes.find(c=>c.id===p.clienteId);
-    const r = resumen(p);
-    const vigentes = (p.pagos||[]).map(pg=>({...pg, prestamoId:p.id}))
-      .sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
-    const previos = pagosArchivados(p).map(pg=>({...pg, prestamoId:p.id}))
-      .sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
-    const totalVigentes = vigentes.reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
-    const totalPrevios = previos.reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
-    const nMods = (p.historialModificaciones||[]).length;
-    const todos = vigentes.concat(previos);
-    return {
-      p, cli, vigentes, previos, nMods, totalVigentes, totalPrevios,
-      totalCobrado: totalVigentes + totalPrevios,
-      capitalNeto: capitalDesembolsadoNeto(p),
-      capitalPendiente: r.capitalPendiente||0,
-      ultimaFecha: todos.length ? todos.map(pg=>pg.fecha).sort().reverse()[0] : p.fechaInicio
-    };
-  }).filter(g => g.vigentes.length>0 || g.previos.length>0);
-  // Solo se listan los préstamos que SÍ tienen algún pago (vigente o archivado) — los que
-  // todavía no tienen ningún pago registrado no aparecen aquí, ya que no hay nada que
-  // mostrar; siguen viéndose igual dentro del detalle de cada préstamo.
-  if(grupos.length===0) return `<p class="empty">Todavía no se ha registrado ningún pago.</p>`;
-  grupos.sort((a,b)=> new Date(b.ultimaFecha)-new Date(a.ultimaFecha));
-  const filaVigente = (pg)=>{
-    const total = (Number(pg.monto)||0) + (Number(pg.mora)||0);
-    let sub = fmtDate(pg.fecha);
-    if(pg.liquidacion) sub += " · Liquidación anticipada";
-    else if(pg.tipo==="enganche") sub += " · Enganche al refinanciar";
-    else if(pg.mora>0) sub += ` · incluye mora ${money(pg.mora)}`;
+  // Una tarjeta POR PRÉSTAMO (no por cliente) — así cada una trae su propio resumen de
+  // capital prestado/pendiente/cobrado, igual que se ve en el detalle de ese préstamo
+  // (mismo método que usa la app Pro).
+  const prestamosConMovs = state.prestamos.filter(p =>
+    (p.pagos&&p.pagos.length) || pagosArchivados(p).length>0
+  );
+  if(prestamosConMovs.length===0) return `<p class="empty">Todavía no se ha registrado ningún pago.</p>`;
+
+  // Un cobro con abono a capital queda guardado como DOS registros en p.pagos (la cuota y
+  // el abono, enlazados por pagoCuota.abonoId / pagoAbono.cuotaId) para poder desglosar la
+  // tabla de amortización — pero de cara al usuario es UN solo cobro. buscarLigado()
+  // encuentra la otra mitad (en el mismo arreglo que se está listando: vigentes o
+  // archivados) para fusionar ambas en una sola tarjeta con un solo recibo.
+  const buscarLigado = (lista, pg)=>{
+    const idLigado = pg.abonoId || (pg.tipo==="abono_capital" ? pg.cuotaId : null);
+    return idLigado ? lista.find(x=>x.id===idLigado) : null;
+  };
+  const notaPago = (pg, abonoLigado)=>{
+    let nota = "";
+    if(pg.tipo==="enganche") nota = "Enganche al refinanciar";
+    else if(pg.liquidacion) nota = "Liquidación anticipada";
+    else if(pg.tipo==="abono_capital") nota = "Abono a capital";
+    else if(pg.mora>0) nota = `Incluye mora ${money(pg.mora)}`;
+    if(abonoLigado) nota += (nota?" · ":"")+`incluye abono a capital de ${money(abonoLigado.monto)}`;
+    return nota;
+  };
+  const filaPago = (p, pg, lista, conBorrar)=>{
+    // Las filas de tipo abono_capital que ya se muestran fusionadas dentro de la cuota que
+    // las originó no se dibujan aparte, para no duplicar la tarjeta (y el botón de recibo).
+    if(pg.tipo==="abono_capital" && pg.cuotaId && buscarLigado(lista, pg)) return "";
+    const abonoLigado = buscarLigado(lista, pg);
+    const total = (Number(pg.monto)||0) + (Number(pg.mora)||0) + (abonoLigado ? (Number(abonoLigado.monto)||0) : 0);
+    const nota = notaPago(pg, abonoLigado && pg.tipo!=="abono_capital" ? abonoLigado : null);
     return `<div class="row-card">
-      <div style="cursor:pointer;" onclick="verRecibo('${pg.prestamoId}','${pg.id||""}')"><p class="name">${money(total)}</p><p class="sub">${sub}</p></div>
+      <div style="cursor:pointer;" onclick="verRecibo('${p.id}','${pg.id||""}')">
+        <p class="name">${money(total)}</p>
+        <p class="sub">${fmtDate(pg.fecha)}${nota?" · "+nota:""}</p>
+      </div>
       <div style="text-align:right;display:flex;align-items:center;gap:6px;">
-        <button class="printbtn" title="Ver recibo" onclick="verRecibo('${pg.prestamoId}','${pg.id||""}')">🧾</button>
-        <button class="printbtn" title="Eliminar pago" onclick="eliminarPago('${pg.prestamoId}','${pg.id||""}')">🗑</button>
+        <button class="printbtn" title="Ver recibo" onclick="verRecibo('${p.id}','${pg.id||""}')">🧾</button>
+        ${conBorrar?`<button class="printbtn" title="Eliminar pago" onclick="eliminarPago('${p.id}','${pg.id||""}')">🗑</button>`:""}
       </div>
     </div>`;
   };
-  const filaPrevia = (pg)=>{
-    const total = (Number(pg.monto)||0) + (Number(pg.mora)||0);
-    let sub = fmtDate(pg.fecha);
-    if(pg.liquidacion) sub += " · Liquidación anticipada";
-    else if(pg.tipo==="enganche") sub += " · Enganche al refinanciar";
-    else if(pg.mora>0) sub += ` · incluye mora ${money(pg.mora)}`;
-    return `<div class="row-card" style="opacity:.7;">
-      <div><p class="name">${money(total)}</p><p class="sub">${sub}</p></div>
-    </div>`;
+  const filaVigente = (p, pg, lista)=> filaPago(p, pg, lista, true);
+  const filaArchivada = (p, pg, lista)=> filaPago(p, pg, lista, false);
+
+  const fechaMasReciente = (p)=>{
+    const fechas = [...(p.pagos||[]).map(pg=>pg.fecha), ...pagosArchivados(p).map(pg=>pg.fecha)];
+    return fechas.length ? fechas.sort().slice(-1)[0] : "";
   };
-  return grupos.map(g=>{
-    const nTotal = g.vigentes.length + g.previos.length;
+  prestamosConMovs.sort((a,b)=> fechaMasReciente(b).localeCompare(fechaMasReciente(a)));
+
+  const tarjetas = prestamosConMovs.map(p=>{
+    const cli = state.clientes.find(c=>c.id===p.clienteId);
+    const nombre = cli?cli.nombre:"—";
+    const r = resumen(p);
+
+    const vigentes = (p.pagos||[]).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+    const totalVigente = vigentes.reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
+
+    const archivados = pagosArchivados(p).slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+    const totalArchivado = archivados.reduce((s,pg)=>s+(Number(pg.monto)||0)+(Number(pg.mora)||0),0);
+
+    const totalGeneral = totalVigente + totalArchivado;
+    const numModificaciones = (p.historialModificaciones||[]).length;
+    // Cuenta transacciones reales, no registros: un cobro con abono a capital son 2
+    // registros en el arreglo pero 1 sola transacción (misma cuenta que ve el usuario en la
+    // lista de abajo, ya fusionada).
+    const contarTransacciones = (lista)=> lista.filter(pg=> !(pg.tipo==="abono_capital" && pg.cuotaId && buscarLigado(lista,pg))).length;
+    const numPagosTotal = contarTransacciones(vigentes) + contarTransacciones(archivados);
+
     return `<details class="row-card">
       <summary>
-        <div><p class="name">${g.cli?g.cli.nombre:"—"}</p><p class="sub">${g.p.codigo} · ${nTotal} pago${nTotal===1?"":"s"}${g.nMods>0?` · ${g.nMods} modificación${g.nMods===1?"":"es"}`:""}</p></div>
-        <p style="font-size:15px;font-weight:600;color:#3B6D11;margin:0;">${money(g.totalCobrado)}</p>
+        <div><p class="name">${nombre}</p><p class="sub">${p.codigo} · ${numPagosTotal} pago${numPagosTotal===1?"":"s"}${numModificaciones>0?` · ${numModificaciones} modificación${numModificaciones===1?"":"es"}`:""}</p></div>
+        <p style="font-size:15px;font-weight:600;color:#3B6D11;margin:0;">${money(totalGeneral)}</p>
       </summary>
       <div class="cuerpo">
         <div class="mini-stats">
-          <div><p class="lbl">Capital prestado (neto)</p><p class="val">${money(g.capitalNeto)}</p></div>
-          <div><p class="lbl">Capital pendiente hoy</p><p class="val">${money(g.capitalPendiente)}</p></div>
-          <div><p class="lbl">Total cobrado</p><p class="val">${money(g.totalCobrado)}</p></div>
+          <div><p class="lbl">Capital prestado (neto)</p><p class="val">${money(capitalDesembolsadoNeto(p))}</p></div>
+          <div><p class="lbl">Capital pendiente hoy</p><p class="val">${money(r.capitalPendiente||0)}</p></div>
+          <div><p class="lbl">Total cobrado</p><p class="val">${money(totalGeneral)}</p></div>
         </div>
-        <p class="sub" style="font-weight:600;margin:0 0 6px;">Pagos vigentes (${g.vigentes.length}) · ${money(g.totalVigentes)}</p>
-        ${g.vigentes.length ? g.vigentes.map(filaVigente).join("") : `<p class="empty" style="padding:8px 0;">Sin pagos vigentes.</p>`}
-        ${g.nMods>0 ? `
-        <p class="sub" style="font-weight:600;margin:14px 0 6px;">De antes de modificar (${g.previos.length})</p>
-        ${g.previos.length ? g.previos.map(filaPrevia).join("") : `<p class="empty" style="padding:8px 0;">Este préstamo tiene ${g.nMods} modificación(es) registrada(s), pero no hay pagos archivados de antes (no se había cobrado nada todavía cuando se modificó).</p>`}
-        ` : ""}
+        ${vigentes.length ? `<p class="sub" style="font-weight:600;margin:0 0 6px;">Pagos vigentes (${vigentes.length}) · ${money(totalVigente)}</p>${vigentes.map(pg=>filaVigente(p,pg,vigentes)).join("")}` : `<p class="empty" style="padding:8px 0;">Sin pagos vigentes.</p>`}
+        ${archivados.length ? `<p class="sub" style="font-weight:600;margin:14px 0 6px;">De antes de modificar (${archivados.length})</p>${archivados.map(pg=>filaArchivada(p,pg,archivados)).join("")}` : ""}
       </div>
     </details>`;
-  }).join("");
+  });
+
+  return tarjetas.join("");
 }
 function eliminarPago(prestamoId, pagoId){
   const p = state.prestamos.find(x=>x.id===prestamoId);
@@ -2806,6 +2960,64 @@ function verRecibo(prestamoId, pagoId){
   state.reciboSel = { prestamoId, pagoId };
   render();
 }
+function buscarPagoPorId(p, id){
+  if(!id) return null;
+  const enPagos = (p.pagos||[]).find(x=>x.id===id);
+  if(enPagos) return enPagos;
+  for(const m of (p.historialModificaciones||[])){
+    const enc = (m.pagosPrevios||[]).find(x=>x.id===id);
+    if(enc) return enc;
+  }
+  return null;
+}
+// Si un pago de cuota tuvo también un abono a capital el mismo cobro (o viceversa), se
+// resuelve siempre hacia el lado de la cuota y se devuelve el abono ligado aparte, para
+// mostrar las dos partes juntas en un solo recibo en vez de dos recibos sueltos.
+function resolverPagoRecibo(p, pg){
+  if(pg.tipo==="abono_capital" && pg.cuotaId){
+    const cuotaLigada = buscarPagoPorId(p, pg.cuotaId);
+    if(cuotaLigada) pg = cuotaLigada;
+  }
+  const abonoLigado = pg.abonoId ? buscarPagoPorId(p, pg.abonoId) : null;
+  return { pg, abonoLigado };
+}
+// Arma en un solo lugar TODO lo que dice un recibo (líneas, total, saldo), para que la
+// pantalla, el PDF de imprimir y el PDF de enviar salgan siempre idénticos. Si se toca el
+// abono a capital de un cobro (o la cuota), se resuelve hacia la cuota y se muestran juntos.
+function datosRecibo(p, cli, pg0, idx){
+  const resuelto = resolverPagoRecibo(p, pg0);
+  const pg = resuelto.pg;
+  const abonoLigado = resuelto.abonoLigado;
+  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
+  const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0) + (abonoLigado ? (Number(abonoLigado.monto)||0) : 0);
+  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.tipo==="enganche" ? "Enganche al refinanciar" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota"));
+  if(abonoLigado) concepto += " + abono a capital";
+  const lineas = [
+    {l:"No. de recibo", v:"R-"+numRecibo},
+    {l:"Fecha", v:fmtDate(pg.fecha)},
+    {l:"Cliente", v:cli?cli.nombre:"—"}
+  ];
+  if(cli && cli.cedula) lineas.push({l:"Cédula", v:cli.cedula});
+  lineas.push({l:"Préstamo", v:p.codigo});
+  lineas.push({l:"Método", v:p.metodo});
+  lineas.push({l:"Concepto", v:concepto});
+  if(pg.interes!=null && pg.capital!=null && pg.tipo!=="abono_capital"){
+    lineas.push({l:"Cuota", v:money(pg.monto)});
+    if(pg.interes>0) lineas.push({l:"· Interés", v:money(pg.interes), sub:true});
+    if(pg.capital>0) lineas.push({l:"· Capital", v:money(pg.capital), sub:true});
+    if(abonoLigado) lineas.push({l:"Abono a capital", v:money(abonoLigado.monto)});
+    if(pg.mora>0) lineas.push({l:"Mora", v:money(pg.mora)});
+  } else if(pg.tipo==="abono_capital"){
+    lineas.push({l:"Abono a capital", v:money(pg.monto)});
+  } else if(pg.mora>0 || abonoLigado){
+    // Cobros guardados antes de que se registrara el desglose interés/capital.
+    lineas.push({l:"Cuota / abono", v:money(pg.monto)});
+    if(abonoLigado) lineas.push({l:"Abono a capital", v:money(abonoLigado.monto)});
+    if(pg.mora>0) lineas.push({l:"Mora", v:money(pg.mora)});
+  }
+  const r = resumen(p);
+  return { pg, abonoLigado, numRecibo, totalPago, lineas, saldo: r.saldoPendiente };
+}
 function viewRecibo(){
   const sel = state.reciboSel || {};
   const p = state.prestamos.find(x=>x.id===sel.prestamoId);
@@ -2813,28 +3025,21 @@ function viewRecibo(){
   const cli = state.clientes.find(c=>c.id===p.clienteId);
   const pagos = p.pagos || [];
   const idx = sel.pagoId ? pagos.findIndex(pg=>pg.id===sel.pagoId) : -1;
-  const pg = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
-  if(!pg){ state.vista="lista"; return viewPagos(); }
-  const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
-  const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0);
-  const r = resumen(p);
-  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.tipo==="enganche" ? "Enganche al refinanciar" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota"));
+  const pg0 = idx>=0 ? pagos[idx] : pagos[pagos.length-1];
+  if(!pg0){ state.vista="lista"; return viewPagos(); }
+  const d = datosRecibo(p, cli, pg0, idx);
+  const pg = d.pg;
+  const filasHtml = d.lineas.map(x => x.sub
+    ? `<div class="rline" style="padding-left:14px;color:#666;"><span>${x.l}</span><span>${x.v}</span></div>`
+    : `<div class="rline"><span>${x.l}</span><b>${x.v}</b></div>`).join("\n      ");
 
   return `
-    <div id="recibo-imprimible">
+    <div id="recibo-imprimible" data-marca="PAGADO">
       <h2>${nombreNegocio()}</h2>
       <p class="hint" style="margin:0 0 14px;">Recibo de pago</p>
-      <div class="rline"><span>No. de recibo</span><b>R-${numRecibo}</b></div>
-      <div class="rline"><span>Fecha</span><b>${fmtDate(pg.fecha)}</b></div>
-      <div class="rline"><span>Cliente</span><b>${cli?cli.nombre:"—"}</b></div>
-      ${cli && cli.cedula ? `<div class="rline"><span>Cédula</span><b>${cli.cedula}</b></div>` : ""}
-      <div class="rline"><span>Préstamo</span><b>${p.codigo}</b></div>
-      <div class="rline"><span>Método</span><b>${p.metodo}</b></div>
-      <div class="rline"><span>Concepto</span><b>${concepto}</b></div>
-      ${pg.mora>0 ? `<div class="rline"><span>Cuota / abono</span><b>${money(pg.monto)}</b></div>
-      <div class="rline"><span>Mora</span><b>${money(pg.mora)}</b></div>` : ""}
-      <div class="rline rtotal" style="border-bottom:none;padding-top:14px;"><span>Total pagado</span><span>${money(totalPago)}</span></div>
-      <div class="rline"><span>Saldo pendiente actual del préstamo</span><b>${money(r.saldoPendiente)}</b></div>
+      ${filasHtml}
+      <div class="rline rtotal" style="border-bottom:none;padding-top:14px;"><span>Total pagado</span><span>${money(d.totalPago)}</span></div>
+      <div class="rline"><span>Saldo pendiente actual del préstamo</span><b>${money(d.saldo)}</b></div>
       <p class="hint" style="margin-top:18px;">Gracias por su pago.</p>
     </div>
     <div class="flexrow" style="margin-top:16px;">
@@ -2897,12 +3102,15 @@ function viewTabbar(){
 })();
 
 // --- Licencia de un solo dispositivo, verificada contra Supabase ------------------
-// Antes de arrancar la app se pregunta a Supabase si la clave de licencia ingresada
-// existe, está activa, y si ya está "amarrada" a otro dispositivo. Cada dispositivo
-// se identifica con un ID aleatorio guardado en localStorage (no es información
-// personal, es solo un identificador técnico de este navegador/dispositivo).
+// Antes de arrancar la app se pregunta a Supabase (por medio de la función
+// verificar_licencia, protegida en el servidor) si la clave ingresada existe, está
+// activa, no venció, es del plan correcto (pro/beta) y no está en uso en otro
+// dispositivo. Cada dispositivo se identifica con un ID aleatorio guardado en
+// localStorage (no es información personal, solo un identificador técnico).
 const LIC_SUPABASE_URL = "https://kbskmdtgwnagdigtdlze.supabase.co";
 const LIC_SUPABASE_KEY = "sb_publishable_AnwNz39_voG8r7XnjCG6Vg_75jK9Aa7";
+const LIC_PLAN = "beta"; // esta copia del archivo solo acepta licencias del plan "beta"
+const LIC_DIAS_GRACIA = 5; // días que puede seguir usándose sin internet antes de exigir reconexión
 
 function licDeviceId(){
   let id = localStorage.getItem("jrp_device_id");
@@ -2913,47 +3121,37 @@ function licDeviceId(){
   return id;
 }
 
-// Días que se deja usar la app sin poder verificar la licencia (por ejemplo sin internet).
-const LIC_DIAS_GRACIA = 30;
-
-function licHeaders(extra){
-  // Las llaves nuevas de Supabase (sb_publishable_...) van solo en "apikey"; solo las llaves
-  // antiguas (JWT, empiezan con "eyJ") se mandan también como Authorization.
-  const h = Object.assign({ apikey: LIC_SUPABASE_KEY }, extra || {});
-  if(LIC_SUPABASE_KEY.indexOf("eyJ") === 0) h.Authorization = "Bearer " + LIC_SUPABASE_KEY;
-  return h;
-}
-
 async function licVerificar(clave){
   const deviceId = licDeviceId();
-  let resp, data;
-  const ctrl = new AbortController();
-  const corte = setTimeout(function(){ ctrl.abort(); }, 12000);   // que nunca se quede colgado
+  let data;
   try{
-    // Ya no se lee la tabla "licencias" directamente (queda cerrada con RLS): se llama a la
-    // función verificar_licencia, la única puerta permitida. Ella revisa todo del lado del
-    // servidor y responde solo 'ok' / 'invalida' / 'inactiva' / 'otro_dispositivo'.
-    resp = await fetch(`${LIC_SUPABASE_URL}/rest/v1/rpc/verificar_licencia`, {
+    const resp = await fetch(`${LIC_SUPABASE_URL}/rest/v1/rpc/verificar_licencia`, {
       method: "POST",
-      headers: licHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ p_clave: clave, p_dispositivo: deviceId }),
-      signal: ctrl.signal
+      headers: {
+        "Content-Type": "application/json",
+        apikey: LIC_SUPABASE_KEY,
+        Authorization: `Bearer ${LIC_SUPABASE_KEY}`
+      },
+      body: JSON.stringify({ p_clave: clave, p_dispositivo: deviceId, p_plan: LIC_PLAN })
     });
+    if(!resp.ok) throw new Error("http " + resp.status);
     data = await resp.json();
   } catch(e){
-    clearTimeout(corte);
     return { ok:false, red:true, motivo:"No se pudo conectar para verificar la licencia. Revisa tu conexión a internet e intenta de nuevo." };
   }
-  clearTimeout(corte);
-  if(!resp.ok || typeof data !== "string") return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
   if(data === "ok") return { ok:true };
   if(data === "invalida") return { ok:false, motivo:"Esa clave de licencia no existe." };
   if(data === "inactiva") return { ok:false, motivo:"Esta licencia está desactivada." };
   if(data === "vencida") return { ok:false, motivo:"Esta licencia venció. Contacta al proveedor de la app para renovarla." };
   if(data === "otro_dispositivo") return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
+  if(data === "producto_incorrecto") return { ok:false, motivo:"Esa clave no es para esta versión de la app." };
   return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
 }
 
+// La pantalla de licencia va en un recuadro APARTE, encima de la app (nunca reemplaza
+// document.body): así, cuando la licencia resulta válida, el <div id="app"> de abajo
+// sigue intacto y la app se puede dibujar. Antes se hacía document.body.innerHTML,
+// que borraba el #app y dejaba la app congelada en "Verificando licencia…".
 function licPantalla(html){
   let ov = document.getElementById("lic-overlay");
   if(!ov){ ov = document.createElement("div"); ov.id = "lic-overlay"; document.body.appendChild(ov); }
@@ -2963,12 +3161,6 @@ function licPantalla(html){
 function licQuitarPantalla(){
   const ov = document.getElementById("lic-overlay");
   if(ov) ov.remove();
-}
-function licAbrirApp(){
-  try{ localStorage.setItem("jrp_licencia_ok", String(Date.now())); }catch(e){}
-  licQuitarPantalla();
-  render();
-  if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
 }
 
 function licPedirClave(mensajeError){
@@ -2990,7 +3182,10 @@ ${mensajeError ? `<p style="color:#F3A0A0;font-size:13px;margin:0 0 10px;max-wid
     const r = await licVerificar(clave);
     if(r.ok){
       localStorage.setItem("jrp_licencia", clave);
-      licAbrirApp();
+      localStorage.setItem("jrp_licencia_ok_ts", String(Date.now()));
+      licQuitarPantalla();
+      render();
+      if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
     } else {
       btn.disabled = false; btn.textContent = "Entrar";
       licPedirClave(r.motivo);
@@ -3005,21 +3200,28 @@ async function licArrancar(){
   if(!claveGuardada){ licPedirClave(); return; }
   licPantalla(`<div style="font-size:40px;margin-bottom:6px;">🔒</div><p style="color:#B9C2D6;font-size:13px;">Verificando licencia…</p>`);
   const r = await licVerificar(claveGuardada);
-  if(r.ok){ licAbrirApp(); return; }
-  if(r.red){
-    // Sin internet o Supabase no responde: NO se borra la licencia guardada. Si se verificó
-    // hace menos de LIC_DIAS_GRACIA días, se deja entrar (la app funciona sin conexión).
-    const ultima = Number(localStorage.getItem("jrp_licencia_ok")) || 0;
-    if(!ultima){ try{ localStorage.setItem("jrp_licencia_ok", String(Date.now())); }catch(e){} }
-    if(!ultima || (Date.now() - ultima) < LIC_DIAS_GRACIA*24*3600*1000){
-      licQuitarPantalla(); render();
-      if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
-      return;
-    }
-    licPedirClave("Hace más de " + LIC_DIAS_GRACIA + " días que no se verifica la licencia. Conéctate a internet para continuar.");
+  if(r.ok){
+    localStorage.setItem("jrp_licencia_ok_ts", String(Date.now()));
+    licQuitarPantalla();
+    render();
+    if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
     return;
   }
-  // Respuesta definitiva del servidor (no existe / desactivada / otro dispositivo)
+  if(r.red){
+    // No se pudo conectar: si se validó bien hace poco, se deja seguir trabajando sin
+    // internet dentro de un margen de días; pasado ese margen, hace falta conexión.
+    const ultimaOk = Number(localStorage.getItem("jrp_licencia_ok_ts") || 0);
+    const diasSinValidar = (Date.now() - ultimaOk) / (1000*60*60*24);
+    if(ultimaOk && diasSinValidar < LIC_DIAS_GRACIA){
+      licQuitarPantalla();
+      render();
+      return;
+    }
+    licPedirClave(r.motivo);
+    return;
+  }
+  // Respuesta definitiva del servidor (no es un problema de conexión): se borra la
+  // clave guardada y se vuelve a pedir, mostrando el motivo real.
   localStorage.removeItem("jrp_licencia");
   licPedirClave(r.motivo);
 }
