@@ -44,7 +44,8 @@
   details.row-card{display:block;padding:0;overflow:hidden;}
   details.row-card summary{cursor:pointer;padding:12px;display:flex;justify-content:space-between;align-items:center;list-style:revert;gap:8px;}
   details.row-card summary::marker{color:var(--gold);}
-  details.row-card[open] summary{border-bottom:1px solid #e5e1d8;background:#F8F6F1;}
+  details.row-card[open] summary{border-bottom:1px solid #e5e1d8;background:#F1EAD8;}
+  details.pago-sec[open]{border-left:1.5px solid var(--gold);border-right:1.5px solid var(--gold);}
   details.row-card .cuerpo{padding:10px 12px;}
   details.row-card .cuerpo .row-card:last-child{margin-bottom:0;}
   details.row-card .mini-stats{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;padding-bottom:10px;border-bottom:1px dashed #e5e1d8;}
@@ -356,13 +357,16 @@ let state = {
   desbloqueado: sessionStorage.getItem(LK("jr_desbloqueado")) === "1",
   ajustesDesbloqueado: sessionStorage.getItem(LK("jr_ajustes_desbloqueado")) === "1",
   q: "",
-  qPrestamos: ""
+  qPrestamos: "",
+  pagoAbierto: (_navPrevia && _navPrevia.pagoAbierto) || null,
+  reciboSel: (_navPrevia && _navPrevia.reciboSel) || null
 };
 function guardarNav(){
   try{
     sessionStorage.setItem(LK("jr_nav"), JSON.stringify({
       tab: state.tab, vista: state.vista, seleccionId: state.seleccionId,
       clienteEditId: state.clienteEditId,
+      reciboSel: state.reciboSel || null, pagoAbierto: state.pagoAbierto || null,
       _nf: window._nf || null, _rf: window._rf || null
     }));
   }catch(e){}
@@ -955,6 +959,7 @@ const ICONS = {
   users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   landmark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>',
   wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
 };
 
@@ -1010,9 +1015,11 @@ function render(){
   const tituloResultados = state.tab==="inicio" && state.vista==="estadoResultados" ? "Estado de resultados" : (state.tab==="inicio" && state.vista==="reporteModificaciones" ? "Modificaciones y refinanciamientos" : null);
   html += `<div><p>${nombreNegocio()}</p><h1>${state.tab==="prestamos"&&state.vista==="cartera"?"Cartera vencida":(state.tab==="prestamos"&&state.vista==="refinanciar"?"Refinanciar":(state.tab==="pagos"&&state.vista==="recibo"?"Recibo de pago":(tituloReporte||tituloResultados||tituloAjustes||titles[state.tab])))}</h1></div>
     </div>`;
+  html += `<div style="display:flex;align-items:center;gap:4px;"><button class="backbtn" style="margin-right:0;" title="Actualizar" onclick="actualizarApp()">${ICONS.refresh}</button>`;
   if(state.tab==="inicio" && state.vista==="lista"){
     html += `<button class="backbtn" style="margin-right:0;" title="Ajustes" onclick="abrirAjustes()">${ICONS.settings}</button>`;
   }
+  html += `</div>`;
   html += `</div></header><div class="content">`;
 
   if(state.tab==="inicio") html += viewInicio();
@@ -1969,10 +1976,15 @@ function viewCartera(){
     html += `<p class="cartera-grupo">${g.label} (${enGrupo.length})</p>`;
     enGrupo.forEach(({p, r, atraso})=>{
       const cli = state.clientes.find(c=>c.id===p.clienteId);
+      // Si hay mas de una cuota vencida, se muestra el total de todas (mas la mora, si aplica).
+      const pend = calcularPendiente(p, r);
+      const varias = pend.nVenc>1;
+      const montoMostrar = varias ? round2(pend.monto + pend.mora) : (r.cuotaActual?r.cuotaActual.cuota:r.cuota);
       html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
         <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
         <p class="sub">${p.codigo} · vence ${fmtDate(r.proximaFecha)}</p>
-        <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.cuotaActual?r.cuotaActual.cuota:r.cuota)}</p></div>
+        <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(montoMostrar)}</p>
+        ${varias?`<p class="sub">${pend.nVenc} cuotas vencidas</p>`:""}</div>
         <span class="badge b-vencido">${atraso} día${atraso===1?"":"s"}</span>
       </div>`;
     });
@@ -2903,8 +2915,8 @@ function viewPagos(){
     const contarTransacciones = (lista)=> lista.filter(pg=> !(pg.tipo==="abono_capital" && pg.cuotaId && buscarLigado(lista,pg))).length;
     const numPagosTotal = contarTransacciones(vigentes) + contarTransacciones(archivados);
 
-    return `<details class="row-card">
-      <summary>
+    return `<details class="row-card pago-sec" data-id="${p.id}" ${state.pagoAbierto===p.id?"open":""}>
+      <summary onclick="togglePagoSec(event,'${p.id}')">
         <div><p class="name">${nombre}</p><p class="sub">${p.codigo} · ${numPagosTotal} pago${numPagosTotal===1?"":"s"}${numModificaciones>0?` · ${numModificaciones} modificación${numModificaciones===1?"":"es"}`:""}</p></div>
         <p style="font-size:15px;font-weight:600;color:#3B6D11;margin:0;">${money(totalGeneral)}</p>
       </summary>
@@ -2921,6 +2933,16 @@ function viewPagos(){
   });
 
   return tarjetas.join("");
+}
+// Acordeon del historial de pagos: solo una seccion abierta a la vez. La abierta se guarda en
+// state.pagoAbierto, asi al abrir un recibo y volver, la misma seccion sigue abierta.
+function togglePagoSec(ev, id){
+  ev.preventDefault();
+  const abrir = state.pagoAbierto !== id;
+  state.pagoAbierto = abrir ? id : null;
+  document.querySelectorAll("details.pago-sec").forEach(function(d){
+    d.open = abrir && d.getAttribute("data-id") === id;
+  });
 }
 function eliminarPago(prestamoId, pagoId){
   const p = state.prestamos.find(x=>x.id===prestamoId);
@@ -3059,47 +3081,22 @@ function viewTabbar(){
     </button>`).join("")}</div>`;
 }
 
-// --- "Deslizar hacia abajo para actualizar" hecho a mano: dispara una recarga REAL del
-// navegador (para traer siempre la última versión del archivo) pero, gracias a guardarNav()
-// / navGuardada() de arriba, al volver a cargar la app te deja exactamente en la misma
-// pantalla en la que estabas — no te manda a Inicio como haría el gesto nativo del navegador
-// (que overscroll-behavior, arriba, ya bloquea para que no dispare solo por accidente).
-(function(){
-  let indicador = null;
-  function getIndicador(){
-    if(!indicador){
-      indicador = document.createElement("div");
-      indicador.id = "pull-refresh-indicator";
-      document.body.appendChild(indicador);
-    }
-    return indicador;
+// --- Actualizar con el icono del encabezado: hace una recarga REAL del navegador (para traer la
+// ultima version del archivo) y, gracias a guardarNav() / navGuardada(), al volver a cargar la
+// app te deja en la misma pantalla (incluido un recibo abierto y la seccion abierta de Pagos).
+// El gesto de deslizar hacia abajo ya no actualiza (overscroll-behavior lo bloquea arriba).
+function actualizarApp(){
+  guardarNav();
+  let ind = document.getElementById("pull-refresh-indicator");
+  if(!ind){
+    ind = document.createElement("div");
+    ind.id = "pull-refresh-indicator";
+    document.body.appendChild(ind);
   }
-  const UMBRAL = 70;
-  let startY = null, disparado = false;
-  document.addEventListener("touchstart", function(e){
-    if(window.scrollY > 0){ startY = null; return; }
-    if(e.touches.length !== 1) { startY = null; return; }
-    startY = e.touches[0].clientY;
-    disparado = false;
-  }, { passive: true });
-  document.addEventListener("touchmove", function(e){
-    if(startY===null || disparado) return;
-    const delta = e.touches[0].clientY - startY;
-    if(delta <= 0){ return; }
-    if(window.scrollY > 0){ startY = null; return; }
-    if(delta > UMBRAL){
-      disparado = true;
-      const ind = getIndicador();
-      ind.classList.add("mostrando");
-      ind.innerHTML = `<span class="spin"></span> Actualizando…`;
-      guardarNav();
-      setTimeout(function(){ location.reload(); }, 200);
-    }
-  }, { passive: true });
-  document.addEventListener("touchend", function(){
-    startY = null;
-  }, { passive: true });
-})();
+  ind.classList.add("mostrando");
+  ind.innerHTML = `<span class="spin"></span> Actualizando\u2026`;
+  setTimeout(function(){ location.reload(); }, 200);
+}
 
 // --- Licencia de un solo dispositivo, verificada contra Supabase ------------------
 // Antes de arrancar la app se pregunta a Supabase (por medio de la función
