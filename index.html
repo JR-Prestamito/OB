@@ -3227,6 +3227,13 @@ async function licArrancar(){
 }
 
 licArrancar();
+
+// --- Modo sin internet: registra el service worker (archivo sw.js junto a index.html) ---
+if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  });
+}
 </script>
 </body>
 </html>
