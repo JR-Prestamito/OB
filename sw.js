@@ -26,7 +26,8 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const claves = await caches.keys();
-    await Promise.all(claves.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)));
+    // Solo borra las copias viejas DE ESTA app (jrp-beta-...), no las de otras apps del mismo sitio (ej. la PRO).
+    await Promise.all(claves.filter(k => k.startsWith("jrp-beta-") && k !== CACHE_VERSION).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
