@@ -112,7 +112,7 @@
   #recibo-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;position:relative;overflow:hidden;}
   /* Marca de agua del recibo: la palabra PAGADO, en diagonal y muy tenue, detrás del
      contenido (el texto viene del atributo data-marca para no tener que duplicarlo). */
-  #recibo-imprimible::before{content:attr(data-marca);position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) rotate(-28deg);text-align:center;font-size:52px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase;color:rgba(27,42,74,.07);pointer-events:none;z-index:0;padding:0 8px;}
+  #recibo-imprimible::before{content:attr(data-marca);position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) rotate(-28deg);text-align:center;font-size:28.6px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase;color:rgba(27,42,74,.07);pointer-events:none;z-index:0;padding:0 8px;}
   #recibo-imprimible > *{position:relative;z-index:1;}
   #recibo-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
   #recibo-imprimible .rline{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed #eee;}
@@ -2449,7 +2449,7 @@ function dibujarMarcaDeAgua(doc, texto, anchoPag, altoPag){
   const t = String(texto||"").toUpperCase().trim();
   if(!t) return;
   const ang = 30, rad = ang*Math.PI/180;
-  let size = 44;
+  let size = 24.2;
   doc.setFont("helvetica","bold");
   doc.setFontSize(size);
   // Se achica la letra si el nombre es largo, para que la diagonal quepa dentro del ancho.
@@ -2595,6 +2595,100 @@ async function compartirPDF(doc, filename){
   URL.revokeObjectURL(url);
   alert("Se descargó el PDF a tu celular. Ábrelo desde tus Descargas para adjuntarlo en WhatsApp u otra app.");
 }
+// --- Recibo como IMAGEN (PNG) para enviar por WhatsApp u otra app ---------------------------
+// Dibuja el mismo recibo del PDF (mismas medidas en mm, mismo texto y marca de agua "PAGADO")
+// directo en un canvas, asi no depende de internet ni de ninguna libreria. Imprimir sigue
+// usando el PDF (sale nitido y en el tamano exacto del ticket).
+function generarImagenRecibo(d){
+  const width = 80;      // mm, igual que el PDF
+  const K = 10;          // pixeles por mm (80 mm = 800 px de ancho)
+  const PT = 0.3528 * K; // pixeles por punto tipografico
+  const FONT = "Helvetica, Arial, sans-serif";
+  const dibujar = (ctx, altoFinal)=>{
+    const font = (est, pt)=>{ ctx.font = `${est} ${pt*PT}px ${FONT}`; };
+    const ancho = (t, est, pt)=>{ font(est, pt); return ctx.measureText(t).width / K; };
+    const texto = (t, x, y, est, pt, color, align)=>{
+      font(est, pt); ctx.fillStyle = color; ctx.textAlign = align || "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(t, x*K, y*K);
+    };
+    const linea = (y)=>{
+      ctx.strokeStyle = "rgb(220,220,220)"; ctx.lineWidth = 0.2*K;
+      ctx.beginPath(); ctx.moveTo(6*K, y*K); ctx.lineTo((width-6)*K, y*K); ctx.stroke();
+    };
+    // Parte un texto largo en varias lineas para que quepa en el ancho disponible (mm).
+    const partir = (t, maxW, est, pt)=>{
+      const lins = []; let act = "";
+      String(t).split(/\s+/).forEach(w=>{
+        const prueba = act ? act+" "+w : w;
+        if(!act || ancho(prueba, est, pt) <= maxW){ act = prueba; } else { lins.push(act); act = w; }
+      });
+      lins.push(act);
+      return lins;
+    };
+    if(altoFinal){
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width*K, altoFinal*K);
+      // Marca de agua en diagonal, muy tenue, detras del texto.
+      const t = "PAGADO", rad = 30*Math.PI/180;
+      let size = 24.2;
+      while(size > 8 && ancho(t, "bold", size)*Math.cos(rad) > width-10) size -= 1;
+      ctx.save();
+      ctx.translate(width/2*K, altoFinal/2*K); ctx.rotate(-rad);
+      font("bold", size); ctx.fillStyle = "rgba(27,42,74,0.10)"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(t, 0, 0);
+      ctx.restore();
+    }
+    let y = 12;
+    texto(nombreNegocio(), width/2, y, "bold", 13, "rgb(27,42,74)", "center"); y += 6;
+    texto("Recibo de pago", width/2, y, "normal", 9, "rgb(120,120,120)", "center"); y += 6;
+    linea(y); y += 7;
+    const fila = (label, valor, sub, total)=>{
+      const xL = sub ? 10 : 6;
+      const wLabel = ancho(label, total?"bold":"normal", 9.5);
+      const lin = partir(valor, Math.max(width-6-(xL+wLabel+3), 18), sub?"normal":"bold", 9.5);
+      const col = sub ? "rgb(110,110,110)" : "rgb(40,40,40)";
+      texto(label, xL, y, total?"bold":"normal", 9.5, col);
+      lin.forEach((t,i)=> texto(t, width-6, y + i*4.4, sub?"normal":"bold", 9.5, col, "right"));
+      y += 7 + (lin.length-1)*4.4;
+    };
+    d.lineas.forEach(x=> fila(x.l, x.v, x.sub, false));
+    y += 1;
+    fila("Total pagado", money(d.totalPago), false, true);
+    fila("Saldo pendiente", money(d.saldo), false, false);
+    y += 2;
+    linea(y); y += 8;
+    texto("\u00a1Gracias por su pago!", width/2, y, "italic", 9, "rgb(120,120,120)", "center");
+    return y;
+  };
+  // Primero se mide (en un canvas diminuto) cuanto mide el recibo y luego se dibuja con el alto exacto.
+  const medir = document.createElement("canvas");
+  const yFinal = dibujar(medir.getContext("2d"), 0);
+  const alto = yFinal + 8;
+  const canvas = document.createElement("canvas");
+  canvas.width = width*K; canvas.height = Math.ceil(alto*K);
+  dibujar(canvas.getContext("2d"), alto);
+  return new Promise((resolve, reject)=>{
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error("sin imagen")), "image/png");
+  });
+}
+async function compartirImagen(blob, filename){
+  try{
+    const file = new File([blob], filename, {type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({ files:[file], title:filename });
+      return;
+    }
+  }catch(err){
+    if(err && err.name==="AbortError") return;
+  }
+  // Si el celular no soporta compartir el archivo directamente, se descarga
+  // para poder adjuntarlo a mano en WhatsApp u otra app.
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  alert("Se descarg\u00f3 la imagen del recibo a tu celular. \u00c1brela desde tus Descargas para adjuntarla en WhatsApp u otra app.");
+}
 function compartirRecibo(prestamoId, pagoId){
   const p = state.prestamos.find(x=>x.id===prestamoId);
   if(!p) return;
@@ -2605,14 +2699,24 @@ function compartirRecibo(prestamoId, pagoId){
   if(!pg0) return;
   if(state.pdfBusy) return;
   state.pdfBusy = true; render();
-  cargarJsPDF(async function(){
+  const datos = datosRecibo(p, cli, pg0, idx);
+  (async function(){
     try{
-      const doc = generarPDFRecibo(p, cli, datosRecibo(p, cli, pg0, idx));
-      await compartirPDF(doc, `recibo-${p.codigo}.pdf`);
-    } finally {
+      const blob = await generarImagenRecibo(datos);
+      await compartirImagen(blob, `recibo-${p.codigo}.png`);
       state.pdfBusy = false; render();
+    }catch(err){
+      // Si por algo no se pudo crear la imagen, se envia como PDF, como antes.
+      cargarJsPDF(async function(){
+        try{
+          const doc = generarPDFRecibo(p, cli, datos);
+          await compartirPDF(doc, `recibo-${p.codigo}.pdf`);
+        } finally {
+          state.pdfBusy = false; render();
+        }
+      });
     }
-  });
+  })();
 }
 function compartirTabla(id){
   const p = state.prestamos.find(x=>x.id===id);
