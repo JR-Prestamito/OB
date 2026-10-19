@@ -226,6 +226,18 @@
   .fila-inicio{border-left-color:#B89552;}
   .tabbar{background:#26375A;border-top:1px solid #B89552;box-shadow:0 -4px 14px rgba(27,42,74,.18);}
   .tab-btn.active{color:var(--gold);}
+
+  /* Aviso de versión nueva: tarjeta centrada con el logo (igual que en la versión PRO) */
+  #jr-aviso-version{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(10,14,22,.55);}
+  #jr-aviso-version .jr-av-card{width:100%;max-width:330px;box-sizing:border-box;text-align:center;background:#FBF9F4;color:#1B2A4A;border:1px solid #C9973E;border-radius:20px;padding:22px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.4);}
+  #jr-aviso-version .jr-av-logo{width:64px;height:64px;border-radius:14px;display:block;margin:0 auto 12px;}
+  #jr-aviso-version .jr-av-tit{font-size:18px;font-weight:700;margin-bottom:6px;}
+  #jr-aviso-version .jr-av-sub{font-size:14px;color:#6b7080;margin-bottom:16px;line-height:1.35;}
+  #jr-aviso-version button{display:block;width:100%;border:0;border-radius:12px;font-weight:700;font-size:15px;padding:12px 14px;cursor:pointer;}
+  #jr-aviso-version .jr-av-ok{background:#C9973E;color:#1B2A4A;}
+  #jr-aviso-version .jr-av-x{background:transparent;color:#6b7080;font-weight:500;margin-top:6px;}
+  [data-theme="dark"] #jr-aviso-version .jr-av-card{background:#1B212C;color:#E3E5EA;}
+  [data-theme="dark"] #jr-aviso-version .jr-av-sub,[data-theme="dark"] #jr-aviso-version .jr-av-x{color:#9AA1AE;}
 </style>
 </head>
 <body>
@@ -3329,10 +3341,62 @@ async function licArrancar(){
 
 licArrancar();
 
-// --- Modo sin internet: registra el service worker (archivo sw.js junto a index.html) ---
+// --- Modo sin internet + aviso de "versión nueva" (igual que en la versión PRO) ---
+// El sw.js descarga la versión nueva en segundo plano y le avisa a la app. La versión nueva NO
+// se usa hasta que se toca "Actualizar": se le pide al sw.js que la active y, cuando confirma,
+// se recarga la app.
+function aplicarActualizacion(){
+  const btn = document.querySelector("#jr-aviso-version .jr-av-ok");
+  if(btn){ btn.disabled = true; btn.textContent = "Actualizando…"; }
+  let hecho = false;
+  const ir = function(){
+    if(hecho) return; hecho = true;
+    location.reload();
+  };
+  window._jrIrAhora = ir;
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({ tipo: "jr-aplicar" });
+      setTimeout(ir, 4000);   // por si no contesta
+      return;
+    }
+  }catch(e){}
+  ir();
+}
+function mostrarAvisoVersion(){
+  if(document.getElementById("jr-aviso-version") || !document.body) return;
+  const d = document.createElement("div");
+  d.id = "jr-aviso-version";
+  d.innerHTML = '<div class="jr-av-card"><img class="jr-av-logo" alt="JR" src="data:image/png;base64,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">' +
+    '<div class="jr-av-tit">Hay una versión nueva</div>' +
+    '<div class="jr-av-sub">Toca Actualizar para usar la última versión de JR Prestamito.</div>' +
+    '<button class="jr-av-ok">Actualizar</button><button class="jr-av-x">Ahora no</button></div>';
+  d.querySelector(".jr-av-ok").addEventListener("click", aplicarActualizacion);
+  d.querySelector(".jr-av-x").addEventListener("click", function(){ d.remove(); });
+  d.addEventListener("click", function(ev){ if(ev.target === d) d.remove(); });
+  document.body.appendChild(d);
+}
 if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
+  navigator.serviceWorker.addEventListener("message", function(ev){
+    if(!ev.data) return;
+    if(ev.data.tipo === "jr-nueva-version") mostrarAvisoVersion();
+    else if(ev.data.tipo === "jr-aplicada" && window._jrIrAhora) window._jrIrAhora();
+  });
+  // Le pide al sw.js que revise si hay versión nueva (al abrir y cuando vuelves a la app, máx. cada 30 min).
+  let _jrUltRevision = 0;
+  function jrPedirRevision(){
+    _jrUltRevision = Date.now();
+    try{
+      navigator.serviceWorker.ready.then(function(reg){
+        if(reg && reg.active) reg.active.postMessage({ tipo: "jr-buscar" });
+      }).catch(function(){});
+    }catch(e){}
+  }
   window.addEventListener("load", function(){
-    navigator.serviceWorker.register("./sw.js").catch(function(){});
+    navigator.serviceWorker.register("./sw.js").then(function(){ setTimeout(jrPedirRevision, 3000); }).catch(function(){});
+  });
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && Date.now() - _jrUltRevision > 30*60*1000) jrPedirRevision();
   });
 }
 </script>
