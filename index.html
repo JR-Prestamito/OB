@@ -1886,17 +1886,31 @@ function renderListaPrestamos(){
   if(filtrados.length===0){
     return `<p class="empty">Ningún préstamo coincide con "${state.qPrestamos}".</p>`;
   }
-  return filtrados.map(p=>{
-    const cli = state.clientes.find(c=>c.id===p.clienteId);
+  // Se separan por secciones: Vencido, Activo, Pagado y Refinanciado (en ese orden).
+  const secciones = { "Vencido":[], "Activo":[], "Pagado":[], "Refinanciado":[] };
+  filtrados.forEach(p=>{
     const r = resumen(p);
     const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
-    return `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
-      <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
-      <p class="sub">${p.codigo} · ${p.metodo.split(" (")[0]}</p>
-      <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.saldoPendiente)}</p></div>
-      <div style="text-align:right;">${badge(atraso>0?"Vencido":r.estado)}</div>
-    </div>`;
-  }).join("");
+    const estado = atraso>0 ? "Vencido" : r.estado;
+    (secciones[estado] || secciones["Activo"]).push({p, r, estado});
+  });
+  let html = "";
+  Object.keys(secciones).forEach(nombre=>{
+    const lista = secciones[nombre];
+    if(lista.length===0) return;
+    const colSec = {"Vencido":"#A32D2D","Activo":"#3B6D11","Pagado":"#0F6E56","Refinanciado":"#2255A0"}[nombre];
+    html += `<p class="cartera-grupo" style="color:${colSec};">${nombre} (${lista.length})</p>`;
+    lista.forEach(({p, r, estado})=>{
+      const cli = state.clientes.find(c=>c.id===p.clienteId);
+      html += `<div class="row-card" style="cursor:pointer;" onclick="verDetalle('${p.id}')">
+        <div><p class="name">${cli?cli.nombre:"Cliente eliminado"}</p>
+        <p class="sub">${p.codigo} · ${p.metodo.split(" (")[0]}</p>
+        <p style="font-size:13px;margin:4px 0 0;color:${NAVY}">${money(r.saldoPendiente)}</p></div>
+        <div style="text-align:right;">${badge(estado)}</div>
+      </div>`;
+    });
+  });
+  return html;
 }
 function filtrarListaPrestamos(){
   // Igual que en clientes: solo se actualiza la lista, el cuadro de búsqueda no se toca,
