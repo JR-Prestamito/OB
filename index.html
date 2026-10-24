@@ -2359,10 +2359,31 @@ function viewDetallePrestamo(){
         return visibles.length ? visibles : [r.tabla[0]];
       })()
     : r.tabla;
+  const hoyTabla = hoyISO();
+  // En un préstamo refinanciado el resumen marca todas las cuotas como hechas; aquí se cuenta
+  // cuántas cubrió de verdad lo que el cliente pagó.
+  let pagosRealesTabla = r.pagosHechos;
+  if(p.refinanciado){
+    let acum = 0; pagosRealesTabla = 0;
+    for(let k=0;k<r.tabla.length;k++){
+      acum += Number(r.tabla[k].cuota)||0;
+      if((r.totalPagado||0) + 0.01 >= acum) pagosRealesTabla = k+1; else break;
+    }
+  }
   let filasHtml = filasParaTabla.map((f,i)=>{
+    // Estado real de cada cuota: Pagada, Abonada (parcial), Vencida, Pendiente
+    // (o Refinanciada, si el préstamo se cerró por refinanciamiento antes de pagarla).
     let estadoCelda;
-    if(i < r.pagosHechos) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
-    else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
+    const vencida = f.fecha < hoyTabla;
+    if(i < pagosRealesTabla) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
+    else if(p.refinanciado) estadoCelda = '<span style="color:#2255A0">Refinanciada</span>';
+    else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0){
+      const falta = Math.max(0, (Number(f.cuota)||0) - r.abonadoEnCuotaActual);
+      estadoCelda = vencida
+        ? `<span style="color:#A32D2D;">Vencida</span><br><span style="color:${GOLD};font-size:11px;">Abonado ${money(r.abonadoEnCuotaActual)} · falta ${money(falta)}</span>`
+        : `<span style="color:${GOLD};">Abonada</span><br><span style="color:#8a8680;font-size:11px;">${money(r.abonadoEnCuotaActual)} · falta ${money(falta)}</span>`;
+    }
+    else if(vencida) estadoCelda = '<span style="color:#A32D2D;">Vencida</span>';
     else estadoCelda = '<span style="color:#8a8680">Pendiente</span>';
     return `<tr><td>${f.n}</td><td>${fmtDate(f.fecha)}</td>
     <td>${money(f.interes)}</td>
@@ -3356,7 +3377,8 @@ async function licArrancar(){
   licPedirClave(r.motivo);
 }
 
-licArrancar();
+render();
+if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
 
 // --- Modo sin internet + aviso de "versión nueva" (igual que en la versión PRO) ---
 // El sw.js descarga la versión nueva en segundo plano y le avisa a la app. La versión nueva NO
