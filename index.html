@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>JR Prestamito</title>
 <meta name="theme-color" content="#1B2A4A">
+<meta name="color-scheme" content="only light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +15,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="shortcut icon" href="icon-192.png">
 <style>
-  :root{ --navy:#1B2A4A; --gold:#C9973E; --cream:#F7F5F0; }
+  :root{ --navy:#1B2A4A; --gold:#C9973E; --cream:#F7F5F0; color-scheme:only light; }
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#333333;overscroll-behavior-y:contain;}
   html{overscroll-behavior-y:contain;}
@@ -58,7 +59,7 @@
   .b-vencido{background:#FCEBEB;color:#A32D2D;}
   .b-refinanciado{background:#EAF0FB;color:#2255A0;}
   input,select{width:100%;border:1px solid #e5e1d8;border-radius:10px;padding:9px 11px;font-size:15px;background:#fff;}
-  .input-clave-bloqueo{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);color:#fff;transition:border-color .15s, box-shadow .15s;}
+  .input-clave-bloqueo{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);color:#fff;transition:border-color .15s, box-shadow .15s;}
   .input-clave-bloqueo::placeholder{color:rgba(255,255,255,.32);}
   .input-clave-bloqueo:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,151,62,.25);}
   label{display:block;margin-bottom:12px;}
@@ -3377,8 +3378,7 @@ async function licArrancar(){
   licPedirClave(r.motivo);
 }
 
-render();
-if(typeof autoSincronizarAlAbrir === "function") autoSincronizarAlAbrir();
+licArrancar();
 
 // --- Modo sin internet + aviso de "versión nueva" (igual que en la versión PRO) ---
 // El sw.js descarga la versión nueva en segundo plano y le avisa a la app. La versión nueva NO
