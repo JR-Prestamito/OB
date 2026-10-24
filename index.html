@@ -16,7 +16,7 @@
 <style>
   :root{ --navy:#1B2A4A; --gold:#C9973E; --cream:#F7F5F0; }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#222;overscroll-behavior-y:contain;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--cream);color:#333333;overscroll-behavior-y:contain;}
   html{overscroll-behavior-y:contain;}
   #pull-refresh-indicator{position:fixed;top:0;left:50%;transform:translate(-50%,-100%);background:var(--navy);color:#fff;font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:0 0 12px 12px;z-index:9999;display:flex;align-items:center;gap:8px;transition:transform .18s ease,opacity .18s ease;opacity:0;pointer-events:none;}
   #pull-refresh-indicator.mostrando{transform:translate(-50%,0);opacity:1;}
@@ -44,7 +44,7 @@
   details.row-card{display:block;padding:0;overflow:hidden;}
   details.row-card summary{cursor:pointer;padding:12px;display:flex;justify-content:space-between;align-items:center;list-style:revert;gap:8px;}
   details.row-card summary::marker{color:var(--gold);}
-  details.row-card[open] summary{border-bottom:1px solid #e5e1d8;background:#F1EAD8;}
+  details.row-card[open] summary{border-bottom:1px solid #e5e1d8;background:#f7f5f0;}
   details.pago-sec[open]{border-left:1.5px solid var(--gold);border-right:1.5px solid var(--gold);}
   details.row-card .cuerpo{padding:10px 12px;}
   details.row-card .cuerpo .row-card:last-child{margin-bottom:0;}
@@ -57,24 +57,24 @@
   .b-pagado{background:#E1F5EE;color:#0F6E56;}
   .b-vencido{background:#FCEBEB;color:#A32D2D;}
   .b-refinanciado{background:#EAF0FB;color:#2255A0;}
-  input,select{width:100%;border:1px solid #d8d3c8;border-radius:10px;padding:9px 11px;font-size:15px;background:#fff;}
+  input,select{width:100%;border:1px solid #e5e1d8;border-radius:10px;padding:9px 11px;font-size:15px;background:#fff;}
   .input-clave-bloqueo{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);color:#fff;transition:border-color .15s, box-shadow .15s;}
   .input-clave-bloqueo::placeholder{color:rgba(255,255,255,.32);}
   .input-clave-bloqueo:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,151,62,.25);}
   label{display:block;margin-bottom:12px;}
-  label span{display:block;font-size:13px;color:#666;margin-bottom:4px;}
+  label span{display:block;font-size:13px;color:#8a8680;margin-bottom:4px;}
   .btn{border:none;border-radius:10px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;width:100%;}
   .btn-navy{background:var(--navy);color:#fff;}
   .btn-gold{background:var(--gold);color:#fff;}
-  .btn-outline{background:#fff;border:1px solid #d8d3c8;color:#333;}
-  .btn-danger{background:#fff;border:1px solid #f3c9c9;color:#c0433b;}
+  .btn-outline{background:#fff;border:1px solid #e5e1d8;color:#333;}
+  .btn-danger{background:#fff;border:1px solid #fcebeb;color:#a32d2d;}
   .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid #e5e1d8;display:flex;justify-content:space-around;padding:8px 0;}
-  .tab-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:#9c9890;cursor:pointer;padding:4px 10px;}
+  .tab-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:#8a8680;cursor:pointer;padding:4px 10px;}
   .tab-btn.active{color:var(--navy);font-weight:600;}
   .tab-btn svg{width:21px;height:21px;}
   table{width:100%;border-collapse:collapse;font-size:12px;}
-  th{background:#F5F3EE;text-align:left;padding:8px 6px;}
-  td{padding:6px;border-top:1px solid #eee;}
+  th{background:#f7f5f0;text-align:left;padding:8px 6px;}
+  td{padding:6px;border-top:1px solid #e5e1d8;}
   /* Tabla de amortización: a diferencia de las tablas normales de arriba (que dejaban
      desbordar y scrollear hacia los lados en pantallas angostas), esta va SIEMPRE al ancho
      exacto del celular (table-layout:fixed reparte las columnas en % fijos, nunca más
@@ -86,36 +86,36 @@
      cortar o apretar el contenido. */
   .tabla-amort{border-collapse:collapse;font-size:12px;}
   .tabla-amort th, .tabla-amort td{border:1px solid #e5e1d8;padding:6px 8px;text-align:center;white-space:nowrap;}
-  .tabla-amort th{background:#F5F3EE;font-weight:600;}
+  .tabla-amort th{background:#f7f5f0;font-weight:600;}
   /* La tabla de amortización en pantalla se limita a mostrar 6 filas de datos a la vez
      (sin contar el encabezado, que queda fijo arriba al hacer scroll) — si tiene más
      cuotas, se desplazan verticalmente dentro de su propio recuadro. */
   .tabla-amort-scroll{max-height:218px;overflow-y:auto;overflow-x:auto;}
   .tabla-amort thead th{position:sticky;top:0;z-index:1;}
-  .tabla-amort tfoot td{position:sticky;bottom:0;background:#F5F3EE;}
-  .empty{text-align:center;color:#b3af a6;color:#aba692;font-size:13px;padding:24px 0;}
-  .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #d8d3c8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
+  .tabla-amort tfoot td{position:sticky;bottom:0;background:#f7f5f0;}
+  .empty{text-align:center;color:#b3af a6;color:#8a8680;font-size:13px;padding:24px 0;}
+  .searchbar{display:flex;align-items:center;gap:8px;border:1px solid #e5e1d8;border-radius:10px;padding:10px 12px;flex:1;background:#fff;}
   .searchbar:focus-within{border-color:#1B2A4A;box-shadow:0 0 0 2px rgba(27,42,74,.15);}
-  .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#222;min-width:0;-webkit-appearance:none;appearance:none;}
+  .searchbar input{border:none;padding:0;flex:1;font-size:15px;background:transparent;outline:none;box-shadow:none;color:#333333;min-width:0;-webkit-appearance:none;appearance:none;}
   .searchbar input::-webkit-search-decoration,.searchbar input::-webkit-search-cancel-button,.searchbar input::-webkit-search-results-button,.searchbar input::-webkit-search-results-decoration{display:none;-webkit-appearance:none;}
   .toprow{display:flex;gap:8px;margin-bottom:16px;}
   /* Buscador fijo: se queda pegado debajo del encabezado al desplazarse por la lista (igual que en la app Pro) */
   .toprow.buscador{position:sticky;top:calc(var(--header-h,78px) - 1px);z-index:390;background:var(--cream);margin:-16px -16px 12px;padding:10px 16px;box-shadow:0 5px 8px -7px rgba(0,0,0,.28);}
   .iconbtn{background:var(--navy);color:#fff;border:none;border-radius:10px;width:40px;flex-shrink:0;}
   .flexrow{display:flex;gap:8px;}
-  .hint{font-size:12px;color:#aaa;margin-top:6px;}
-  .avatar{width:36px;height:36px;border-radius:50%;background:#EEF1F6;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+  .hint{font-size:12px;color:#8a8680;margin-top:6px;}
+  .avatar{width:36px;height:36px;border-radius:50%;background:#eaf0fb;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
   .flex-gap{display:flex;align-items:center;gap:10px;}
   .backbtn{background:none;border:none;color:#fff;font-size:20px;margin-right:6px;cursor:pointer;}
   .cartera-grupo{font-size:12px;font-weight:700;color:#A32D2D;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em;}
-  .printbtn{background:none;border:none;color:#9c9890;font-size:16px;cursor:pointer;padding:4px;}
+  .printbtn{background:none;border:none;color:#8a8680;font-size:16px;cursor:pointer;padding:4px;}
   #recibo-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;position:relative;overflow:hidden;}
   /* Marca de agua del recibo: la palabra PAGADO, en diagonal y muy tenue, detrás del
      contenido (el texto viene del atributo data-marca para no tener que duplicarlo). */
   #recibo-imprimible::before{content:attr(data-marca);position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) rotate(-28deg);text-align:center;font-size:28.6px;font-weight:800;line-height:1.15;letter-spacing:.14em;text-transform:uppercase;color:rgba(27,42,74,.07);pointer-events:none;z-index:0;padding:0 8px;}
   #recibo-imprimible > *{position:relative;z-index:1;}
   #recibo-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
-  #recibo-imprimible .rline{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed #eee;}
+  #recibo-imprimible .rline{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed #e5e1d8;}
   #recibo-imprimible .rtotal{font-size:17px;font-weight:700;color:var(--navy);}
   #reporte-imprimible{background:#fff;border:1px solid #e5e1d8;border-radius:16px;padding:20px;}
   #reporte-imprimible h2{font-size:16px;margin:0 0 2px;color:var(--navy);}
@@ -133,7 +133,7 @@
 
   /* Pantalla de inicio */
   .hero{margin:-16px -16px 18px;padding:6px 18px 22px;color:#fff;border-radius:0 0 26px 26px;position:relative;overflow:hidden;
-    background:radial-gradient(circle at 88% 8%,rgba(201,151,62,.38) 0,rgba(201,151,62,0) 42%),linear-gradient(165deg,#22376A 0%,#1B2A4A 55%,#121D36 100%);box-shadow:0 10px 24px rgba(27,42,74,.28);}
+    background:radial-gradient(circle at 88% 8%,rgba(201,151,62,.38) 0,rgba(201,151,62,0) 42%),linear-gradient(165deg,#1b2a4a 0%,#1B2A4A 55%,#1b2a4a 100%);box-shadow:0 10px 24px rgba(27,42,74,.28);}
   .hero .hero-lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.65);margin:0 0 4px;font-weight:600;}
   .hero .hero-val{font-size:34px;font-weight:700;margin:0;line-height:1.1;color:#fff;}
   .hero .hero-val em{font-style:normal;color:#E6B45A;}
@@ -159,12 +159,12 @@
   .panel-prox .section-title{margin-top:0;}
   .panel-prox .empty{color:#1B2A4A;opacity:.75;padding:14px 0 10px;font-size:13.5px;}
   .panel-prox .empty::before{content:"✓";display:block;width:46px;height:46px;line-height:46px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,#D9A84B,#B8842A);color:#fff;font-size:22px;font-weight:700;box-shadow:0 6px 14px rgba(201,151,62,.35);}
-  .tabbar{background:linear-gradient(180deg,#22376A,#1B2A4A);border-top:2px solid var(--gold);box-shadow:0 -6px 18px rgba(27,42,74,.25);}
+  .tabbar{background:linear-gradient(180deg,#1b2a4a,#1B2A4A);border-top:2px solid var(--gold);box-shadow:0 -6px 18px rgba(27,42,74,.25);}
   .tab-btn{color:rgba(255,255,255,.6);}
-  .tab-btn.active{color:#E6B45A;}
+  .tab-btn.active{color:#c9973e;}
 
   /* Inicio — diseño 2 (corporativo, tipografía compacta) */
-  .v2-hero{margin:-16px -16px 14px;padding:2px 16px 16px;background:linear-gradient(180deg,#1B2A4A,#16223D);border-bottom:2px solid var(--gold);color:#fff;}
+  .v2-hero{margin:-16px -16px 14px;padding:2px 16px 16px;background:linear-gradient(180deg,#1B2A4A,#1b2a4a);border-bottom:2px solid var(--gold);color:#fff;}
   .v2-lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.6);margin:0 0 3px;font-weight:600;}
   .v2-val{font-size:25px;font-weight:700;margin:0;color:#fff;line-height:1.15;}
   .v2-stats{display:grid;grid-template-columns:1fr 1fr;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.14);}
@@ -192,7 +192,7 @@
   [data-theme="dark"] .v2-kpi .k-l{color:rgba(255,255,255,.55);}
 
   /* Inicio — diseño 3 (diseño 1 con colores apagados, panel separado e íconos) */
-  .v3-hero{margin:4px 0 16px;padding:18px;border-radius:22px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(circle at 90% 6%,rgba(201,151,62,.20) 0,rgba(201,151,62,0) 45%),linear-gradient(160deg,#33466B 0%,#283858 60%,#213050 100%);box-shadow:0 8px 20px rgba(27,42,74,.18);}
+  .v3-hero{margin:4px 0 16px;padding:18px;border-radius:22px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(circle at 90% 6%,rgba(201,151,62,.20) 0,rgba(201,151,62,0) 45%),linear-gradient(160deg,#1b2a4a 0%,#1b2a4a 60%,#1b2a4a 100%);box-shadow:0 8px 20px rgba(27,42,74,.18);}
   .v3-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
   .v3-lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.68);margin:0 0 4px;font-weight:600;}
   .v3-val{font-size:28px;font-weight:700;margin:0;line-height:1.1;color:#fff;}
@@ -224,20 +224,20 @@
   .panel-prox .empty::before{background:linear-gradient(135deg,#C7A566,#A98544);box-shadow:0 5px 12px rgba(169,133,68,.28);}
   .section-title.dorado::before{background:#B89552;}
   .fila-inicio{border-left-color:#B89552;}
-  .tabbar{background:#26375A;border-top:1px solid #B89552;box-shadow:0 -4px 14px rgba(27,42,74,.18);}
+  .tabbar{background:#1b2a4a;border-top:1px solid #c9973e;box-shadow:0 -4px 14px rgba(27,42,74,.18);}
   .tab-btn.active{color:var(--gold);}
 
   /* Aviso de versión nueva: tarjeta centrada con el logo (igual que en la versión PRO) */
   #jr-aviso-version{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(10,14,22,.55);}
-  #jr-aviso-version .jr-av-card{width:100%;max-width:330px;box-sizing:border-box;text-align:center;background:#FBF9F4;color:#1B2A4A;border:1px solid #C9973E;border-radius:20px;padding:22px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.4);}
+  #jr-aviso-version .jr-av-card{width:100%;max-width:330px;box-sizing:border-box;text-align:center;background:#f7f5f0;color:#1B2A4A;border:1px solid #C9973E;border-radius:20px;padding:22px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.4);}
   #jr-aviso-version .jr-av-logo{width:64px;height:64px;border-radius:14px;display:block;margin:0 auto 12px;}
   #jr-aviso-version .jr-av-tit{font-size:18px;font-weight:700;margin-bottom:6px;}
-  #jr-aviso-version .jr-av-sub{font-size:14px;color:#6b7080;margin-bottom:16px;line-height:1.35;}
+  #jr-aviso-version .jr-av-sub{font-size:14px;color:#8a8680;margin-bottom:16px;line-height:1.35;}
   #jr-aviso-version button{display:block;width:100%;border:0;border-radius:12px;font-weight:700;font-size:15px;padding:12px 14px;cursor:pointer;}
   #jr-aviso-version .jr-av-ok{background:#C9973E;color:#1B2A4A;}
-  #jr-aviso-version .jr-av-x{background:transparent;color:#6b7080;font-weight:500;margin-top:6px;}
-  [data-theme="dark"] #jr-aviso-version .jr-av-card{background:#1B212C;color:#E3E5EA;}
-  [data-theme="dark"] #jr-aviso-version .jr-av-sub,[data-theme="dark"] #jr-aviso-version .jr-av-x{color:#9AA1AE;}
+  #jr-aviso-version .jr-av-x{background:transparent;color:#8a8680;font-weight:500;margin-top:6px;}
+  [data-theme="dark"] #jr-aviso-version .jr-av-card{background:#1b2a4a;color:#e5e1d8;}
+  [data-theme="dark"] #jr-aviso-version .jr-av-sub,[data-theme="dark"] #jr-aviso-version .jr-av-x{color:#8a8680;}
 </style>
 </head>
 <body>
@@ -879,7 +879,7 @@ function viewBloqueo(){
   const sigla = "JR";
   const marca = `<p style="position:absolute;top:calc(16px + env(safe-area-inset-top));left:20px;color:${GOLD};font-weight:700;font-size:13px;letter-spacing:.04em;margin:0;">JR PRESTAMITO</p>`;
   if(state.mostrarRecuperar){
-    return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+    return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#1b2a4a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
       ${marca}
       <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
       <p style="font-weight:700;color:#fff;margin:0 0 4px;font-size:17px;text-align:center;">Recuperar acceso</p>
@@ -891,7 +891,7 @@ function viewBloqueo(){
       <a href="javascript:void(0)" onclick="cancelarRecuperar()" style="color:rgba(255,255,255,.55);font-size:12.5px;margin-top:18px;text-decoration:underline;">Cancelar</a>
     </div>`;
   }
-  return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+  return `<div style="position:relative;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,${NAVY} 0%,#1b2a4a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
     ${marca}
     <div style="width:92px;height:92px;border-radius:24px;background:${GOLD};display:flex;align-items:center;justify-content:center;color:${NAVY};font-weight:700;font-size:34px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);">${sigla}</div>
     <p style="text-align:center;margin:0 0 16px;color:rgba(255,255,255,.6);font-size:13px;">Ingresar clave</p>
@@ -1186,12 +1186,12 @@ function viewReportePDF(){
     const atraso = r.proximaFecha ? diasAtraso(r.proximaFecha) : 0;
     const estado = atraso>0 ? "Vencido" : r.estado;
     return `<tr>
-      <td style="padding:6px;border-top:1px solid #eee;">${p.codigo}</td>
-      <td style="padding:6px;border-top:1px solid #eee;">${cli?cli.nombre:"—"}</td>
-      <td style="padding:6px;border-top:1px solid #eee;">${money(p.capital)}</td>
-      <td style="padding:6px;border-top:1px solid #eee;">${estado}</td>
-      <td style="padding:6px;border-top:1px solid #eee;text-align:right;">${money(r.saldoPendiente)}</td>
-      <td style="padding:6px;border-top:1px solid #eee;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;">${p.codigo}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;">${cli?cli.nombre:"—"}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;">${money(p.capital)}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;">${estado}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;text-align:right;">${money(r.saldoPendiente)}</td>
+      <td style="padding:6px;border-top:1px solid #e5e1d8;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</td>
     </tr>`;
   }).join("");
   return `
@@ -1205,12 +1205,12 @@ function viewReportePDF(){
         <div><p class="hint" style="margin:0;">Préstamos</p><p style="font-weight:700;margin:2px 0;">${state.prestamos.length}</p></div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr style="background:#F5F3EE;">
+        <thead><tr style="background:#f7f5f0;">
           <th style="text-align:left;padding:6px;">Código</th><th style="text-align:left;padding:6px;">Cliente</th>
           <th style="text-align:left;padding:6px;">Capital</th><th style="text-align:left;padding:6px;">Estado</th>
           <th style="text-align:right;padding:6px;">Saldo</th><th style="text-align:left;padding:6px;">Próx. fecha</th>
         </tr></thead>
-        <tbody>${filas || `<tr><td colspan="6" style="padding:14px;text-align:center;color:#aaa;">Sin préstamos registrados.</td></tr>`}</tbody>
+        <tbody>${filas || `<tr><td colspan="6" style="padding:14px;text-align:center;color:#8a8680;">Sin préstamos registrados.</td></tr>`}</tbody>
       </table>
     </div>
     <div class="flexrow" style="margin-top:16px;">
@@ -1366,7 +1366,7 @@ function viewEstadoResultados(){
       </table>` : ""}
       <table style="width:100%;border-collapse:collapse;font-size:14px;border-top:2px solid #1B2A4A;">
         <tr><td style="padding:8px 6px;font-weight:700;">${utilidad>=0?"Utilidad":"Pérdida"} del período</td>
-        <td style="padding:8px 6px;text-align:right;font-weight:700;color:${utilidad>=0?"#3B6D11":"#c0433b"};">${money(Math.abs(utilidad))}</td></tr>
+        <td style="padding:8px 6px;text-align:right;font-weight:700;color:${utilidad>=0?"#3B6D11":"#a32d2d"};">${money(Math.abs(utilidad))}</td></tr>
       </table>
       <p class="hint" style="margin-top:14px;">Nota: es un estado en base efectivo (dinero que entra vs. dinero que sale), no un estado contable formal. Cuando un préstamo se refinancia, el saldo que se traslada del préstamo anterior NO se cuenta otra vez como desembolso — solo cuenta el monto adicional que realmente se entregó en efectivo en ese momento (si lo hubo). Cuando un refinanciamiento se clasifica como "modificación no sustancial" según NIIF para las PYMES, Sección 11 (prueba del umbral de valor presente), la diferencia se reconoce aquí como ganancia o pérdida; cuando es "sustancial", se trata como préstamo nuevo sin efecto adicional en este renglón.${T.hayEstimado ? " Los cobros hechos antes de modificar un préstamo, cuando se registraron antes de que la app guardara el reparto, se dividen entre interés y capital por estimación (los abonos a capital, la mora y el total son exactos)." : ""}</p>
     </div>
@@ -1421,14 +1421,14 @@ function viewReporteModificaciones(){
   const td = "padding:5px 6px;white-space:nowrap;";
   const filas = eventos.map(e=>`<tr>
       <td style="${td}">${fmtDateCorta(e.fecha)}</td>
-      <td style="${td}">${e.codigo}${e.tipo==="sustancial"&&e.codigoOrigen!=="—"?` <span style="color:#888;font-size:11px;">(de ${e.codigoOrigen})</span>`:""}</td>
+      <td style="${td}">${e.codigo}${e.tipo==="sustancial"&&e.codigoOrigen!=="—"?` <span style="color:#8a8680;font-size:11px;">(de ${e.codigoOrigen})</span>`:""}</td>
       <td style="${td}">${e.cliente}</td>
       <td style="${td}">${e.tipo==="sustancial"?"Sustancial":"No sustancial"}</td>
       <td style="${td}text-align:right;">${e.capitalAntes!=null?money(e.capitalAntes):"—"}</td>
       <td style="${td}text-align:right;">${money(e.capitalDespues)}</td>
       <td style="${td}text-align:right;">${e.tasaAntes!=null?e.tasaAntes+"%":"—"}</td>
       <td style="${td}text-align:right;">${e.tasaDespues}%</td>
-      <td style="${td}text-align:right;${Math.abs(e.gananciaPerdida)>=0.005?(e.gananciaPerdida>=0?"color:#3B6D11":"color:#c0433b"):""}">${Math.abs(e.gananciaPerdida)>=0.005?money(e.gananciaPerdida):"—"}</td>
+      <td style="${td}text-align:right;${Math.abs(e.gananciaPerdida)>=0.005?(e.gananciaPerdida>=0?"color:#3B6D11":"color:#a32d2d"):""}">${Math.abs(e.gananciaPerdida)>=0.005?money(e.gananciaPerdida):"—"}</td>
     </tr>`).join("");
   return `
     <div id="reporte-imprimible">
@@ -1437,7 +1437,7 @@ function viewReporteModificaciones(){
       ${eventos.length===0 ? `<p class="hint">Todavía no se ha refinanciado ni modificado ningún préstamo.</p>` : `
       <div style="overflow:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px;">
       <table style="width:100%;min-width:780px;border-collapse:collapse;font-size:12px;">
-        <thead><tr style="background:#F5F3EE;">
+        <thead><tr style="background:#f7f5f0;">
           <th style="${td}text-align:left;">Fecha</th><th style="${td}text-align:left;">Préstamo</th><th style="${td}text-align:left;">Cliente</th>
           <th style="${td}text-align:left;">Clasificación</th><th style="${td}text-align:right;">Capital antes</th>
           <th style="${td}text-align:right;">Capital después</th><th style="${td}text-align:right;">Tasa antes</th>
@@ -1450,7 +1450,7 @@ function viewReporteModificaciones(){
         <tr><td style="padding:6px;">Modificaciones sustanciales (préstamo nuevo)</td><td style="padding:6px;text-align:right;">${totalSustanciales}</td></tr>
         <tr><td style="padding:6px;">Modificaciones NO sustanciales (mismo préstamo)</td><td style="padding:6px;text-align:right;">${totalNoSustanciales}</td></tr>
         <tr><td style="padding:8px 6px;font-weight:700;">${totalGanancia>=0?"Ganancia":"Pérdida"} neta por modificaciones</td>
-        <td style="padding:8px 6px;text-align:right;font-weight:700;color:${totalGanancia>=0?"#3B6D11":"#c0433b"};">${money(Math.abs(totalGanancia))}</td></tr>
+        <td style="padding:8px 6px;text-align:right;font-weight:700;color:${totalGanancia>=0?"#3B6D11":"#a32d2d"};">${money(Math.abs(totalGanancia))}</td></tr>
       </table>`}
       <p class="hint" style="margin-top:14px;">Reúne todos los refinanciamientos y modificaciones de condiciones registrados, con su clasificación según NIIF para las PYMES, Sección 11 (sustancial o no sustancial) y la ganancia o pérdida reconocida en cada uno. Es el detalle/respaldo de la línea "Ganancia/(pérdida) por modificación de préstamos" del Estado de resultados.</p>
     </div>
@@ -1604,7 +1604,7 @@ function abrirAjustes(){
   render();
 }
 function viewAjustesClave(){
-  return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:linear-gradient(160deg,${NAVY} 0%,#13203A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
+  return `<div id="panelAjustesClave" style="margin:-16px -16px 0;background:linear-gradient(160deg,${NAVY} 0%,#1b2a4a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;box-sizing:border-box;">
     <div style="width:80px;height:80px;border-radius:22px;background:${GOLD};display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);">🔒</div>
     <p style="text-align:center;margin:0 0 16px;color:rgba(255,255,255,.6);font-size:13px;">Ingresar clave</p>
     <input type="password" id="f_pinAjustesIngresado" inputmode="numeric" autocomplete="off" class="input-clave-bloqueo"
@@ -1678,7 +1678,7 @@ function viewAjustes(){
     <p style="font-weight:600;margin:0 0 4px;">Mensaje de recordatorio (WhatsApp / SMS)</p>
     <p class="hint" style="margin:0 0 10px;">Personaliza el texto que se usa en "Cartera vencida". Puedes usar estas palabras clave y la app las reemplaza solas: <b>{negocio}</b> (nombre de tu negocio), <b>{nombre}</b> (primer nombre), <b>{nombreCompleto}</b>, <b>{codigo}</b>, <b>{cuota}</b>, <b>{monto}</b> (total vencido, sumando todas las cuotas atrasadas y la mora si aplica), <b>{cuotas}</b> (cantidad de cuotas vencidas, ej. "2 cuotas"), <b>{fecha}</b>, <b>{atraso}</b> (ej. "5 días de atraso"), <b>{dias}</b> (solo el número).</p>
     <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
-      <textarea id="f_plantillaRecordatorio" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaRecordatorio=this.value; save();">${(state.config.plantillaRecordatorio||PLANTILLA_RECORDATORIO_DEFAULT)}</textarea>
+      <textarea id="f_plantillaRecordatorio" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #e5e1d8;border-radius:10px;" oninput="state.config.plantillaRecordatorio=this.value; save();">${(state.config.plantillaRecordatorio||PLANTILLA_RECORDATORIO_DEFAULT)}</textarea>
     </label>
     <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajeRecordatorio({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:hoyISO()}, 5, {monto:1750, mora:45, nVenc:2})}</p>
     <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de recordatorio original?')){ state.config.plantillaRecordatorio=PLANTILLA_RECORDATORIO_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
@@ -1687,7 +1687,7 @@ function viewAjustes(){
     <p style="font-weight:600;margin:0 0 4px;">Mensaje de pendiente de cobro (1 día antes)</p>
     <p class="hint" style="margin:0 0 10px;">Se usa en "Próximos a vencer" para las cuotas que vencen hoy o mañana, todavía no atrasadas. Mismas palabras clave que arriba, sin {atraso} ni {dias}.</p>
     <label style="margin-bottom:10px;"><span>Plantilla del mensaje</span>
-      <textarea id="f_plantillaPendiente" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:10px;" oninput="state.config.plantillaPendiente=this.value; save();">${(state.config.plantillaPendiente||PLANTILLA_PENDIENTE_DEFAULT)}</textarea>
+      <textarea id="f_plantillaPendiente" rows="5" style="width:100%;font-family:inherit;font-size:14px;padding:10px;border:1px solid #e5e1d8;border-radius:10px;" oninput="state.config.plantillaPendiente=this.value; save();">${(state.config.plantillaPendiente||PLANTILLA_PENDIENTE_DEFAULT)}</textarea>
     </label>
     <p class="hint" style="margin:0 0 10px;"><b>Vista previa:</b> ${mensajePendiente({codigo:"P0001"}, {nombre:"Juan Pérez"}, {cuotaActual:null, cuota:875, proximaFecha:hoyISO()})}</p>
     <button class="btn btn-outline" onclick="if(confirm('¿Volver al mensaje de pendiente original?')){ state.config.plantillaPendiente=PLANTILLA_PENDIENTE_DEFAULT; save(); render(); }">Restaurar mensaje original</button>
@@ -1724,7 +1724,7 @@ function viewAjustes(){
     ${state.config.pin ? `<button class="btn btn-danger" style="margin-top:10px;" onclick="quitarPin()">Quitar clave</button>` : ""}
     ` : ""}
     ${state.config.pin ? `
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #eee;">
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e5e1d8;">
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;">
         <input type="checkbox" style="width:auto;" ${state.config.pedirClaveEnAjustes!==false?"checked":""} onchange="state.config.pedirClaveEnAjustes=this.checked; save();">
         <span style="font-size:14px;">Pedir esta clave también al entrar a Ajustes</span>
@@ -1732,7 +1732,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#9c9890;margin:18px 0 8px;">Versión 6.0</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 7.0</p>`;
 }
 
 function viewClientes(){
@@ -1769,7 +1769,7 @@ function renderListaClientes(){
   return filtrados.map(c=>`<div class="row-card">
       <div class="flex-gap" style="cursor:pointer;" onclick="abrirFormCliente('${c.id}')"><div class="avatar">${c.nombre.slice(0,2).toUpperCase()}</div>
       <div><p class="name">${c.nombre}</p><p class="sub">${c.codigo} · ${c.celular||"sin celular"}</p></div></div>
-      <button onclick="eliminarCliente('${c.id}')" style="background:none;border:none;color:#bbb;font-size:16px;">✕</button>
+      <button onclick="eliminarCliente('${c.id}')" style="background:none;border:none;color:#e5e1d8;font-size:16px;">✕</button>
     </div>`).join("");
 }
 function filtrarListaClientes(){
@@ -2033,7 +2033,7 @@ function viewNuevoPrestamo(){
     const tabla = generarTabla({...f, cuotas: esIndef?1:f.cuotas});
     const esAmericano = f.metodo === METODOS[4];
     if(tabla.length){
-      previewHtml = `<div class="card" style="background:#EEF1F6;margin-bottom:16px;">
+      previewHtml = `<div class="card" style="background:#eaf0fb;margin-bottom:16px;">
         ${esAmericano
           ? `<p style="font-size:13px;margin:0 0 4px;">Durante el plazo no se cobra nada; todo el interés se acumula.</p>
              <p style="font-size:13px;margin:0;">Pago único al final (capital + interés): <b>${money(tabla[tabla.length-1].cuota)}</b></p>`
@@ -2045,8 +2045,8 @@ function viewNuevoPrestamo(){
 
   return `
     ${editando ? `<p class="hint" style="margin-bottom:12px;">Editando ${f.codigo} — cambiar estos datos puede afectar la tabla de amortización y los pagos ya registrados.</p>` : ""}
-    ${state.clientes.length===0 ? `<p style="color:#c0433b;font-size:13px;">Agrega un cliente primero en la pestaña Clientes.</p>` : ""}
-    <label><span>N° de préstamo</span><input id="nf_codigo" type="text" value="${f.codigo||""}" ${editando?"disabled style='opacity:.6;background:#eee;'":""} oninput="window._nf.codigo=this.value.toUpperCase(); render()"></label>
+    ${state.clientes.length===0 ? `<p style="color:#a32d2d;font-size:13px;">Agrega un cliente primero en la pestaña Clientes.</p>` : ""}
+    <label><span>N° de préstamo</span><input id="nf_codigo" type="text" value="${f.codigo||""}" ${editando?"disabled style='opacity:.6;background:#e5e1d8;'":""} oninput="window._nf.codigo=this.value.toUpperCase(); render()"></label>
     <label><span>Cliente</span><select onchange="window._nf.clienteId=this.value; render()">${opts}</select></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <label style="margin:0;"><span>Capital a financiar (L)</span><input id="nf_capital" type="text" inputmode="decimal" value="${f.capital}" oninput="window._nf.capital=filtrarDecimal(this.value); render()"></label>
@@ -2145,7 +2145,7 @@ function viewRefinanciar(){
     const esAmericano = f.metodo === METODOS[4];
     if(tabla.length){
       evalNIF = evaluarModificacionNIF(origen, nuevoCapital, tabla.map(x=>x.cuota), {esIndefinidoNuevo: esIndef});
-      previewHtml = `<div class="card" style="background:#EEF1F6;margin-bottom:16px;">
+      previewHtml = `<div class="card" style="background:#eaf0fb;margin-bottom:16px;">
         <p style="font-size:13px;margin:0 0 4px;">Nuevo capital financiado: <b>${money(nuevoCapital)}</b></p>
         ${esAmericano
           ? `<p style="font-size:13px;margin:0 0 4px;">Durante el plazo no se cobra nada; todo el interés se acumula.</p>
@@ -2153,8 +2153,8 @@ function viewRefinanciar(){
           : `<p style="font-size:13px;margin:0 0 4px;">Cuota ${esIndef?"por período":"(1ª)"}: <b>${money(tabla[0].cuota)}</b></p>
              ${esIndef?"":`<p style="font-size:13px;margin:0;">Total a pagar: <b>${money(tabla.reduce((s,x)=>s+x.cuota,0))}</b></p>`}`}
       </div>`;
-      clasificacionHtml = `<div class="card" style="background:${evalNIF.esSustancial?'#FBF3E4':'#EAF3DE'};margin-bottom:16px;color:#333;">
-        <p style="font-size:12px;font-weight:700;margin:0 0 4px;color:${evalNIF.esSustancial?'#8A6416':'#3B6D11'};">Clasificación NIIF PYMES: ${evalNIF.esSustancial?"Modificación sustancial":"Modificación NO sustancial"}</p>
+      clasificacionHtml = `<div class="card" style="background:${evalNIF.esSustancial?'#f7f5f0':'#EAF3DE'};margin-bottom:16px;color:#333;">
+        <p style="font-size:12px;font-weight:700;margin:0 0 4px;color:${evalNIF.esSustancial?'#1b2a4a':'#3B6D11'};">Clasificación NIIF PYMES: ${evalNIF.esSustancial?"Modificación sustancial":"Modificación NO sustancial"}</p>
         <p style="font-size:12px;margin:0 0 4px;color:#333;">${evalNIF.diffPct===null ? "No hay un capital neto válido contra el cual comparar; se trata como préstamo nuevo por prudencia." : `El valor presente de los pagos nuevos (descontado a la tasa original) difiere ${(evalNIF.diffPct*100).toFixed(1)}% del capital que queda como base después del enganche/monto adicional (umbral ${umbralActualVista}%). ${evalNIF.esSustancial ? "Como la diferencia llega o supera el umbral, se da de baja el préstamo anterior y este se registra como préstamo nuevo." : "Como está por debajo del umbral, se reconoce como ajuste del mismo préstamo (no se crea un préstamo nuevo)."}`}</p>
         ${(!evalNIF.esSustancial && evalNIF.diffPct!==null) ? `<p style="font-size:13px;margin:0;color:#333;">${evalNIF.gananciaPerdida>=0?"Ganancia":"Pérdida"} por modificación a reconocer: <b style="color:${evalNIF.gananciaPerdida>=0?'#3B6D11':'#A32D2D'}">${money(Math.abs(evalNIF.gananciaPerdida))}</b></p>` : ""}
       </div>`;
@@ -2363,7 +2363,7 @@ function viewDetallePrestamo(){
     let estadoCelda;
     if(i < r.pagosHechos) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
     else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0) estadoCelda = `<span style="color:${GOLD};">Abonado ${money(r.abonadoEnCuotaActual)}</span>`;
-    else estadoCelda = '<span style="color:#aaa">Pendiente</span>';
+    else estadoCelda = '<span style="color:#8a8680">Pendiente</span>';
     return `<tr><td>${f.n}</td><td>${fmtDate(f.fecha)}</td>
     <td>${money(f.interes)}</td>
     <td>${money(f.abono)}</td>
@@ -2413,23 +2413,22 @@ function viewDetallePrestamo(){
     ${r.estado==="Activo" ? `
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 10px;">Registrar pago</p>
-      ${r.abonadoEnCuotaActual>0 ? `<p class="hint" style="color:#8A6416;margin:0 0 10px;">Ya abonaste ${money(r.abonadoEnCuotaActual)} a esta cuota. Falta ${money(r.faltaEnCuotaActual)}.</p>` : ""}
+      ${r.abonadoEnCuotaActual>0 ? `<p class="hint" style="color:#1b2a4a;margin:0 0 10px;">Ya abonaste ${money(r.abonadoEnCuotaActual)} a esta cuota. Falta ${money(r.faltaEnCuotaActual)}.</p>` : ""}
       ${moraCalc>0 ? `<p class="hint" style="color:#A32D2D;margin:0 0 6px;">${nVenc>1 ? `Tienes ${nVenc} cuotas vencidas. Mora total calculada: ${money(moraCalc)}` : `Este pago tiene ${pendiente.diasAtr} día(s) de atraso. Mora calculada: ${money(moraCalc)}`}</p>
-      <label style="display:flex;align-items:center;gap:6px;margin-bottom:12px;"><input type="checkbox" id="incluirMora" checked style="width:auto;" onchange="document.getElementById('montoPago').value = this.checked ? '${round2(sugerido+moraCalc).toFixed(2)}' : '${sugerido.toFixed(2)}';"><span style="margin:0;font-size:13px;color:#666;">Cobrar la mora junto con este pago</span></label>` : ""}
+      <label style="display:flex;align-items:center;gap:6px;margin-bottom:12px;"><input type="checkbox" id="incluirMora" checked style="width:auto;" onchange="document.getElementById('montoPago').value = this.checked ? '${round2(sugerido+moraCalc).toFixed(2)}' : '${sugerido.toFixed(2)}';"><span style="margin:0;font-size:13px;color:#8a8680;">Cobrar la mora junto con este pago</span></label>` : ""}
       <div class="flexrow">
         <input type="text" inputmode="decimal" id="montoPago" value="${moraCalc>0 ? round2(sugerido+moraCalc).toFixed(2) : ""}" placeholder="${sugerido.toFixed(2)}">
         <button class="btn btn-gold" style="width:auto;padding:0 18px;" onclick="registrarPago('${p.id}')">Pagar</button>
       </div>
-      <label style="display:block;margin:10px 0 0;"><span style="font-size:12.5px;color:#666;">Fecha del pago</span><input type="date" id="fechaPago" value="${hoyISO()}" max="${hoyISO()}"></label>
+      <label style="display:block;margin:10px 0 0;"><span style="font-size:12.5px;color:#8a8680;">Fecha del pago</span><input type="date" id="fechaPago" value="${hoyISO()}" max="${hoyISO()}"></label>
       <p class="hint">${nVenc>1 ? `El monto sugerido ya incluye las ${nVenc} cuotas vencidas${moraCalc>0?" y la mora":""}.` : (moraCalc>0 ? "El monto ya incluye la mora; desmarca la casilla para dejar solo la cuota." : "Déjalo vacío para pagar lo sugerido.")} Un monto menor queda como abono parcial a la cuota. Si pagas de más (después de completarla), el excedente se registra como <b>abono a capital</b> — se puede hacer cualquier día.</p>
     </div>
-    ${esBullet ? `
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 6px;">Liquidar anticipado</p>
       <p class="hint" style="margin:0 0 10px;">Calcula el interés real, prorateado por los días que realmente pasaron, si cancelas antes de la fecha de la cuota.</p>
       <label><span>Fecha de liquidación</span><input type="date" id="fechaLiquidacion" value="${hoyISO()}"></label>
       <button class="btn btn-outline" onclick="liquidarAnticipado('${p.id}')">Calcular y liquidar</button>
-    </div>` : ""}` : ""}
+    </div>` : ""}
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;">
       <p class="section-title" style="margin:0;">Tabla de amortización</p>
       <p style="font-size:13px;font-weight:700;color:${NAVY};margin:0;">Capital: ${money(p.capital)}</p>
@@ -2440,7 +2439,7 @@ function viewDetallePrestamo(){
       <div class="tabla-amort-scroll" style="border:1px solid #e5e1d8;border-radius:16px;">
         <table class="tabla-amort" style="width:100%;"><thead><tr><th>#</th><th>Fecha</th><th>Interés</th><th>Abono</th><th>Cuota</th><th>Saldo</th><th>Estado</th></tr></thead>
         <tbody>${filasHtml}</tbody>
-        <tfoot><tr style="font-weight:700;background:#F5F3EE;">
+        <tfoot><tr style="font-weight:700;background:#f7f5f0;">
           <td colspan="2">Total</td>
           <td>${money(totalInteres)}</td>
           <td>${money(totalAbono)}</td>
@@ -2897,7 +2896,10 @@ function liquidarAnticipado(id){
   const fechaBase = r.pagosHechos>0 ? r.tabla[r.pagosHechos-1].fecha : p.fechaInicio;
   const diasReales = Math.max(0, Math.round((new Date(fechaLiq+"T00:00:00") - new Date(fechaBase+"T00:00:00"))/86400000));
   const capitalPendiente = r.capitalPendiente!=null ? r.capitalPendiente : Number(p.capital)||0;
-  const interes = Math.round(capitalPendiente*tasaDiaria*diasReales*100)/100;
+  const interesProrrateado = Math.round(capitalPendiente*tasaDiaria*diasReales*100)/100;
+  // Si ya se abonó algo a la cuota en curso, primero cubrió su interés: no se vuelve a cobrar.
+  const interesYaCubierto = Math.min(r.abonadoEnCuotaActual||0, r.cuotaActual?(r.cuotaActual.interes||0):0, interesProrrateado);
+  const interes = Math.round((interesProrrateado - interesYaCubierto)*100)/100;
   const total = capitalPendiente + interes;
   const ok = confirm(
     `Liquidación anticipada al ${fmtDate(fechaLiq)}:\n` +
@@ -3183,7 +3185,7 @@ function viewRecibo(){
   const d = datosRecibo(p, cli, pg0, idx);
   const pg = d.pg;
   const filasHtml = d.lineas.map(x => x.sub
-    ? `<div class="rline" style="padding-left:14px;color:#666;"><span>${x.l}</span><span>${x.v}</span></div>`
+    ? `<div class="rline" style="padding-left:14px;color:#8a8680;"><span>${x.l}</span><span>${x.v}</span></div>`
     : `<div class="rline"><span>${x.l}</span><b>${x.v}</b></div>`).join("\n      ");
 
   return `
@@ -3295,8 +3297,8 @@ function licPedirClave(mensajeError){
   licPantalla(`
 <div style="font-size:40px;margin-bottom:6px;">🔒</div>
 <h2 style="color:#fff;margin:0 0 6px;font-size:18px;">Licencia requerida</h2>
-<p style="color:#B9C2D6;font-size:13px;margin:0 0 16px;max-width:280px;">Ingresa la clave de licencia para usar esta app en este dispositivo.</p>
-${mensajeError ? `<p style="color:#F3A0A0;font-size:13px;margin:0 0 10px;max-width:280px;">${mensajeError}</p>` : ""}
+<p style="color:#e5e1d8;font-size:13px;margin:0 0 16px;max-width:280px;">Ingresa la clave de licencia para usar esta app en este dispositivo.</p>
+${mensajeError ? `<p style="color:#fcebeb;font-size:13px;margin:0 0 10px;max-width:280px;">${mensajeError}</p>` : ""}
 <input id="licClaveInput" type="text" placeholder="Clave de licencia" autocapitalize="off" autocorrect="off" style="width:240px;text-align:center;font-size:16px;padding:12px;border-radius:12px;border:none;margin-bottom:10px;">
 <button id="licEntrarBtn" style="width:240px;padding:12px;border-radius:12px;border:none;background:#C9973E;color:#1B2A4A;font-weight:700;font-size:15px;">Entrar</button>
 `);
@@ -3326,7 +3328,7 @@ ${mensajeError ? `<p style="color:#F3A0A0;font-size:13px;margin:0 0 10px;max-wid
 async function licArrancar(){
   const claveGuardada = localStorage.getItem("jrp_licencia");
   if(!claveGuardada){ licPedirClave(); return; }
-  licPantalla(`<div style="font-size:40px;margin-bottom:6px;">🔒</div><p style="color:#B9C2D6;font-size:13px;">Verificando licencia…</p>`);
+  licPantalla(`<div style="font-size:40px;margin-bottom:6px;">🔒</div><p style="color:#e5e1d8;font-size:13px;">Verificando licencia…</p>`);
   const r = await licVerificar(claveGuardada);
   if(r.ok){
     localStorage.setItem("jrp_licencia_ok_ts", String(Date.now()));
