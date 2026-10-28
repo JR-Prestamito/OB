@@ -248,8 +248,8 @@
 <script>
 const NAVY = "#1B2A4A", GOLD = "#C9973E";
 const METODOS = ["Francés (cuota fija)","Alemán (cuota decreciente)","Tasa plana (interés fijo)","Capital al final (bullet)","Sistema Americano (puro)","Indefinido (solo interés)"];
-const PERIODOS = ["Semanal","Quincenal","Mensual"];
-const DIAS_PERIODO = { Semanal:7, Quincenal:15, Mensual:30 };
+const PERIODOS = ["Semanal","Quincenal","Mensual","Semestral","Anual"];
+const DIAS_PERIODO = { Semanal:7, Quincenal:15, Mensual:30, Semestral:180, Anual:365 };
 
 // Espacio de guardado propio de esta dirección (URL): así, si esta app llega a quedar
 // publicada dos veces bajo el mismo dominio (por ejemplo dos repos distintos en el mismo
@@ -754,14 +754,17 @@ function generarTablaDinamica(p){
     }
     let abono = abonoProgramado;
     let huboAjuste = false;
+    let capitalDirecto = 0; // abonos directos a capital (se pagan aparte, no forman parte de la cuota)
     while(idxAj<ajustes.length && ajustes[idxAj].despuesDeFila===i){
+      const antes = abono;
       abono = round2(Math.min(saldoInicial, abono + (Number(ajustes[idxAj].monto)||0)));
+      if(ajustes[idxAj].soloCapital) capitalDirecto = round2(capitalDirecto + (abono - antes));
       huboAjuste = true;
       idxAj++;
     }
-    const cuota = round2(interes+abono);
+    const cuota = round2(interes+abono-capitalDirecto);
     const nuevoSaldo = round2(Math.max(0, saldoInicial-abono));
-    filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: nuevoSaldo});
+    filas.push({n:i, fecha:fechaCuotaDe(p, dias, i), cuota, interes, abono, saldo: nuevoSaldo, capitalDirecto});
     saldo = nuevoSaldo;
     if(huboAjuste) recalcularVigente(i);
   }
@@ -778,17 +781,37 @@ function resumen(p){
   // sumara aquí, se estaría descontando el mismo dinero dos veces del cronograma.
   const pagosParaCronograma = pagos.filter(pg=>pg.tipo!=="enganche");
   // el capital/interés se acumula por separado de la mora: la mora no hace avanzar cuotas
-  const totalPagado = pagosParaCronograma.reduce((s,pg)=> s + (Number(pg.monto)||0), 0);
+  const totalPagado = pagosParaCronograma.filter(pg=>!pg.soloCapital).reduce((s,pg)=> s + (Number(pg.monto)||0), 0);
+  // Abonos directos a capital (sin pagar cuota) que aún no se reflejan en el saldo de la tabla
+  // porque su fila (la cuota en curso) todavía no se completa: se restan aparte del capital pendiente.
+  const soloCapitalPendiente = (cuotasHechas)=> (p.ajustesCapital||[]).filter(a=>a.soloCapital && a.despuesDeFila>cuotasHechas).reduce((s,a)=>s+(Number(a.monto)||0),0);
   const moraTotal = pagosParaCronograma.reduce((s,pg)=> s + (Number(pg.mora)||0), 0);
 
+  // Al liquidar o refinanciar, el resumen cierra el préstamo (pagosHechos = todas las filas)
+  // para que no cuente cuotas vencidas. Pero para MOSTRAR, "cuotas pagadas" debe ser lo que
+  // el cliente realmente cubrió con sus pagos normales (sin contar el pago de liquidación),
+  // y "cuota" la cuota regular, no la fila 1 (que puede incluir un abono a capital).
+  let cuotasPagadasReales = null, cuotaMostrar = tabla[0]?tabla[0].cuota:0;
+  if(p.liquidadoAnticipado || p.refinanciado){
+    const totalNormal = pagosParaCronograma.filter(pg=>!pg.liquidacion && !pg.soloCapital).reduce((s,pg)=>s+(Number(pg.monto)||0),0);
+    let acumN = 0; cuotasPagadasReales = 0;
+    for(let k=0;k<tabla.length;k++){
+      acumN += Number(tabla[k].cuota)||0;
+      if(totalNormal + 0.01 >= acumN) cuotasPagadasReales = k+1; else break;
+    }
+    if(esIndef){
+      const filaReg = tabla[cuotasPagadasReales] || tabla[tabla.length-1];
+      if(filaReg) cuotaMostrar = filaReg.cuota;
+    }
+  }
   if(p.liquidadoAnticipado){
-    return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente:0, capitalPendiente:0, estado:"Pagado", proximaFecha:null,
-      tabla, pagosHechos: tabla.length, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
+    return { cuota: cuotaMostrar, saldoPendiente:0, capitalPendiente:0, estado:"Pagado", proximaFecha:null,
+      tabla, pagosHechos: tabla.length, cuotasPagadas: cuotasPagadasReales, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
       moraTotal, totalPagado };
   }
   if(p.refinanciado){
-    return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente:0, capitalPendiente:0, estado:"Refinanciado", proximaFecha:null,
-      tabla, pagosHechos: tabla.length, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
+    return { cuota: cuotaMostrar, saldoPendiente:0, capitalPendiente:0, estado:"Refinanciado", proximaFecha:null,
+      tabla, pagosHechos: tabla.length, cuotasPagadas: cuotasPagadasReales, cuotaActual:null, abonadoEnCuotaActual:0, faltaEnCuotaActual:0,
       moraTotal, totalPagado };
   }
 
@@ -806,7 +829,7 @@ function resumen(p){
     const cuotaActualRow = tabla[periodosPagados] || null;
     const baseAnterior = periodosPagados>0 ? tabla.slice(0,periodosPagados).reduce((s,f)=>s+f.cuota,0) : 0;
     const abonadoEnCuotaActual = Math.max(0, totalPagado-baseAnterior);
-    const capitalPendienteIndef = periodosPagados>0 ? (tabla[periodosPagados-1].saldo||capital) : capital;
+    const capitalPendienteIndef = Math.max(0, (periodosPagados>0 ? (tabla[periodosPagados-1].saldo||capital) : capital) - soloCapitalPendiente(periodosPagados));
     // Como este método es "solo interés", cada cuota vencida sin pagar es interés puro (el
     // capital no baja por el cronograma normal, solo por abono a capital). Ese interés vencido
     // SÍ es deuda real de hoy, así que se suma al saldo pendiente. capitalPendiente se deja
@@ -850,7 +873,7 @@ function resumen(p){
   const saldoBase = cuotasCompletas>0 ? Math.max(0, tabla[cuotasCompletas-1].saldo||0) : capital;
   const interesCuotaActual = cuotaActual ? (cuotaActual.interes||0) : 0;
   const abonoCapitalEnCuotaActual = Math.max(0, abonadoEnCuotaActual - interesCuotaActual);
-  const capitalPendiente = pagado ? 0 : Math.max(0, saldoBase - abonoCapitalEnCuotaActual);
+  const capitalPendiente = pagado ? 0 : Math.max(0, saldoBase - abonoCapitalEnCuotaActual - soloCapitalPendiente(cuotasCompletas));
 
   return { cuota: tabla[0]?tabla[0].cuota:0, saldoPendiente, capitalPendiente, estado: pagado?"Pagado":"Activo",
     proximaFecha: pagado?null:(cuotaActual?cuotaActual.fecha:null), tabla, pagosHechos: cuotasCompletas,
@@ -1734,7 +1757,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 7.0</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 8.0</p>`;
 }
 
 function viewClientes(){
@@ -2364,20 +2387,14 @@ function viewDetallePrestamo(){
   const hoyTabla = hoyISO();
   // En un préstamo refinanciado el resumen marca todas las cuotas como hechas; aquí se cuenta
   // cuántas cubrió de verdad lo que el cliente pagó.
-  let pagosRealesTabla = r.pagosHechos;
-  if(p.refinanciado){
-    let acum = 0; pagosRealesTabla = 0;
-    for(let k=0;k<r.tabla.length;k++){
-      acum += Number(r.tabla[k].cuota)||0;
-      if((r.totalPagado||0) + 0.01 >= acum) pagosRealesTabla = k+1; else break;
-    }
-  }
+  const pagosRealesTabla = r.cuotasPagadas!=null ? r.cuotasPagadas : r.pagosHechos;
   let filasHtml = filasParaTabla.map((f,i)=>{
     // Estado real de cada cuota: Pagada, Abonada (parcial), Vencida, Pendiente
     // (o Refinanciada, si el préstamo se cerró por refinanciamiento antes de pagarla).
     let estadoCelda;
     const vencida = f.fecha < hoyTabla;
     if(i < pagosRealesTabla) estadoCelda = '<span style="color:#3B6D11">✓ Pagada</span>';
+    else if(p.liquidadoAnticipado) estadoCelda = '<span style="color:#0F6E56">Liquidada</span>';
     else if(p.refinanciado) estadoCelda = '<span style="color:#2255A0">Refinanciada</span>';
     else if(i === r.pagosHechos && r.abonadoEnCuotaActual>0){
       const falta = Math.max(0, (Number(f.cuota)||0) - r.abonadoEnCuotaActual);
@@ -2389,7 +2406,7 @@ function viewDetallePrestamo(){
     else estadoCelda = '<span style="color:#8a8680">Pendiente</span>';
     return `<tr><td>${f.n}</td><td>${fmtDate(f.fecha)}</td>
     <td>${money(f.interes)}</td>
-    <td>${money(f.abono)}</td>
+    <td>${money(f.abono)}${f.capitalDirecto>0?`<br><span style="font-size:10.5px;color:#8a8680;">incl. ${money(f.capitalDirecto)} directo</span>`:""}</td>
     <td style="font-weight:600;">${money(f.cuota)}</td>
     <td>${money(f.saldo)}</td>
     <td>${estadoCelda}</td></tr>`;
@@ -2415,7 +2432,7 @@ function viewDetallePrestamo(){
       <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Capital</p><p style="font-size:15px;font-weight:600;margin:0;">${money(p.capital)}</p></div>
       <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuota</p><p style="font-size:15px;font-weight:600;margin:0;">${money(r.cuota)}</p></div>
       <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Próxima fecha</p><p style="font-size:15px;font-weight:600;margin:0;">${r.proximaFecha?fmtDate(r.proximaFecha):"—"}</p></div>
-      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuotas pagadas</p><p style="font-size:15px;font-weight:600;margin:0;">${r.pagosHechos}${p.metodo.includes("Indefinido")?"":" / "+p.cuotas}</p></div>
+      <div class="card" style="border:1px solid #e5e1d8;"><p class="lbl">Cuotas pagadas</p><p style="font-size:15px;font-weight:600;margin:0;">${r.cuotasPagadas!=null?r.cuotasPagadas:r.pagosHechos}${p.metodo.includes("Indefinido")?"":" / "+p.cuotas}</p></div>
     </div>
     ${(()=>{
       if(r.estado!=="Activo" || !r.proximaFecha) return "";
@@ -2445,6 +2462,15 @@ function viewDetallePrestamo(){
       </div>
       <label style="display:block;margin:10px 0 0;"><span style="font-size:12.5px;color:#8a8680;">Fecha del pago</span><input type="date" id="fechaPago" value="${hoyISO()}" max="${hoyISO()}"></label>
       <p class="hint">${nVenc>1 ? `El monto sugerido ya incluye las ${nVenc} cuotas vencidas${moraCalc>0?" y la mora":""}.` : (moraCalc>0 ? "El monto ya incluye la mora; desmarca la casilla para dejar solo la cuota." : "Déjalo vacío para pagar lo sugerido.")} Un monto menor queda como abono parcial a la cuota. Si pagas de más (después de completarla), el excedente se registra como <b>abono a capital</b> — se puede hacer cualquier día.</p>
+    </div>
+    <div class="row-card" style="display:block;">
+      <p style="font-weight:600;margin:0 0 6px;">Solo abono a capital</p>
+      <p class="hint" style="margin:0 0 10px;">Baja el capital sin pagar la cuota. El interés de la cuota en curso se sigue calculando sobre el capital anterior; el nuevo capital cuenta desde la cuota siguiente.</p>
+      <div class="flexrow">
+        <input type="text" inputmode="decimal" id="montoAbonoCapital" placeholder="Monto a capital">
+        <button class="btn btn-gold" style="width:auto;padding:0 18px;" onclick="registrarAbonoCapital('${p.id}')">Abonar</button>
+      </div>
+      <label style="display:block;margin:10px 0 0;"><span style="font-size:12.5px;color:#8a8680;">Fecha del abono</span><input type="date" id="fechaAbonoCapital" value="${hoyISO()}" max="${hoyISO()}"></label>
     </div>
     <div class="row-card" style="display:block;">
       <p style="font-weight:600;margin:0 0 6px;">Liquidar anticipado</p>
@@ -2611,7 +2637,8 @@ function generarPDFTabla(p, cli, r){
     : r.tabla;
   filasPDF.forEach((f,i)=>{
     if(y > pageH-14){ doc.addPage(); y=16; dibujarEncabezado(); }
-    const est = i<r.pagosHechos ? "Pagada" : (i===r.pagosHechos && r.abonadoEnCuotaActual>0 ? `Abonado ${money(r.abonadoEnCuotaActual)}` : "Pendiente");
+    const pgReal = r.cuotasPagadas!=null ? r.cuotasPagadas : r.pagosHechos;
+    const est = i<pgReal ? "Pagada" : (p.liquidadoAnticipado ? "Liquidada" : (p.refinanciado ? "Refinanciada" : (i===r.pagosHechos && r.abonadoEnCuotaActual>0 ? `Abonado ${money(r.abonadoEnCuotaActual)}` : "Pendiente")));
     const valores = [String(f.n), fmtDate(f.fecha), money(f.interes), money(f.abono), money(f.cuota), money(f.saldo), est];
     let x = marginX;
     valores.forEach((val,idx)=>{
@@ -2910,6 +2937,43 @@ function registrarPago(id){
   }
   alert(msg);
 }
+function registrarAbonoCapital(id){
+  const p = state.prestamos.find(x=>x.id===id);
+  if(!p) return;
+  const r = resumen(p);
+  if(r.estado!=="Activo") return;
+  const monto = round2(Number(String(document.getElementById("montoAbonoCapital").value||"").replace(/,/g,"")));
+  if(!monto || monto<=0){ alert("Escribe el monto que se abonará a capital."); return; }
+  const capitalAntes = r.capitalPendiente!=null ? r.capitalPendiente : Number(p.capital)||0;
+  if(monto >= capitalAntes - 0.01){
+    alert("Ese monto cubre todo el capital pendiente (" + money(capitalAntes) + "). Para cerrar el préstamo usa \"Liquidar anticipado\".");
+    return;
+  }
+  const fEl = document.getElementById("fechaAbonoCapital");
+  const fecha = (fEl && fEl.value) ? fEl.value : hoyISO();
+  const cli = state.clientes.find(c=>c.id===p.clienteId);
+  const ok = confirm(
+    `Vas a registrar un abono SOLO a capital con fecha ${fmtDate(fecha)}:\n` +
+    `Cliente: ${cli?cli.nombre:"—"}\n` +
+    `Préstamo: ${p.codigo}\n` +
+    `Abono a capital: ${money(monto)}\n` +
+    `Capital pendiente: ${money(capitalAntes)} → ${money(round2(capitalAntes-monto))}\n\n` +
+    `Esto NO paga la cuota en curso. ¿Confirmas?`
+  );
+  if(!ok) return;
+  p.pagos = p.pagos || [];
+  const idPago = uid();
+  p.pagos.push({ id:idPago, fecha, monto, mora:0, tipo:"abono_capital", soloCapital:true, interes:0, capital:monto });
+  // Igual que un abono junto a la cuota, el ajuste cae DESPUÉS de la(s) cuota(s) en curso o
+  // vencidas: esas ya generaron su interés sobre el capital anterior.
+  p.ajustesCapital = p.ajustesCapital || [];
+  p.ajustesCapital.push({ despuesDeFila: (r.pagosHechos||0) + Math.max(1, cuotasVencidas(r)), monto, fecha, pagoId:idPago, soloCapital:true });
+  save(); render();
+  const r2 = resumen(p);
+  let msg = `✅ Abono a capital registrado: ${money(monto)}.\n\nCapital pendiente: ${money(r2.capitalPendiente)}.`;
+  if(r2.proximaFecha) msg += `\nPróxima cuota: ${fmtDate(r2.proximaFecha)} (${money(r2.faltaEnCuotaActual||r2.cuota)}).`;
+  alert(msg);
+}
 function liquidarAnticipado(id){
   const p = state.prestamos.find(x=>x.id===id);
   const r = resumen(p);
@@ -3168,7 +3232,7 @@ function datosRecibo(p, cli, pg0, idx){
   const abonoLigado = resuelto.abonoLigado;
   const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
   const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0) + (abonoLigado ? (Number(abonoLigado.monto)||0) : 0);
-  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.tipo==="enganche" ? "Enganche al refinanciar" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota"));
+  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.soloCapital ? "Abono a capital" : pg.tipo==="enganche" ? "Enganche al refinanciar" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota"));
   if(abonoLigado) concepto += " + abono a capital";
   const lineas = [
     {l:"No. de recibo", v:"R-"+numRecibo},
