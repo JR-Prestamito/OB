@@ -1014,6 +1014,7 @@ function render(){
   document.getElementById("app").style.padding = "";
   document.getElementById("app").style.background = "";
   guardarNav();
+  if(typeof navRastrear === "function") navRastrear();
   // Guarda qué campo tenía el foco (y la posición del cursor) antes de reconstruir el DOM.
   // Sin esto, cada tecla presionada destruye y recrea el <input>, lo que en el celular
   // hace que el teclado parpadee o se cierre con cada dígito.
@@ -1757,7 +1758,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 8.0</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.0</p>`;
 }
 
 function viewClientes(){
@@ -2377,13 +2378,13 @@ function viewDetallePrestamo(){
   // día DESPUÉS de la fecha de la cuota anterior — se haya pagado esa cuota anterior o no,
   // esto es puramente por calendario — y se va quedando ahí ya como pagada o pendiente.
   const esIndefDetalle = p.metodo === METODOS[5];
-  const filasParaTabla = esIndefDetalle
+  const filasParaTabla = filasLiquidacion(p, r) || (esIndefDetalle
     ? (function(){
         const hoy = hoyISO();
         const visibles = r.tabla.filter((f,i)=> i===0 || addDays(r.tabla[i-1].fecha,1) <= hoy);
         return visibles.length ? visibles : [r.tabla[0]];
       })()
-    : r.tabla;
+    : r.tabla);
   const hoyTabla = hoyISO();
   // En un préstamo refinanciado el resumen marca todas las cuotas como hechas; aquí se cuenta
   // cuántas cubrió de verdad lo que el cliente pagó.
@@ -2592,6 +2593,18 @@ function generarPDFRecibo(p, cli, d){
   dibujar(doc, alto);
   return doc;
 }
+
+// Si el préstamo se cerró con "Liquidar anticipado", la tabla muestra las cuotas que de verdad
+// se pagaron y, aparte, una línea propia con la liquidación (su fecha, interés, capital y total),
+// aunque ese mismo día también se haya pagado una cuota.
+function filasLiquidacion(p, r){
+  if(!p.liquidadoAnticipado || r.cuotasPagadas==null) return null;
+  const liq = (p.pagos||[]).filter(pg=>pg.liquidacion).slice(-1)[0];
+  if(!liq) return null;
+  const pagadas = r.tabla.slice(0, r.cuotasPagadas);
+  return pagadas.concat([{ n:"Liq.", fecha:liq.fecha, interes:Number(liq.interes)||0, abono:Number(liq.capital)||0,
+    cuota:round2(Number(liq.monto)||0), saldo:0, esLiquidacion:true }]);
+}
 function generarPDFTabla(p, cli, r){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"mm", format:"a4", orientation:"landscape"});
@@ -2628,13 +2641,13 @@ function generarPDFTabla(p, cli, r){
   }
   dibujarEncabezado();
   const esIndefPDF = p.metodo === METODOS[5];
-  const filasPDF = esIndefPDF
+  const filasPDF = filasLiquidacion(p, r) || (esIndefPDF
     ? (function(){
         const hoy = hoyISO();
         const visibles = r.tabla.filter((f,i)=> i===0 || addDays(r.tabla[i-1].fecha,1) <= hoy);
         return visibles.length ? visibles : [r.tabla[0]];
       })()
-    : r.tabla;
+    : r.tabla);
   filasPDF.forEach((f,i)=>{
     if(y > pageH-14){ doc.addPage(); y=16; dibujarEncabezado(); }
     const pgReal = r.cuotasPagadas!=null ? r.cuotasPagadas : r.pagosHechos;
@@ -3442,6 +3455,104 @@ async function licArrancar(){
   localStorage.removeItem("jrp_licencia");
   licPedirClave(r.motivo);
 }
+
+// ---- Botón "atrás" del celular ----
+// Atrás regresa a la pantalla anterior (y así hasta Inicio). Estando en Inicio (o en la
+// pantalla de clave) pide tocar otra vez para salir. Se lleva una pila propia de pantallas.
+(function(){
+  const CLAVE = LK("jr_navpila");
+  let pila = [];
+  try{ pila = JSON.parse(sessionStorage.getItem(CLAVE)||"[]") || []; }catch(e){ pila = []; }
+  let actual = null, volviendo = false, ultimoAtras = 0, saliendo = false, toastT = null;
+  function snap(){
+    return { tab:state.tab, vista:state.vista, seleccionId:state.seleccionId||null,
+             clienteEditId:state.clienteEditId||null, reciboSel:state.reciboSel||null };
+  }
+  function firma(s){
+    return [s.tab, s.vista, s.seleccionId||"", s.clienteEditId||"", (s.reciboSel&&s.reciboSel.pagoId)||""].join("|");
+  }
+  function guardarPila(){ try{ sessionStorage.setItem(CLAVE, JSON.stringify(pila)); }catch(e){} }
+  // Se llama desde render(): detecta cuándo cambió de pantalla.
+  window.navRastrear = function(){
+    const s = snap();
+    if(actual && firma(actual)===firma(s)){ volviendo = false; actual = s; return; }
+    if(volviendo){ volviendo = false; actual = s; guardarPila(); return; }
+    if(actual){
+      // Si volvió con la flecha ‹ de la app, no se apila: se desapila.
+      if(pila.length && firma(pila[pila.length-1])===firma(s)) pila.pop();
+      else { pila.push(actual); if(pila.length>40) pila.shift(); }
+    }
+    actual = s; guardarPila();
+  };
+  function existe(s){
+    try{
+      if(s.tab==="prestamos" && (s.vista==="detalle"||s.vista==="refinanciar")) return state.prestamos.some(x=>x.id===s.seleccionId);
+      if(s.tab==="clientes" && s.vista==="detalle") return state.clientes.some(x=>x.id===s.seleccionId);
+      if(s.tab==="pagos" && s.vista==="recibo") return !!(s.reciboSel && state.prestamos.some(x=>x.id===s.reciboSel.prestamoId));
+    }catch(e){ return false; }
+    return true;
+  }
+  function restaurar(s){
+    state.tab = s.tab; state.vista = s.vista; state.seleccionId = s.seleccionId;
+    state.clienteEditId = s.clienteEditId; state.reciboSel = s.reciboSel;
+    window._nf = null; window._rf = null;
+    volviendo = true; render();
+  }
+  function bloqueada(){
+    if(state.config && state.config.pin && !state.desbloqueado) return true;
+    return !!document.getElementById("lic-overlay");
+  }
+  function toast(msg){
+    let el = document.getElementById("jr-toast-salir");
+    if(!el){
+      el = document.createElement("div"); el.id = "jr-toast-salir";
+      el.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:#1B2A4A;color:#fff;border:1px solid #C9973E;padding:10px 18px;border-radius:22px;font-size:14px;z-index:100000;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:opacity .2s;pointer-events:none;white-space:nowrap;";
+      document.body.appendChild(el);
+    }
+    el.textContent = msg; el.style.opacity = "1";
+    clearTimeout(toastT); toastT = setTimeout(()=>{ el.style.opacity = "0"; }, 2000);
+  }
+  // Devuelve "salir" cuando hay que dejar que la app se cierre.
+  function manejarAtras(){
+    if(bloqueada()){
+      if(state.mostrarRecuperar){ state.mostrarRecuperar = false; render(); return "ok"; }
+    } else {
+      while(pila.length){
+        const s = pila.pop();
+        if(existe(s)){ guardarPila(); restaurar(s); return "ok"; }
+      }
+      if(!(state.tab==="inicio" && state.vista==="lista")){
+        state.tab = "inicio"; state.vista = "lista"; state.seleccionId = null; state.clienteEditId = null;
+        window._nf = null; window._rf = null; volviendo = true; render(); return "ok";
+      }
+    }
+    const ahora = Date.now();
+    if(ahora - ultimoAtras < 2000) return "salir";
+    ultimoAtras = ahora;
+    toast("Toca otra vez para salir");
+    return "ok";
+  }
+  // Se deja una entrada extra en el historial para poder interceptar el botón atrás. Chrome
+  // ignora entradas creadas sin tocar la página, así que se arma en el primer toque.
+  function armar(){ try{ history.pushState({jr:1}, ""); }catch(e){} }
+  try{
+    if(!(history.state && history.state.jr)){
+      history.replaceState({jrRoot:1}, "");
+      const una = function(){
+        document.removeEventListener("pointerdown", una, true);
+        document.removeEventListener("keydown", una, true);
+        armar();
+      };
+      document.addEventListener("pointerdown", una, true);
+      document.addEventListener("keydown", una, true);
+    }
+  }catch(e){}
+  window.addEventListener("popstate", function(){
+    if(saliendo) return;
+    if(manejarAtras()==="salir"){ saliendo = true; history.back(); return; }
+    armar();
+  });
+})();
 
 licArrancar();
 
