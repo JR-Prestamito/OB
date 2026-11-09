@@ -1758,8 +1758,8 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.3</p>
-  <p style="text-align:center;font-size:11px;color:#8a8680;margin:0 0 8px;">Atrás: ${(window._navDiag&&window._navDiag.armados>0)?"activo":"sin activar"} · pila ${(window._navDiag&&window._navDiag.pila)||0} · historial ${history.length}${(window._navDiag&&window._navDiag.error)?" · "+window._navDiag.error:""}</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.4</p>
+  <p style="text-align:center;font-size:11px;color:#8a8680;margin:0 0 8px;">Atrás: ${(window._navDiag&&window._navDiag.armados>0)?"activo":"sin activar"} · pila ${(window._navDiag&&window._navDiag.pila)||0} · historial ${history.length} · atrás ${(window._navDiag&&window._navDiag.atras)||0}${(window._navDiag&&window._navDiag.error)?" · "+window._navDiag.error:""}</p>`;
 }
 
 function viewClientes(){
@@ -3587,10 +3587,24 @@ async function licArrancar(){
   ["pointerup","touchend","click","keydown"].forEach(function(ev){
     document.addEventListener(ev, intentarArmar, true);
   });
-  window.addEventListener("popstate", function(){
+  // Importante: tras cada "atrás" NO se crea una entrada nueva (el navegador marca como "saltables"
+  // las entradas creadas sin tocar la pantalla, y entonces el siguiente atrás se salía de la app).
+  // En vez de eso se vuelve a la entrada de arriba con "adelante", que no crea nada nuevo.
+  let reingresando = false;
+  window.addEventListener("popstate", function(ev){
     if(saliendo) return;
+    const st = ev.state || history.state || null;
+    if(reingresando){ reingresando = false; return; }   // el "adelante" que hicimos nosotros
+    if(st && st.jr) return;                              // llegamos a la entrada de arriba: nada que hacer
+    diag.atras = (diag.atras||0) + 1;
     if(manejarAtras()==="salir"){ saliendo = true; history.back(); return; }
-    armar();
+    if(st && st.jrRoot){
+      reingresando = true;
+      setTimeout(function(){ reingresando = false; }, 700);
+      try{ history.forward(); }catch(e){ reingresando = false; armar(); }
+    } else {
+      armar();
+    }
   });
 })();
 
