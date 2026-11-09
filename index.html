@@ -1758,7 +1758,8 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.2</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.3</p>
+  <p style="text-align:center;font-size:11px;color:#8a8680;margin:0 0 8px;">Atrás: ${(window._navDiag&&window._navDiag.armados>0)?"activo":"sin activar"} · pila ${(window._navDiag&&window._navDiag.pila)||0} · historial ${history.length}${(window._navDiag&&window._navDiag.error)?" · "+window._navDiag.error:""}</p>`;
 }
 
 function viewClientes(){
@@ -3496,6 +3497,7 @@ async function licArrancar(){
   let pila = [];
   try{ pila = JSON.parse(sessionStorage.getItem(CLAVE)||"[]") || []; }catch(e){ pila = []; }
   let actual = null, volviendo = false, ultimoAtras = 0, saliendo = false, toastT = null;
+  const diag = window._navDiag = { armados:0, pila:pila.length, error:"" };
   function snap(){
     return { tab:state.tab, vista:state.vista, seleccionId:state.seleccionId||null,
              clienteEditId:state.clienteEditId||null, reciboSel:state.reciboSel||null };
@@ -3503,11 +3505,12 @@ async function licArrancar(){
   function firma(s){
     return [s.tab, s.vista, s.seleccionId||"", s.clienteEditId||"", (s.reciboSel&&s.reciboSel.pagoId)||""].join("|");
   }
-  function guardarPila(){ try{ sessionStorage.setItem(CLAVE, JSON.stringify(pila)); }catch(e){} }
+  function guardarPila(){ diag.pila = pila.length; try{ sessionStorage.setItem(CLAVE, JSON.stringify(pila)); }catch(e){} }
   // Se llama desde render(): detecta cuándo cambió de pantalla.
   window.navRastrear = function(){
     const s = snap();
     if(actual && firma(actual)===firma(s)){ volviendo = false; actual = s; return; }
+    if(s.tab==="inicio" && s.vista==="lista"){ volviendo = false; pila = []; actual = s; guardarPila(); return; }
     if(volviendo){ volviendo = false; actual = s; guardarPila(); return; }
     if(actual){
       // Si volvió con la flecha ‹ de la app, no se apila: se desapila.
@@ -3548,15 +3551,13 @@ async function licArrancar(){
   function manejarAtras(){
     if(bloqueada()){
       if(state.mostrarRecuperar){ state.mostrarRecuperar = false; render(); return "ok"; }
-    } else {
+    } else if(!(state.tab==="inicio" && state.vista==="lista")){
       while(pila.length){
         const s = pila.pop();
-        if(existe(s)){ guardarPila(); restaurar(s); return "ok"; }
+        if(firma(s)!==firma(snap()) && existe(s)){ guardarPila(); restaurar(s); return "ok"; }
       }
-      if(!(state.tab==="inicio" && state.vista==="lista")){
-        state.tab = "inicio"; state.vista = "lista"; state.seleccionId = null; state.clienteEditId = null;
-        window._nf = null; window._rf = null; volviendo = true; render(); return "ok";
-      }
+      state.tab = "inicio"; state.vista = "lista"; state.seleccionId = null; state.clienteEditId = null;
+      window._nf = null; window._rf = null; volviendo = true; render(); return "ok";
     }
     const ahora = Date.now();
     if(ahora - ultimoAtras < 2000) return "salir";
@@ -3566,7 +3567,13 @@ async function licArrancar(){
   }
   // Se deja una entrada extra en el historial para poder interceptar el botón atrás. Chrome
   // ignora entradas creadas sin tocar la página, así que se arma en el primer toque.
-  function armar(){ try{ history.pushState({jr:1}, ""); }catch(e){} }
+  function armar(){
+    try{ history.pushState({jr:1}, ""); diag.armados++; }
+    catch(e){
+      diag.error = String((e&&e.message)||e).slice(0,40);
+      try{ history.pushState({jr:1}, "", "#"); diag.armados++; }catch(e2){}
+    }
+  }
   try{
     if(!(history.state && history.state.jr)) history.replaceState({jrRoot:1}, "");
   }catch(e){}
