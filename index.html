@@ -1014,6 +1014,7 @@ function render(){
   document.getElementById("app").style.padding = "";
   document.getElementById("app").style.background = "";
   guardarNav();
+  if(typeof navRastrear === "function") navRastrear();
   // Guarda qué campo tenía el foco (y la posición del cursor) antes de reconstruir el DOM.
   // Sin esto, cada tecla presionada destruye y recrea el <input>, lo que en el celular
   // hace que el teclado parpadee o se cierre con cada dígito.
@@ -1757,7 +1758,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.5</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.6</p>`;
 }
 
 function viewClientes(){
@@ -3488,16 +3489,50 @@ async function licArrancar(){
 }
 
 // ---- Botón "atrás" del celular ----
-// Atrás sube UN nivel: de un recibo, detalle o formulario a su lista, y de una lista a Inicio.
-// No repite el recorrido por el que pasaste. Desde Inicio (o la pantalla de clave) pide tocar
-// otra vez para salir.
+// Dentro de una misma sección (Inicio, Clientes, Préstamos, Pagos) el atrás repite el recorrido
+// paso a paso (ej. Préstamos > detalle > editar: atrás vuelve al detalle y luego a la lista). Al
+// cambiar de sección no se arrastra el recorrido: de la lista de una sección se va a Inicio.
+// Desde Inicio (o la pantalla de clave) pide tocar otra vez para salir.
 (function(){
-  let ultimoAtras = 0, saliendo = false, toastT = null;
+  const LOAD = Date.now().toString(36) + Math.random().toString(36).slice(2,6); // identifica esta carga de la página
+  let ultimoAtras = 0, saliendo = false, toastT = null, reingresando = false;
+  let pila = [], actual = null, volviendo = false;
   const diag = window._navDiag = { armados:0, atras:0, error:"" };
   function esRaiz(){ return state.tab==="inicio" && state.vista==="lista"; }
   function bloqueada(){
     if(state.config && state.config.pin && !state.desbloqueado) return true;
     return !!document.getElementById("lic-overlay");
+  }
+  function snap(){
+    return { tab:state.tab, vista:state.vista, seleccionId:state.seleccionId||null,
+             clienteEditId:state.clienteEditId||null, reciboSel:state.reciboSel||null };
+  }
+  function firma(s){
+    return [s.tab, s.vista, s.seleccionId||"", s.clienteEditId||"", (s.reciboSel&&s.reciboSel.pagoId)||""].join("|");
+  }
+  // Se llama desde render(): lleva el recorrido de la sección actual.
+  window.navRastrear = function(){
+    const s = snap();
+    if(actual && firma(actual)===firma(s)){ volviendo = false; actual = s; return; }
+    if(!actual || actual.tab!==s.tab){ pila = []; volviendo = false; actual = s; return; }  // otra sección: recorrido nuevo
+    if(volviendo){ volviendo = false; actual = s; return; }
+    if(pila.length && firma(pila[pila.length-1])===firma(s)) pila.pop();   // volvió con la flecha ‹ de la app
+    else { pila.push(actual); if(pila.length>30) pila.shift(); }
+    actual = s;
+  };
+  function existe(s){
+    try{
+      if(s.tab==="prestamos" && (s.vista==="detalle"||s.vista==="refinanciar")) return state.prestamos.some(x=>x.id===s.seleccionId);
+      if(s.tab==="clientes" && s.vista==="detalle") return state.clientes.some(x=>x.id===s.seleccionId);
+      if(s.tab==="pagos" && s.vista==="recibo") return !!(s.reciboSel && state.prestamos.some(x=>x.id===s.reciboSel.prestamoId));
+    }catch(e){ return false; }
+    return true;
+  }
+  function restaurar(s){
+    state.tab = s.tab; state.vista = s.vista; state.seleccionId = s.seleccionId;
+    state.clienteEditId = s.clienteEditId; state.reciboSel = s.reciboSel;
+    window._nf = null; window._rf = null;
+    volviendo = true; render();
   }
   function toast(msg){
     let el = document.getElementById("jr-toast-salir");
@@ -3509,7 +3544,7 @@ async function licArrancar(){
     el.textContent = msg; el.style.opacity = "1";
     clearTimeout(toastT); toastT = setTimeout(()=>{ el.style.opacity = "0"; }, 2000);
   }
-  // Cambia state a la pantalla "padre" de la actual.
+  // Pantalla "padre" cuando ya no hay recorrido que repetir (ej. tras recargar la app).
   function subirNivel(){
     const t = state.tab, v = state.vista;
     if(t==="inicio"){
@@ -3523,7 +3558,6 @@ async function licArrancar(){
       state.vista = "lista";
       return;
     }
-    // Lista de Clientes / Préstamos / Pagos -> Inicio
     state.tab = "inicio"; state.vista = "lista"; state.seleccionId = null; state.clienteEditId = null;
     window._nf = null; window._rf = null;
   }
@@ -3532,7 +3566,11 @@ async function licArrancar(){
     if(bloqueada()){
       if(state.mostrarRecuperar){ state.mostrarRecuperar = false; render(); return "ok"; }
     } else if(!esRaiz()){
-      subirNivel(); render(); return "ok";
+      while(pila.length){
+        const s = pila.pop();
+        if(firma(s)!==firma(snap()) && existe(s)){ restaurar(s); return "ok"; }
+      }
+      subirNivel(); volviendo = true; render(); return "ok";
     }
     const ahora = Date.now();
     if(ahora - ultimoAtras < 2000) return "salir";
@@ -3540,21 +3578,26 @@ async function licArrancar(){
     toast("Toca otra vez para salir");
     return "ok";
   }
+  function miEstado(tipo){
+    const st = history.state;
+    return !!(st && st[tipo] && st.id===LOAD);
+  }
   // Se deja una entrada extra en el historial para poder interceptar el botón atrás. Chrome
   // ignora entradas creadas sin tocar la página, así que se arma con un toque real.
   function armar(){
-    try{ history.pushState({jr:1}, ""); diag.armados++; }
+    try{ history.pushState({jr:1, id:LOAD}, ""); diag.armados++; }
     catch(e){
       diag.error = String((e&&e.message)||e).slice(0,40);
-      try{ history.pushState({jr:1}, "", "#"); diag.armados++; }catch(e2){}
+      try{ history.pushState({jr:1, id:LOAD}, "", "#"); diag.armados++; }catch(e2){}
     }
   }
-  try{
-    if(!(history.state && history.state.jr)) history.replaceState({jrRoot:1}, "");
-  }catch(e){}
+  // Esta carga de la página toma la entrada actual como su "base" (si venía de una carga anterior,
+  // su entrada de arriba es de otra carga y ya no sirve: se vuelve a armar con esta).
+  try{ if(!miEstado("jrRoot") && !miEstado("jr")) history.replaceState({jrRoot:1, id:LOAD}, ""); }catch(e){}
   function intentarArmar(){
     try{
-      if(history.state && history.state.jr) return;
+      if(miEstado("jr")) return;
+      if(!miEstado("jrRoot")) history.replaceState({jrRoot:1, id:LOAD}, "");
       if(navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
       armar();
     }catch(e){}
@@ -3562,24 +3605,35 @@ async function licArrancar(){
   ["pointerup","touchend","click","keydown"].forEach(function(ev){
     document.addEventListener(ev, intentarArmar, true);
   });
-  // Importante: tras cada "atrás" NO se crea una entrada nueva (el navegador marca como "saltables"
-  // las entradas creadas sin tocar la pantalla, y entonces el siguiente atrás se salía de la app).
-  // En vez de eso se vuelve a la entrada de arriba con "adelante", que no crea nada nuevo.
-  let reingresando = false;
+  // Vuelve a la entrada de arriba con "adelante" (no crea entradas nuevas: Chrome marca como
+  // "saltables" las creadas sin tocar la pantalla y entonces el siguiente atrás se salía de la app).
+  function reentrar(){
+    if(!miEstado("jrRoot")) return;
+    reingresando = true;
+    setTimeout(function(){ reingresando = false; }, 700);
+    try{ history.forward(); }catch(e){ reingresando = false; }
+  }
+  // Si la app vuelve a mostrarse (o seguía abierta tras intentar salir), se reactiva el atrás.
+  function reanudar(){
+    saliendo = false; ultimoAtras = 0;
+    reentrar();
+  }
+  window.addEventListener("pageshow", function(e){ if(e.persisted) reanudar(); });
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden && saliendo) reanudar(); });
   window.addEventListener("popstate", function(ev){
     if(saliendo) return;
     const st = ev.state || history.state || null;
     if(reingresando){ reingresando = false; return; }   // el "adelante" que hicimos nosotros
-    if(st && st.jr) return;                              // llegamos a la entrada de arriba: nada que hacer
+    if(!st || (st.jr && st.id===LOAD)) return;           // llegamos a la entrada de arriba: nada que hacer
     diag.atras++;
-    if(manejarAtras()==="salir"){ saliendo = true; history.back(); return; }
-    if(st && st.jrRoot){
-      reingresando = true;
-      setTimeout(function(){ reingresando = false; }, 700);
-      try{ history.forward(); }catch(e){ reingresando = false; armar(); }
-    } else {
-      armar();
+    if(manejarAtras()==="salir"){
+      saliendo = true;
+      history.back();
+      // Si la app sigue aquí (por ejemplo no había a dónde salir), se vuelve a armar el atrás.
+      setTimeout(function(){ if(saliendo) reanudar(); }, 900);
+      return;
     }
+    if(st.jrRoot && st.id===LOAD) reentrar();
   });
 })();
 
