@@ -12,7 +12,8 @@
 (function(){
   try{
     var t = Number(sessionStorage.getItem("jr_salida")||0);
-    if(t && Date.now()-t < 6000){
+    var nav = (window.performance && performance.getEntriesByType && performance.getEntriesByType("navigation")[0]) || {};
+    if(t && Date.now()-t < 6000 && nav.type==="back_forward"){
       sessionStorage.setItem("jr_salida", String(Date.now()));
       document.documentElement.style.visibility = "hidden";
       history.back();
@@ -1777,7 +1778,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.7</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 10.0</p>`;
 }
 
 function viewClientes(){
@@ -3275,6 +3276,55 @@ function buscarPagoPorId(p, id){
 // Si un pago de cuota tuvo también un abono a capital el mismo cobro (o viceversa), se
 // resuelve siempre hacia el lado de la cuota y se devuelve el abono ligado aparte, para
 // mostrar las dos partes juntas en un solo recibo en vez de dos recibos sueltos.
+// Texto de cuotas a partir de sus números: "cuota 3", "cuotas 3 y 4", "cuotas 3 a 5".
+function textoCuotas(nums){
+  if(nums.length===1) return "cuota " + nums[0];
+  const seguidas = nums.every((n,i)=> i===0 || n===nums[i-1]+1);
+  if(nums.length===2) return "cuotas " + nums[0] + " y " + nums[1];
+  return seguidas ? ("cuotas " + nums[0] + " a " + nums[nums.length-1]) : ("cuotas " + nums.join(", "));
+}
+// Concepto real de un cobro: qué cuota(s) completó, o a cuál quedó como abono parcial.
+function conceptoPago(p, pg, abonoLigado){
+  if(pg.liquidacion) return "Liquidación anticipada";
+  if(pg.soloCapital) return "Abono a capital";
+  if(pg.tipo==="enganche") return "Enganche al refinanciar";
+  let base = "Abono / cuota";
+  try{
+    const tabla = resumen(p).tabla || [];
+    const pagos = (p.pagos||[]).filter(x=>x.tipo!=="enganche" && !x.liquidacion && !x.soloCapital);
+    const ids = [pg.id].concat(abonoLigado ? [abonoLigado.id] : []);
+    const primero = pagos.findIndex(x=>ids.indexOf(x.id)>=0);
+    if(primero>=0 && tabla.length){
+      let antes = 0;
+      for(let k=0;k<primero;k++) antes += Number(pagos[k].monto)||0;
+      const despues = antes + (Number(pg.monto)||0) + (abonoLigado ? (Number(abonoLigado.monto)||0) : 0);
+      const acum = []; let t = 0;
+      tabla.forEach(f=>{ t += Number(f.cuota)||0; acum.push(t); });
+      const completas = [];
+      let parcial = null;
+      for(let k=0;k<tabla.length;k++){
+        if(acum[k] <= antes + 0.01) continue;             // ya estaba pagada antes de este cobro
+        if(acum[k] <= despues + 0.01){ completas.push(tabla[k].n!=null ? tabla[k].n : k+1); continue; }
+        if(despues > (k>0?acum[k-1]:0) + 0.01) parcial = tabla[k].n!=null ? tabla[k].n : k+1;
+        break;
+      }
+      const listaCuotas = completas.length ? textoCuotas(completas) : "";
+      const textoParcial = parcial!=null ? ("abono parcial a cuota " + parcial) : "";
+      if(abonoLigado){
+        // Cuota y abono a capital en el mismo cobro: "Cuota 1 / abono a capital"
+        const cuotaTxt = listaCuotas ? (listaCuotas.charAt(0).toUpperCase() + listaCuotas.slice(1)) : "Cuota";
+        base = cuotaTxt + (textoParcial ? " + " + textoParcial : "") + " / abono a capital";
+      } else if(listaCuotas){
+        base = "Pago de " + listaCuotas + (textoParcial ? " + " + textoParcial : "");
+      } else if(textoParcial){
+        base = textoParcial.charAt(0).toUpperCase() + textoParcial.slice(1);
+      }
+    }
+  }catch(e){}
+  if(base==="Abono / cuota" && abonoLigado) base = "Cuota / abono a capital";
+  if(pg.mora>0) base += " + mora por atraso";
+  return base;
+}
 function resolverPagoRecibo(p, pg){
   if(pg.tipo==="abono_capital" && pg.cuotaId){
     const cuotaLigada = buscarPagoPorId(p, pg.cuotaId);
@@ -3292,8 +3342,7 @@ function datosRecibo(p, cli, pg0, idx){
   const abonoLigado = resuelto.abonoLigado;
   const numRecibo = pg.id ? pg.id.slice(-6).toUpperCase() : String(idx+1).padStart(4,"0");
   const totalPago = (Number(pg.monto)||0) + (Number(pg.mora)||0) + (abonoLigado ? (Number(abonoLigado.monto)||0) : 0);
-  let concepto = pg.liquidacion ? "Liquidación anticipada" : (pg.soloCapital ? "Abono a capital" : pg.tipo==="enganche" ? "Enganche al refinanciar" : (pg.mora>0 ? "Cuota + mora por atraso" : "Abono / cuota"));
-  if(abonoLigado) concepto += " + abono a capital";
+  const concepto = conceptoPago(p, pg, abonoLigado);
   const lineas = [
     {l:"No. de recibo", v:"R-"+numRecibo},
     {l:"Fecha", v:fmtDate(pg.fecha)},
@@ -3514,7 +3563,7 @@ async function licArrancar(){
 // Desde Inicio (o la pantalla de clave) pide tocar otra vez para salir.
 (function(){
   const LOAD = Date.now().toString(36) + Math.random().toString(36).slice(2,6); // identifica esta carga de la página
-  let ultimoAtras = 0, saliendo = false, toastT = null, reingresando = false;
+  let toastT = null, reingresando = false, salidaArmada = false, salidaT = null;
   let pila = [], actual = null, volviendo = false;
   const diag = window._navDiag = { armados:0, atras:0, error:"" };
   function esRaiz(){ return state.tab==="inicio" && state.vista==="lista"; }
@@ -3580,7 +3629,7 @@ async function licArrancar(){
     state.tab = "inicio"; state.vista = "lista"; state.seleccionId = null; state.clienteEditId = null;
     window._nf = null; window._rf = null;
   }
-  // Devuelve "salir" cuando hay que dejar que la app se cierre.
+  // Devuelve "aviso" cuando se está en Inicio: se muestra el aviso y el siguiente atrás sale.
   function manejarAtras(){
     if(bloqueada()){
       if(state.mostrarRecuperar){ state.mostrarRecuperar = false; render(); return "ok"; }
@@ -3591,11 +3640,8 @@ async function licArrancar(){
       }
       subirNivel(); volviendo = true; render(); return "ok";
     }
-    const ahora = Date.now();
-    if(ahora - ultimoAtras < 3000) return "salir";
-    ultimoAtras = ahora;
     toast("Toca otra vez para salir");
-    return "ok";
+    return "aviso";
   }
   function miEstado(tipo){
     const st = history.state;
@@ -3615,6 +3661,7 @@ async function licArrancar(){
   try{ if(!miEstado("jrRoot") && !miEstado("jr")) history.replaceState({jrRoot:1, id:LOAD}, ""); }catch(e){}
   function intentarArmar(){
     try{
+      if(salidaArmada){ cancelarSalida(); return; }       // tocó la pantalla tras el aviso: se vuelve a armar
       if(miEstado("jr")) return;
       if(!miEstado("jrRoot")) history.replaceState({jrRoot:1, id:LOAD}, "");
       if(navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
@@ -3632,27 +3679,30 @@ async function licArrancar(){
     setTimeout(function(){ reingresando = false; }, 700);
     try{ history.forward(); }catch(e){ reingresando = false; }
   }
-  // Si la app vuelve a mostrarse (o seguía abierta tras intentar salir), se reactiva el atrás.
-  function reanudar(){
-    saliendo = false; ultimoAtras = 0;
+  // Primer "atrás" en Inicio: se muestra el aviso y la app se DEJA en su base, sin volver a armar
+  // el atrás. Así el segundo "atrás" lo atiende el propio navegador (o la app instalada) y sale de
+  // verdad. Pasados 3 s, o al tocar la pantalla, se vuelve a armar el atrás.
+  function armarSalida(){
+    salidaArmada = true;
+    try{ sessionStorage.setItem("jr_salida", String(Date.now())); }catch(e){}
+    clearTimeout(salidaT);
+    salidaT = setTimeout(cancelarSalida, 3000);
+  }
+  function cancelarSalida(){
+    if(!salidaArmada) return;
+    salidaArmada = false;
+    clearTimeout(salidaT);
+    try{ sessionStorage.removeItem("jr_salida"); }catch(e){}
     reentrar();
   }
-  window.addEventListener("pageshow", function(e){ if(e.persisted) reanudar(); });
-  document.addEventListener("visibilitychange", function(){ if(!document.hidden && saliendo) reanudar(); });
+  window.addEventListener("pageshow", function(e){ if(e.persisted) cancelarSalida(); });
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) cancelarSalida(); });
   window.addEventListener("popstate", function(ev){
-    if(saliendo) return;
     const st = ev.state || history.state || null;
     if(reingresando){ reingresando = false; return; }   // el "adelante" que hicimos nosotros
     if(!st || (st.jr && st.id===LOAD)) return;           // llegamos a la entrada de arriba: nada que hacer
     diag.atras++;
-    if(manejarAtras()==="salir"){
-      saliendo = true;
-      try{ sessionStorage.setItem("jr_salida", String(Date.now())); }catch(e){}
-      history.back();
-      // Si la app sigue aquí (por ejemplo no había a dónde salir), se vuelve a armar el atrás.
-      setTimeout(function(){ if(saliendo){ try{ sessionStorage.removeItem("jr_salida"); }catch(e){} reanudar(); } }, 1500);
-      return;
-    }
+    if(manejarAtras()==="aviso"){ armarSalida(); return; }
     if(st.jrRoot && st.id===LOAD) reentrar();
   });
 })();
