@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>JR Prestamito</title>
 <meta name="theme-color" content="#1B2A4A">
+<script>
+// Salida con "atrás": si la app acaba de intentar salir y el navegador regresó a una carga anterior
+// de la misma app (el historial de la pestaña la conserva), se sigue retrocediendo sin mostrarla,
+// para que el segundo "atrás" sí salga de verdad.
+(function(){
+  try{
+    var t = Number(sessionStorage.getItem("jr_salida")||0);
+    if(t && Date.now()-t < 6000){
+      sessionStorage.setItem("jr_salida", String(Date.now()));
+      document.documentElement.style.visibility = "hidden";
+      history.back();
+      setTimeout(function(){
+        try{ sessionStorage.removeItem("jr_salida"); }catch(e){}
+        document.documentElement.style.visibility = "";
+      }, 1200);
+    }
+  }catch(e){}
+})();
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1758,7 +1777,7 @@ function viewAjustes(){
       <p class="hint nota-ayuda" style="margin:6px 0 0;">Si la desactivas, la clave se te sigue pidiendo siempre al abrir la app (la app nunca queda desprotegida) — solo deja de pedírtela otra vez al entrar aquí a Ajustes.</p>
     </div>` : ""}
   </div>
-  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.6</p>`;
+  <p style="text-align:center;font-size:12px;color:#8a8680;margin:18px 0 8px;">Versión 9.7</p>`;
 }
 
 function viewClientes(){
@@ -3542,7 +3561,7 @@ async function licArrancar(){
       document.body.appendChild(el);
     }
     el.textContent = msg; el.style.opacity = "1";
-    clearTimeout(toastT); toastT = setTimeout(()=>{ el.style.opacity = "0"; }, 2000);
+    clearTimeout(toastT); toastT = setTimeout(()=>{ el.style.opacity = "0"; }, 3000);
   }
   // Pantalla "padre" cuando ya no hay recorrido que repetir (ej. tras recargar la app).
   function subirNivel(){
@@ -3573,7 +3592,7 @@ async function licArrancar(){
       subirNivel(); volviendo = true; render(); return "ok";
     }
     const ahora = Date.now();
-    if(ahora - ultimoAtras < 2000) return "salir";
+    if(ahora - ultimoAtras < 3000) return "salir";
     ultimoAtras = ahora;
     toast("Toca otra vez para salir");
     return "ok";
@@ -3628,9 +3647,10 @@ async function licArrancar(){
     diag.atras++;
     if(manejarAtras()==="salir"){
       saliendo = true;
+      try{ sessionStorage.setItem("jr_salida", String(Date.now())); }catch(e){}
       history.back();
       // Si la app sigue aquí (por ejemplo no había a dónde salir), se vuelve a armar el atrás.
-      setTimeout(function(){ if(saliendo) reanudar(); }, 900);
+      setTimeout(function(){ if(saliendo){ try{ sessionStorage.removeItem("jr_salida"); }catch(e){} reanudar(); } }, 1500);
       return;
     }
     if(st.jrRoot && st.id===LOAD) reentrar();
