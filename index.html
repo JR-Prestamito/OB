@@ -3475,6 +3475,10 @@ async function licVerificar(clave){
   if(data === "vencida") return { ok:false, motivo:"Esta licencia venció. Contacta al proveedor de la app para renovarla." };
   if(data === "otro_dispositivo") return { ok:false, motivo:"Esta licencia ya está en uso en otro dispositivo." };
   if(data === "producto_incorrecto") return { ok:false, motivo:"Esa clave no es para esta versión de la app." };
+  if(data === "liberada"){
+    try{ localStorage.removeItem("jrp_device_id"); }catch(e){}
+    return { ok:false, motivo:"Esta licencia fue liberada. Escribe la clave para activarla de nuevo en este dispositivo." };
+  }
   return { ok:false, red:true, motivo:"No se pudo verificar la licencia. Intenta de nuevo." };
 }
 
